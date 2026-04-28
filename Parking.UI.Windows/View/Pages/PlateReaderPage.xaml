@@ -3,93 +3,119 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d"
-             Background="#F1F5F9">
+             mc:Ignorable="d" 
+             Background="#121212"
+             d:DesignHeight="720" d:DesignWidth="1280">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+        <Style x:Key="SidebarSectionStyle" TargetType="Border">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4"/>
+                </Style>
+            </Style.Resources>
+        </Style>
     </UserControl.Resources>
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="380"/>
+        </Grid.ColumnDefinitions>
 
-        <TextBlock Text="Sistema de Control de Placas"
-                   FontSize="22"
-                   FontWeight="Bold"
-                   Margin="0,0,0,10"/>
-
-        <Border Grid.Row="1"
-                Background="Black"
-                CornerRadius="10"
-                Margin="0,0,0,12">
+        <Border Grid.Column="0" Background="#000000" Margin="10,10,5,10" CornerRadius="4" BorderBrush="#2A2A2A" BorderThickness="1">
             <Grid>
-                <TextBlock Text="Cámara desactivada"
-                           Foreground="White"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           FontSize="18"
-                           Opacity="0.6"
-                           Visibility="{Binding IsCameraRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverted}"/>
-                <Image Source="{Binding CameraPreview}" Stretch="Uniform" Margin="4"/>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Visibility="{Binding IsCameraRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverted}">
+                    <TextBlock Text="CÁMARA DESACTIVADA" Foreground="#555555" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Inicie el visor desde el panel lateral" Foreground="#333333" FontSize="14" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <Image Source="{Binding CameraPreview}" Stretch="Uniform" />
             </Grid>
         </Border>
 
-        <StackPanel Grid.Row="2" Orientation="Vertical">
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="5,10,10,10">
 
-            <TextBlock Text="Placa Detectada (Edite si es necesario):" 
-                       FontWeight="Bold" 
-                       Margin="0,0,0,4"/>
+                <Border Style="{StaticResource SidebarSectionStyle}">
+                    <StackPanel>
+                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="32" FontWeight="Bold" Height="60"
+                                 Background="#0A0A0A" Foreground="#FFFFFF" 
+                                 BorderBrush="#444444" BorderThickness="1"
+                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        <TextBlock Text="Edite manualmente si es necesario" Foreground="#555555" FontSize="10" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
-            <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
-                     FontSize="24"
-                     FontWeight="Bold"
-                     Height="50"
-                     Margin="0,0,0,12"
-                     HorizontalContentAlignment="Center"
-                     VerticalContentAlignment="Center"
-                     Background="White"/>
-            <Border Background="#DBEAFE" BorderBrush="#2563EB" BorderThickness="2" CornerRadius="10" Margin="0,0,0,15" Padding="10">
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="VALOR A COBRAR" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#1E40AF" FontSize="14"/>
-                    <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}" 
-                   FontSize="42" FontWeight="Black" Foreground="#1E3A8A" HorizontalAlignment="Center"/>
-                </StackPanel>
-            </Border>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
-                <Button Content="REGISTRAR ENTRADA"
-                        Command="{Binding SavePlateCommand}"
-                        Background="#10B981"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="30,15"
-                        MinWidth="200"
-                        Margin="0,0,20,0"/>
+                <Border Style="{StaticResource SidebarSectionStyle}" Background="#151A20" BorderBrush="#2D4A63">
+                    <StackPanel>
+                        <TextBlock Text="RESUMEN DE COBRO" Foreground="#4A90E2" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <Viewbox Height="60">
+                            <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}" 
+                                       FontWeight="Black" Foreground="#FFFFFF" />
+                        </Viewbox>
+                    </StackPanel>
+                </Border>
 
-                <Button Content="REGISTRAR SALIDA"
-                        Command="{Binding RegisterExitCommand}"
-                        Background="#EF4444"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="30,15"
-                        MinWidth="200"/>
+                <Border Style="{StaticResource SidebarSectionStyle}">
+                    <StackPanel>
+                        <Button Content="REGISTRAR ENTRADA"
+                                Command="{Binding SavePlateCommand}"
+                                Style="{StaticResource ActionButtonStyle}"
+                                Background="#2E7D32" Foreground="White"
+                                Margin="0,0,0,10"/>
+
+                        <Button Content="REGISTRAR SALIDA"
+                                Command="{Binding RegisterExitCommand}"
+                                Style="{StaticResource ActionButtonStyle}"
+                                Background="#C62828" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="100">
+                    <StackPanel>
+                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="#CCCCCC" FontSize="13" 
+                                   TextWrapping="Wrap" Opacity="0.8"/>
+                    </StackPanel>
+                </Border>
+
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Content="Iniciar Cámara" 
+                            Command="{Binding StartCameraCommand}" 
+                            Background="#333333" Foreground="#AAAAAA"
+                            Padding="5" Margin="0,0,5,0" FontSize="12"/>
+                    <Button Grid.Column="1" Content="Detener" 
+                            Command="{Binding StopCameraCommand}" 
+                            Background="#333333" Foreground="#AAAAAA"
+                            Padding="5" Margin="5,0,0,0" FontSize="12"/>
+                </Grid>
+
             </StackPanel>
-
-            <TextBlock Text="{Binding StatusMessage}"
-                       FontSize="14"
-                       FontWeight="SemiBold"
-                       Foreground="#1E293B"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       Margin="0,0,0,10"/>
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Iniciar cámara" Command="{Binding StartCameraCommand}" Margin="5" Padding="10,5"/>
-                <Button Content="Detener cámara" Command="{Binding StopCameraCommand}" Margin="5" Padding="10,5"/>
-            </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>
