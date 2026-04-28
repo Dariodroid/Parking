@@ -1,0 +1,95 @@
+﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.PlateReaderPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             Background="#F1F5F9">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Sistema de Control de Placas"
+                   FontSize="22"
+                   FontWeight="Bold"
+                   Margin="0,0,0,10"/>
+
+        <Border Grid.Row="1"
+                Background="Black"
+                CornerRadius="10"
+                Margin="0,0,0,12">
+            <Grid>
+                <TextBlock Text="Cámara desactivada"
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="18"
+                           Opacity="0.6"
+                           Visibility="{Binding IsCameraRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverted}"/>
+                <Image Source="{Binding CameraPreview}" Stretch="Uniform" Margin="4"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Vertical">
+
+            <TextBlock Text="Placa Detectada (Edite si es necesario):" 
+                       FontWeight="Bold" 
+                       Margin="0,0,0,4"/>
+
+            <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
+                     FontSize="24"
+                     FontWeight="Bold"
+                     Height="50"
+                     Margin="0,0,0,12"
+                     HorizontalContentAlignment="Center"
+                     VerticalContentAlignment="Center"
+                     Background="White"/>
+            <Border Background="#DBEAFE" BorderBrush="#2563EB" BorderThickness="2" CornerRadius="10" Margin="0,0,0,15" Padding="10">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                    <TextBlock Text="VALOR A COBRAR" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#1E40AF" FontSize="14"/>
+                    <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}" 
+                   FontSize="42" FontWeight="Black" Foreground="#1E3A8A" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
+                <Button Content="REGISTRAR ENTRADA"
+                        Command="{Binding SavePlateCommand}"
+                        Background="#10B981"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Padding="30,15"
+                        MinWidth="200"
+                        Margin="0,0,20,0"/>
+
+                <Button Content="REGISTRAR SALIDA"
+                        Command="{Binding RegisterExitCommand}"
+                        Background="#EF4444"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Padding="30,15"
+                        MinWidth="200"/>
+            </StackPanel>
+
+            <TextBlock Text="{Binding StatusMessage}"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="#1E293B"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,10"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Iniciar cámara" Command="{Binding StartCameraCommand}" Margin="5" Padding="10,5"/>
+                <Button Content="Detener cámara" Command="{Binding StopCameraCommand}" Margin="5" Padding="10,5"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

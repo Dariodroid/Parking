@@ -1,0 +1,85 @@
+﻿<Window x:Class="Parking.UI.Windows.View.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Parking.UI.Windows.ViewModels"
+        xmlns:views="clr-namespace:Parking.UI.Windows.View.Pages"
+        Title="Sistema de Parqueadero"
+        Height="700"
+        Width="1200"
+        WindowStartupLocation="CenterScreen">
+
+    <!-- 🔥 AQUÍ ESTÁ LA SOLUCIÓN -->
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
+            <views:PlateReaderPage/>
+        </DataTemplate>
+
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR -->
+        <StackPanel Background="#1E293B" Grid.Column="0">
+
+            <TextBlock Text="🚗 PARKING"
+                       Foreground="White"
+                       FontSize="18"
+                       Margin="10"
+                       FontWeight="Bold"/>
+
+            <!-- BOTONES -->
+            <Button Content="🏠 Dashboard"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Dashboard"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="🚗 Operaciones"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Operaciones"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="💰 Caja"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Caja"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="👥 Clientes"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Clientes"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="🔐 Seguridad"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Seguridad"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="⚙️ Configuración"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Config"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="📊 Reportes"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Reportes"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+        </StackPanel>
+
+        <!-- CONTENIDO -->
+        <Grid Grid.Column="1" Background="#F1F5F9">
+            <ContentControl Content="{Binding CurrentView}"/>
+        </Grid>
+
+    </Grid>
+</Window>

@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.13.0.20260330" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Parking.Application\Parking.Application.csproj" />
+    <ProjectReference Include="..\Parking.Domain.Model\Parking.Domain.Model.csproj" />
+    <ProjectReference Include="..\Parking.Domain.Services\Parking.Domain.Services.csproj" />
+    <ProjectReference Include="..\Parking.Infrestructure.DataAccess\Parking.Infrastructure.DataAccess.csproj" />
+    <ProjectReference Include="..\Parking.Infrestructure.ExternalServices\Parking.Infrastructure.ExternalServices.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="tessdata\eng.traineddata">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
