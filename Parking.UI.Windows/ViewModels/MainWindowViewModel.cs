@@ -34,13 +34,13 @@ namespace Parking.UI.Windows.ViewModels
                    "IServiceProvider es null. Verifica el registro de servicios en App.xaml.cs");
 
             // Navegar a la pantalla inicial de forma segura
-            NavigateCommand = new RelayCommand(param => Navigate(param?.ToString()));
-
+            NavigateCommand = new RelayCommand(async param => await NavigateAsync(param?.ToString()));
             // Carga la vista inicial sin arriesgar NRE
-            Navigate("Operaciones");
+            //_= NavigateAsync("Operaciones");
+            //_ = NavigateAsync("Tipos Vehículo");
         }
 
-        private void Navigate(string? destination)
+        private async Task NavigateAsync(string? destination)
         {
             if (string.IsNullOrWhiteSpace(destination)) return;
 
@@ -78,6 +78,16 @@ namespace Parking.UI.Windows.ViewModels
 
                 case "Caja":
                     PageTitle = "Caja";
+                    break;
+
+                case "Tipos Vehículo":
+                    var vm = _serviceProvider.GetRequiredService<VehicleTypeViewModel>();
+
+                    CurrentView = vm;
+                    PageTitle = "Tipos de Vehículos";
+
+                    await vm.InitializeAsync();
+
                     break;
 
                 default:

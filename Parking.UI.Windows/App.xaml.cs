@@ -34,6 +34,7 @@ namespace Parking.UI.Windows
 
             // ====================== 2. REPOSITORIOS ======================
             serviceCollection.AddScoped<IParkingSessionRepository, ParkingSessionRepository>();
+            serviceCollection.AddScoped<IVehicleTypeRepository, VehicleTypeRepository>();
 
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
@@ -47,8 +48,9 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<IEntryService, EntryService>();
 
             // ====================== 5. VIEWMODELS ======================
-            serviceCollection.AddTransient<PlateReaderViewModel>();
             serviceCollection.AddTransient<MainWindowViewModel>();
+            serviceCollection.AddTransient<PlateReaderViewModel>();
+            serviceCollection.AddTransient<VehicleTypeViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();

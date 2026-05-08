@@ -13,6 +13,9 @@
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
             <views:PlateReaderPage/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:VehicleTypeViewModel}">
+            <views:VehicleTypePage/>
+        </DataTemplate>
 
         <Style x:Key="MenuButtonStyle" TargetType="Button">
             <Setter Property="Margin" Value="5"/>
@@ -72,6 +75,11 @@
             <Button Content="📊 Reportes"
                     Command="{Binding NavigateCommand}"
                     CommandParameter="Reportes"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="🚘 Tipos Vehículo"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Tipos Vehículo"
                     Style="{StaticResource MenuButtonStyle}"/>
 
         </StackPanel>

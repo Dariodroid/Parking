@@ -78,6 +78,62 @@
 
                 <Border Style="{StaticResource SidebarSectionStyle}">
                     <StackPanel>
+                        <Border Style="{StaticResource SidebarSectionStyle}">
+                            <StackPanel>
+                                <TextBlock Text="TIPO DE VEHÍCULO"
+                   Foreground="#888888"
+                   FontSize="11"
+                   FontWeight="Bold"
+                   Margin="0,0,0,10"/>
+
+                                <ComboBox ItemsSource="{Binding VehicleTypes}"
+                  SelectedItem="{Binding SelectedVehicleType}"
+                  Height="42"
+                  FontSize="14"
+                  Background="#0A0A0A"
+                  Foreground="White"
+                  BorderBrush="#444444"
+                  BorderThickness="1"
+                  Padding="8">
+
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Text="{Binding Icon}"
+                                   VerticalAlignment="Center"
+                                   FontSize="14"
+                                   Foreground="#CCCCCC"/>
+
+                                                <TextBlock Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   Margin="8,0,0,0"/>
+
+                                                <TextBlock Grid.Column="2"
+                                   Text="{Binding HourlyRate, StringFormat={}{0:C2}/h}"
+                                   VerticalAlignment="Center"
+                                   Foreground="#4A90E2"
+                                   Margin="10,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <TextBlock Text="Seleccione el tipo antes de registrar entrada"
+                   Foreground="#555555"
+                   FontSize="10"
+                   Margin="0,5,0,0"
+                   HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
                         <Button Content="REGISTRAR ENTRADA"
                                 Command="{Binding SavePlateCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
@@ -87,8 +143,8 @@
                         <Button Content="REGISTRAR SALIDA"
                                 Command="{Binding RegisterExitCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
-                                Background="#C62828" Foreground="White"/>
-                    </StackPanel>
+                                Background="#C62828" Foreground="White"/>                        
+                    </StackPanel>                    
                 </Border>
 
                 <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="100">
