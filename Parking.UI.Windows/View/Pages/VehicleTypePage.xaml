@@ -50,6 +50,18 @@
             <Setter Property="Height" Value="36"/>
         </Style>
 
+        <!-- NUEVO: ESTILO HEADER DATAGRID -->
+        <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2A2A2A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
     </UserControl.Resources>
 
     <Grid Margin="10">
@@ -68,6 +80,7 @@
 
                 <!-- FORMULARIO -->
                 <Border Style="{StaticResource SectionStyle}">
+
                     <StackPanel>
 
                         <TextBlock Text="TIPO DE VEHÍCULO"
@@ -76,19 +89,41 @@
                                    FontWeight="Bold"
                                    Margin="0,0,0,15"/>
 
-                        <TextBlock Text="NOMBRE" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="NOMBRE"
+                                   Style="{StaticResource LabelStyle}"/>
+
                         <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputStyle}"/>
 
-                        <TextBlock Text="ICONO" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="ICONO"
+                                   Style="{StaticResource LabelStyle}"/>
+
                         <TextBox Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputStyle}"/>
 
-                        <TextBlock Text="TARIFA POR HORA" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="TARIFA POR HORA"
+                                   Style="{StaticResource LabelStyle}"/>
 
-                        <TextBox Style="{StaticResource InputStyle}"
-                                 Text="{Binding HourlyRate, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0.##}}"
-                                 GotFocus="HourlyRateTextBox_GotFocus"/>
+                        <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource InputStyle}"/>
+
+                        <TextBlock Text="MINUTOS DE GRACIA"
+                                   Style="{StaticResource LabelStyle}"/>
+
+                        <TextBox Text="{Binding GraceMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource InputStyle}"/>
+
+                        <TextBlock Text="MINUTOS POR FRACCIÓN"
+                                   Style="{StaticResource LabelStyle}"/>
+
+                        <TextBox Text="{Binding FractionMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource InputStyle}"/>
+
+                        <TextBlock Text="TARIFA FRACCIÓN"
+                                   Style="{StaticResource LabelStyle}"/>
+
+                        <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="ESTADO"
                                    Style="{StaticResource LabelStyle}"
@@ -104,9 +139,13 @@
                                       Margin="0,0,0,8">
 
                             <ToggleButton.Template>
+
                                 <ControlTemplate TargetType="ToggleButton">
+
                                     <Border Background="Transparent">
-                                        <Grid Width="150" Height="36">
+
+                                        <Grid Width="150"
+                                              Height="36">
 
                                             <Border x:Name="SwitchBackground"
                                                     CornerRadius="18"
@@ -127,12 +166,16 @@
                                                     Background="White"
                                                     HorizontalAlignment="Right"
                                                     Margin="4"/>
+
                                         </Grid>
+
                                     </Border>
 
                                     <ControlTemplate.Triggers>
 
-                                        <Trigger Property="IsChecked" Value="False">
+                                        <Trigger Property="IsChecked"
+                                                 Value="False">
+
                                             <Setter TargetName="SwitchBackground"
                                                     Property="Background"
                                                     Value="#666666"/>
@@ -144,9 +187,12 @@
                                             <Setter TargetName="Knob"
                                                     Property="HorizontalAlignment"
                                                     Value="Left"/>
+
                                         </Trigger>
 
-                                        <Trigger Property="IsChecked" Value="True">
+                                        <Trigger Property="IsChecked"
+                                                 Value="True">
+
                                             <Setter TargetName="SwitchBackground"
                                                     Property="Background"
                                                     Value="#2E7D32"/>
@@ -158,18 +204,24 @@
                                             <Setter TargetName="Knob"
                                                     Property="HorizontalAlignment"
                                                     Value="Right"/>
+
                                         </Trigger>
 
                                     </ControlTemplate.Triggers>
+
                                 </ControlTemplate>
+
                             </ToggleButton.Template>
+
                         </ToggleButton>
 
                     </StackPanel>
+
                 </Border>
 
                 <!-- BOTONES -->
                 <Border Style="{StaticResource SectionStyle}">
+
                     <StackPanel Orientation="Horizontal">
 
                         <Button Content="GUARDAR"
@@ -197,11 +249,14 @@
                                 Style="{StaticResource ActionButtonStyle}"/>
 
                     </StackPanel>
+
                 </Border>
 
                 <!-- LOG -->
                 <Border Style="{StaticResource SectionStyle}">
+
                     <StackPanel>
+
                         <TextBlock Text="ESTADO"
                                    Foreground="#888888"
                                    FontSize="11"
@@ -211,7 +266,9 @@
                         <TextBlock Text="{Binding StatusMessage}"
                                    Foreground="#CCCCCC"
                                    TextWrapping="Wrap"/>
+
                     </StackPanel>
+
                 </Border>
 
             </StackPanel>
@@ -237,18 +294,8 @@
                       RowBackground="#1A1A1A"
                       AlternatingRowBackground="#202020"
                       CanUserAddRows="False"
-                      IsReadOnly="True">
-
-                <DataGrid.ColumnHeaderStyle>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#2A2A2A"/>
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="FontWeight" Value="SemiBold"/>
-                        <Setter Property="BorderBrush" Value="#444444"/>
-                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
-                        <Setter Property="Padding" Value="8,4"/>
-                    </Style>
-                </DataGrid.ColumnHeaderStyle>
+                      IsReadOnly="True"
+                      ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
 
                 <DataGrid.Columns>
 
@@ -260,22 +307,40 @@
                                         Binding="{Binding icon}"
                                         Width="100"/>
 
-                    <DataGridTextColumn Header="Tarifa"
+                    <DataGridTextColumn Header="Hora"
                                         Binding="{Binding hourly_rate, StringFormat={}{0:N2}}"
                                         Width="80"/>
 
+                    <DataGridTextColumn Header="Gracia"
+                                        Binding="{Binding grace_minutes}"
+                                        Width="70"/>
+
+                    <DataGridTextColumn Header="Fracción"
+                                        Binding="{Binding fraction_minutes}"
+                                        Width="80"/>
+
+                    <DataGridTextColumn Header="Tarifa Fracción"
+                                        Binding="{Binding fraction_rate, StringFormat={}{0:N2}}"
+                                        Width="120"/>
+
                     <DataGridTemplateColumn Header="Activo"
                                             Width="65">
+
                         <DataGridTemplateColumn.CellTemplate>
+
                             <DataTemplate>
+
                                 <TextBlock HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            FontSize="14"
                                            FontWeight="Bold"
                                            Foreground="White"
                                            Text="{Binding is_active, Converter={StaticResource BooleanToCheckConverter}}"/>
+
                             </DataTemplate>
+
                         </DataGridTemplateColumn.CellTemplate>
+
                     </DataGridTemplateColumn>
 
                 </DataGrid.Columns>

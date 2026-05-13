@@ -2,73 +2,82 @@
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 
-namespace Parking.Infrastructure.DataAccess.Repository
+namespace Parking.Infrastructure.DataAccess.Repository;
+
+public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeRepository
 {
-    public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeRepository
+    private readonly parking_dbContext _context;
+
+    public VehicleTypeRepository(parking_dbContext context)
     {
-        private readonly parking_dbContext _context;
+        _context = context;
+    }
 
-        public VehicleTypeRepository(parking_dbContext context)
+    public async Task<VehicleType> AddAsync(VehicleType entity)
+    {
+        await _context.vehicle_types.AddAsync(entity);
+
+        return entity;
+    }
+
+    public async Task DeleteAsync(long id)
+    {
+        var entity = await _context.vehicle_types
+            .FirstOrDefaultAsync(x => x.id == id);
+
+        if (entity != null)
         {
-            _context = context;
+            entity.is_deleted = true;
+            entity.deleted_at = DateTime.Now;
         }
+    }
 
-        public async Task<VehicleType> AddAsync(VehicleType entity)
-        {
-            await _context.vehicle_types.AddAsync(entity);
-            return entity;
-        }
-
-        public async Task DeleteAsync(long id)
-        {
-            var entity = await _context.vehicle_types
-                .FirstOrDefaultAsync(x => x.id == id);
-
-            if (entity != null)
+    public async Task<IEnumerable<VehicleType>> GetAllAsync()
+    {
+        return await _context.vehicle_types
+            .AsNoTracking()
+            .Where(x => !x.is_deleted)
+            .OrderBy(x => x.name)
+            .Select(x => new VehicleType
             {
-                entity.is_deleted = true;
-                entity.deleted_at = DateTime.Now;
-            }
-        }
+                id = x.id,
 
-        public async Task<IEnumerable<VehicleType>> GetAllAsync()
-        {
-            return await _context.vehicle_types
-                .AsNoTracking()
-                .Where(x => !x.is_deleted)
-                .OrderBy(x => x.name)
-                .Select(x => new VehicleType
-                {
-                    id = x.id,
-                    name = x.name,
-                    icon = x.icon,
-                    hourly_rate = x.hourly_rate,
-                    is_active = x.is_active
-                })
-                .ToListAsync();
-        }
+                name = x.name,
+                icon = x.icon,
 
-        public async Task<VehicleType?> GetByIdAsync(long id)
-        {
-            return await _context.vehicle_types
-                .FirstOrDefaultAsync(x => x.id == id && !x.is_deleted);
-        }
+                hourly_rate = x.hourly_rate,
 
-        public Task UpdateAsync(VehicleType entity)
-        {
-            _context.vehicle_types.Update(entity);
-            return Task.CompletedTask;
-        }
+                grace_minutes = x.grace_minutes,
+                fraction_minutes = x.fraction_minutes,
+                fraction_rate = x.fraction_rate,
 
-        public async Task<bool> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
-        }
+                is_active = x.is_active
+            })
+            .ToListAsync();
+    }
 
-        public async Task SoftDeleteAsync(VehicleType entity)
-        {
-            _context.vehicle_types.Update(entity);
-            await Task.CompletedTask;
-        }
+    public async Task<VehicleType?> GetByIdAsync(long id)
+    {
+        return await _context.vehicle_types
+            .FirstOrDefaultAsync(x => x.id == id && !x.is_deleted);
+    }
+
+    public Task UpdateAsync(VehicleType entity)
+    {
+        _context.vehicle_types.Update(entity);
+
+        return Task.CompletedTask;
+    }
+
+    public async Task<bool> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync() > 0;
+    }
+
+    public async Task SoftDeleteAsync(VehicleType entity)
+    {
+        _context.vehicle_types.Update(entity);
+
+        await Task.CompletedTask;
     }
 }

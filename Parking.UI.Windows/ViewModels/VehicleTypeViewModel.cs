@@ -12,6 +12,23 @@ public class VehicleTypeViewModel : BaseViewModel
 
     private readonly int _currentUserId = 1;
 
+    public ObservableCollection<VehicleType> VehicleTypes { get; } = new();
+
+    public ICommand SaveCommand { get; }
+    public ICommand UpdateCommand { get; }
+    public ICommand NewCommand { get; }
+    public ICommand DeleteCommand { get; }
+
+    public VehicleTypeViewModel(IVehicleTypeRepository repository)
+    {
+        _repository = repository;
+
+        SaveCommand = new RelayCommand(async _ => await SaveAsync());
+        UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
+        NewCommand = new RelayCommand(_ => ClearForm());
+        DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
+    }
+
     private int _id;
     public int Id
     {
@@ -40,6 +57,27 @@ public class VehicleTypeViewModel : BaseViewModel
         set => SetProperty(ref _hourlyRate, value);
     }
 
+    private int _graceMinutes = 5;
+    public int GraceMinutes
+    {
+        get => _graceMinutes;
+        set => SetProperty(ref _graceMinutes, value);
+    }
+
+    private int _fractionMinutes = 15;
+    public int FractionMinutes
+    {
+        get => _fractionMinutes;
+        set => SetProperty(ref _fractionMinutes, value);
+    }
+
+    private decimal _fractionRate;
+    public decimal FractionRate
+    {
+        get => _fractionRate;
+        set => SetProperty(ref _fractionRate, value);
+    }
+
     private bool _isActive = true;
     public bool IsActive
     {
@@ -54,8 +92,6 @@ public class VehicleTypeViewModel : BaseViewModel
         set => SetProperty(ref _statusMessage, value);
     }
 
-    public ObservableCollection<VehicleType> VehicleTypes { get; } = new();
-
     private VehicleType? _selectedVehicleType;
     public VehicleType? SelectedVehicleType
     {
@@ -67,21 +103,6 @@ public class VehicleTypeViewModel : BaseViewModel
                 LoadSelected(value);
             }
         }
-    }
-
-    public ICommand SaveCommand { get; }
-    public ICommand UpdateCommand { get; }
-    public ICommand NewCommand { get; }
-    public ICommand DeleteCommand { get; }
-
-    public VehicleTypeViewModel(IVehicleTypeRepository repository)
-    {
-        _repository = repository;
-
-        SaveCommand = new RelayCommand(async _ => await SaveAsync());
-        UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
-        NewCommand = new RelayCommand(_ => ClearForm());
-        DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
     }
 
     private bool _isLoaded;
@@ -113,7 +134,13 @@ public class VehicleTypeViewModel : BaseViewModel
         Id = item.id;
         Name = item.name ?? string.Empty;
         Icon = item.icon ?? string.Empty;
+
         HourlyRate = item.hourly_rate;
+
+        GraceMinutes = item.grace_minutes;
+        FractionMinutes = item.fraction_minutes;
+        FractionRate = item.fraction_rate;
+
         IsActive = item.is_active;
     }
 
@@ -127,7 +154,13 @@ public class VehicleTypeViewModel : BaseViewModel
 
         if (HourlyRate <= 0)
         {
-            StatusMessage = "La tarifa debe ser mayor que cero.";
+            StatusMessage = "La tarifa por hora debe ser mayor que cero.";
+            return false;
+        }
+
+        if (FractionMinutes <= 0)
+        {
+            StatusMessage = "Los minutos por fracción deben ser mayores a cero.";
             return false;
         }
 
@@ -143,7 +176,7 @@ public class VehicleTypeViewModel : BaseViewModel
 
             if (Id != 0)
             {
-                StatusMessage = "Para guardar un nuevo registro use NUEVO primero.";
+                StatusMessage = "Use NUEVO antes de guardar.";
                 return;
             }
 
@@ -151,10 +184,18 @@ public class VehicleTypeViewModel : BaseViewModel
             {
                 name = Name.Trim(),
                 icon = Icon?.Trim(),
+
                 hourly_rate = HourlyRate,
+
+                grace_minutes = GraceMinutes,
+                fraction_minutes = FractionMinutes,
+                fraction_rate = FractionRate,
+
                 is_active = IsActive,
+
                 created_at = DateTime.Now,
                 created_by = _currentUserId,
+
                 is_deleted = false
             };
 
@@ -164,11 +205,12 @@ public class VehicleTypeViewModel : BaseViewModel
             StatusMessage = "Tipo de vehículo registrado.";
 
             await LoadAsync();
+
             ClearForm();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = ex.Message;
         }
     }
 
@@ -181,7 +223,7 @@ public class VehicleTypeViewModel : BaseViewModel
 
             if (Id == 0)
             {
-                StatusMessage = "Seleccione un registro para actualizar.";
+                StatusMessage = "Seleccione un registro.";
                 return;
             }
 
@@ -195,22 +237,30 @@ public class VehicleTypeViewModel : BaseViewModel
 
             entity.name = Name.Trim();
             entity.icon = Icon?.Trim();
+
             entity.hourly_rate = HourlyRate;
+
+            entity.grace_minutes = GraceMinutes;
+            entity.fraction_minutes = FractionMinutes;
+            entity.fraction_rate = FractionRate;
+
             entity.is_active = IsActive;
+
             entity.updated_at = DateTime.Now;
             entity.updated_by = _currentUserId;
 
             await _repository.UpdateAsync(entity);
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Tipo de vehículo actualizado.";
+            StatusMessage = "Registro actualizado.";
 
             await LoadAsync();
+
             ClearForm();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = ex.Message;
         }
     }
 
@@ -239,24 +289,33 @@ public class VehicleTypeViewModel : BaseViewModel
             await _repository.SoftDeleteAsync(entity);
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Registro eliminado correctamente.";
+            StatusMessage = "Registro eliminado.";
 
             await LoadAsync();
+
             ClearForm();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = ex.Message;
         }
     }
 
     private void ClearForm()
     {
         Id = 0;
+
         Name = string.Empty;
         Icon = string.Empty;
+
         HourlyRate = 0;
+
+        GraceMinutes = 5;
+        FractionMinutes = 15;
+        FractionRate = 0;
+
         IsActive = true;
+
         SelectedVehicleType = null;
     }
 }
