@@ -7,27 +7,27 @@ namespace Parking.Domain.Model.Models;
 
 public partial class FingerprintTemplate
 {
-    public int Id { get; set; }
+    public int id { get; set; }
 
-    public int VehicleId { get; set; }
+    public int vehicle_id { get; set; }
 
-    public byte FingerIndex { get; set; }
+    public byte finger_index { get; set; }
 
-    public byte[] TemplateData { get; set; }
+    public byte[] template_data { get; set; }
 
-    public int QualityScore { get; set; }
+    public int quality_score { get; set; }
 
-    public DateTime EnrolledAt { get; set; }
+    public DateTime enrolled_at { get; set; }
 
-    public int? EnrolledBy { get; set; }
+    public int? enrolled_by { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool is_deleted { get; set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? deleted_at { get; set; }
 
-    public int? DeletedBy { get; set; }
+    public int? deleted_by { get; set; }
 
-    public virtual User EnrolledByNavigation { get; set; }
+    public virtual User enrolled_byNavigation { get; set; }
 
-    public virtual RegisteredVehicle Vehicle { get; set; }
+    public virtual RegisteredVehicle vehicle { get; set; }
 }

@@ -15,130 +15,130 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
 
     public async Task<User> AddAsync(User entity)
     {
-        await _context.Users.AddAsync(entity);
+        await _context.users.AddAsync(entity);
         return entity;
     }
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
-        return await _context.Users
+        return await _context.users
             .AsNoTracking()
-            .Where(x => !x.IsDeleted)
-            .OrderBy(x => x.FullName)
+            .Where(x => !x.is_deleted)
+            .OrderBy(x => x.full_name)
             .Select(x => new User
             {
-                Id = x.Id,
-                Username = x.Username,
-                FullName = x.FullName,
-                Role = x.Role,
-                IsActive = x.IsActive,
-                LastLogin = x.LastLogin,
-                LoginAttempts = x.LoginAttempts,
-                CreatedAt = x.CreatedAt
+                id = x.id,
+                username = x.username,
+                full_name = x.full_name,
+                role = x.role,
+                is_active = x.is_active,
+                last_login = x.last_login,
+                login_attempts = x.login_attempts,
+                created_at = x.created_at
             })
             .ToListAsync();
     }
 
     public async Task<User?> GetByIdAsync(long id)
     {
-        return await _context.Users
+        return await _context.users
             .FirstOrDefaultAsync(x =>
-                x.Id == id &&
-                !x.IsDeleted);
+                x.id == id &&
+                !x.is_deleted);
     }
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await _context.Users
+        return await _context.users
             .AsNoTracking()
             .FirstOrDefaultAsync(x =>
-                x.Username == email &&
-                !x.IsDeleted);
+                x.username == email &&
+                !x.is_deleted);
     }
 
     public async Task<bool> ExistsByEmailAsync(string email)
     {
-        return await _context.Users
+        return await _context.users
             .AnyAsync(x =>
-                x.Username == email &&
-                !x.IsDeleted);
+                x.username == email &&
+                !x.is_deleted);
     }
 
     public async Task<IEnumerable<User>> GetUsersByRoleAsync(string roleName)
     {
-        return await _context.Users
+        return await _context.users
             .AsNoTracking()
             .Where(x =>
-                x.Role == roleName &&
-                !x.IsDeleted)
-            .OrderBy(x => x.FullName)
+                x.role == roleName &&
+                !x.is_deleted)
+            .OrderBy(x => x.full_name)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<User>> GetActiveOperatorsAsync()
     {
-        return await _context.Users
+        return await _context.users
             .AsNoTracking()
             .Where(x =>
-                x.Role == "operator" &&
-                x.IsActive &&
-                !x.IsDeleted)
-            .OrderBy(x => x.FullName)
+                x.role == "operator" &&
+                x.is_active &&
+                !x.is_deleted)
+            .OrderBy(x => x.full_name)
             .ToListAsync();
     }
 
     public async Task<bool> ChangeStatusAsync(int userId, bool isActive)
     {
-        var user = await _context.Users
+        var user = await _context.users
             .FirstOrDefaultAsync(x =>
-                x.Id == userId &&
-                !x.IsDeleted);
+                x.id == userId &&
+                !x.is_deleted);
 
         if (user == null)
             return false;
 
-        user.IsActive = isActive;
-        user.UpdatedAt = DateTime.Now;
+        user.is_active = isActive;
+        user.updated_at = DateTime.Now;
 
         return true;
     }
 
     public async Task UpdateLastLoginAsync(int userId)
     {
-        var user = await _context.Users
+        var user = await _context.users
             .FirstOrDefaultAsync(x =>
-                x.Id == userId &&
-                !x.IsDeleted);
+                x.id == userId &&
+                !x.is_deleted);
 
         if (user == null)
             return;
 
-        user.LastLogin = DateTime.Now;
-        user.LoginAttempts = 0;
+        user.last_login = DateTime.Now;
+        user.login_attempts = 0;
 
-        _context.Users.Update(user);
+        _context.users.Update(user);
     }
 
     public Task UpdateAsync(User entity)
     {
-        _context.Users.Update(entity);
+        _context.users.Update(entity);
         return Task.CompletedTask;
     }
 
     public async Task DeleteAsync(long id)
     {
-        var user = await _context.Users
+        var user = await _context.users
             .FirstOrDefaultAsync(x =>
-                x.Id == id &&
-                !x.IsDeleted);
+                x.id == id &&
+                !x.is_deleted);
 
         if (user == null)
             return;
 
-        user.IsDeleted = true;
-        user.DeletedAt = DateTime.Now;
+        user.is_deleted = true;
+        user.deleted_at = DateTime.Now;
 
-        _context.Users.Update(user);
+        _context.users.Update(user);
     }
 
     public async Task<bool> SaveChangesAsync()
@@ -148,17 +148,17 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
 
     public async Task<bool> ExistsByUsernameAsync(string username)
     {
-        return await _context.Users
+        return await _context.users
             .AnyAsync(x =>
-                x.Username == username &&
-                !x.IsDeleted);
+                x.username == username &&
+                !x.is_deleted);
     }
 
     public async Task<User?> GetByUsernameAsync(string username)
     {
-        return await _context.Users
+        return await _context.users
             .FirstOrDefaultAsync(x =>
-                x.Username == username &&
-                !x.IsDeleted);
+                x.username == username &&
+                !x.is_deleted);
     }
 }

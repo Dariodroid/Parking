@@ -109,7 +109,7 @@ namespace Parking.UI.Windows.ViewModels
                 if (success)
                 {
                     // 3. Mostrar el cobro (Lógica de hora o fracción: $1 x cada hora iniciada)
-                    TimeSpan duration = DateTime.UtcNow - session.EntryTime;
+                    TimeSpan duration = DateTime.UtcNow - session.entry_time;
                     decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
                     if (hoursToCharge < 1) hoursToCharge = 1;
 
@@ -224,15 +224,15 @@ namespace Parking.UI.Windows.ViewModels
                 if (success)
                 {
                     // 3. Calcular el cobro para mostrarlo al operador (Misma lógica de hora o fracción)
-                    TimeSpan duration = DateTime.UtcNow - session.EntryTime;
+                    TimeSpan duration = DateTime.UtcNow - session.entry_time;
                     decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
                     if (hoursToCharge < 1) hoursToCharge = 1;
 
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         AmountToCharge = hoursToCharge * 1.00m;
-                        PlateNumber = session.Plate; // Autocompleta la placa en el textbox
-                        StatusMessage = $"✅ SALIDA POR QR: {session.Plate} | Total: {AmountToCharge:C2}";
+                        PlateNumber = session.plate; // Autocompleta la placa en el textbox
+                        StatusMessage = $"✅ SALIDA POR QR: {session.plate} | Total: {AmountToCharge:C2}";
                     });
                 }
             }

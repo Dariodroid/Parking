@@ -7,31 +7,31 @@ namespace Parking.Domain.Model.Models;
 
 public partial class Payment
 {
-    public long Id { get; set; }
+    public long id { get; set; }
 
-    public long SessionId { get; set; }
+    public long session_id { get; set; }
 
-    public decimal AmountDue { get; set; }
+    public decimal amount_due { get; set; }
 
-    public string PaymentMethod { get; set; }
+    public string payment_method { get; set; }
 
-    public string PaymentReference { get; set; }
+    public string payment_reference { get; set; }
 
-    public int CollectedBy { get; set; }
+    public int collected_by { get; set; }
 
-    public DateTime CollectedAt { get; set; }
+    public DateTime collected_at { get; set; }
 
-    public string Notes { get; set; }
+    public string notes { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime created_at { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool is_deleted { get; set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? deleted_at { get; set; }
 
-    public int? DeletedBy { get; set; }
+    public int? deleted_by { get; set; }
 
-    public virtual User CollectedByNavigation { get; set; }
+    public virtual User collected_byNavigation { get; set; }
 
-    public virtual ParkingSession Session { get; set; }
+    public virtual ParkingSession session { get; set; }
 }

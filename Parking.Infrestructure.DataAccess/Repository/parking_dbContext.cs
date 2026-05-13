@@ -14,303 +14,177 @@ public partial class parking_dbContext : DbContext
     {
     }
 
-    public virtual DbSet<FingerprintTemplate> FingerprintTemplates { get; set; }
+    public virtual DbSet<FingerprintTemplate> fingerprint_templates { get; set; }
 
-    public virtual DbSet<ParkingSession> ParkingSessions { get; set; }
+    public virtual DbSet<ParkingSession> parking_sessions { get; set; }
 
-    public virtual DbSet<ParkingSlot> ParkingSlots { get; set; }
+    public virtual DbSet<ParkingSlot> parking_slots { get; set; }
 
-    public virtual DbSet<Payment> Payments { get; set; }
+    public virtual DbSet<Payment> payments { get; set; }
 
-    public virtual DbSet<RegisteredVehicle> RegisteredVehicles { get; set; }
+    public virtual DbSet<RegisteredVehicle> registered_vehicles { get; set; }
 
-    public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<User> users { get; set; }
 
-    public virtual DbSet<VehicleType> VehicleTypes { get; set; }
+    public virtual DbSet<VehicleType> vehicle_types { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<FingerprintTemplate>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__fingerpr__3213E83FDBBEBB05");
+            entity.HasKey(e => e.id).HasName("PK__fingerpr__3213E83FDBBEBB05");
 
-            entity.ToTable("fingerprint_templates");
+            entity.Property(e => e.enrolled_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.template_data).IsRequired();
 
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
-            entity.Property(e => e.DeletedBy).HasColumnName("deleted_by");
-            entity.Property(e => e.EnrolledAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("enrolled_at");
-            entity.Property(e => e.EnrolledBy).HasColumnName("enrolled_by");
-            entity.Property(e => e.FingerIndex).HasColumnName("finger_index");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.QualityScore).HasColumnName("quality_score");
-            entity.Property(e => e.TemplateData)
-                .IsRequired()
-                .HasColumnName("template_data");
-            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");
-
-            entity.HasOne(d => d.EnrolledByNavigation).WithMany(p => p.FingerprintTemplates)
-                .HasForeignKey(d => d.EnrolledBy)
+            entity.HasOne(d => d.enrolled_byNavigation).WithMany(p => p.fingerprint_templates)
+                .HasForeignKey(d => d.enrolled_by)
                 .HasConstraintName("FK__fingerpri__enrol__4222D4EF");
 
-            entity.HasOne(d => d.Vehicle).WithMany(p => p.FingerprintTemplates)
-                .HasForeignKey(d => d.VehicleId)
+            entity.HasOne(d => d.vehicle).WithMany(p => p.fingerprint_templates)
+                .HasForeignKey(d => d.vehicle_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__fingerpri__vehic__412EB0B6");
         });
 
         modelBuilder.Entity<ParkingSession>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__parking___3213E83F56D9C37C");
+            entity.HasKey(e => e.id).HasName("PK__parking___3213E83F56D9C37C");
 
-            entity.ToTable("parking_sessions");
+            entity.HasIndex(e => e.session_code, "UQ__parking___615A1EA73E5AD186").IsUnique();
 
-            entity.HasIndex(e => e.SessionCode, "UQ__parking___615A1EA73E5AD186").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.AmountDue)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("amount_due");
-            entity.Property(e => e.ChargeableMinutes).HasColumnName("chargeable_minutes");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
-            entity.Property(e => e.DeletedBy).HasColumnName("deleted_by");
-            entity.Property(e => e.DurationMinutes).HasColumnName("duration_minutes");
-            entity.Property(e => e.EntryOperatorId).HasColumnName("entry_operator_id");
-            entity.Property(e => e.EntryPhotoPath)
-                .HasMaxLength(500)
-                .HasColumnName("entry_photo_path");
-            entity.Property(e => e.EntryTime).HasColumnName("entry_time");
-            entity.Property(e => e.ExitOperatorId).HasColumnName("exit_operator_id");
-            entity.Property(e => e.ExitTime).HasColumnName("exit_time");
-            entity.Property(e => e.HasKeyDeposit).HasColumnName("has_key_deposit");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.ParkingSlotId).HasColumnName("parking_slot_id");
-            entity.Property(e => e.Plate)
+            entity.Property(e => e.amount_due).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.entry_photo_path).HasMaxLength(500);
+            entity.Property(e => e.plate)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("plate");
-            entity.Property(e => e.QrData).HasColumnName("qr_data");
-            entity.Property(e => e.RegisteredVehicleId).HasColumnName("registered_vehicle_id");
-            entity.Property(e => e.SessionCode)
+                .HasMaxLength(20);
+            entity.Property(e => e.session_code)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("session_code");
-            entity.Property(e => e.Status)
+                .HasMaxLength(20);
+            entity.Property(e => e.status)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("status");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.VehicleTypeId).HasColumnName("vehicle_type_id");
+                .HasMaxLength(20);
 
-            entity.HasOne(d => d.EntryOperator).WithMany(p => p.ParkingSessionEntryOperators)
-                .HasForeignKey(d => d.EntryOperatorId)
+            entity.HasOne(d => d.entry_operator).WithMany(p => p.parking_sessionentry_operators)
+                .HasForeignKey(d => d.entry_operator_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__parking_s__entry__44FF419A");
 
-            entity.HasOne(d => d.ExitOperator).WithMany(p => p.ParkingSessionExitOperators)
-                .HasForeignKey(d => d.ExitOperatorId)
+            entity.HasOne(d => d.exit_operator).WithMany(p => p.parking_sessionexit_operators)
+                .HasForeignKey(d => d.exit_operator_id)
                 .HasConstraintName("FK__parking_s__exit___45F365D3");
 
-            entity.HasOne(d => d.ParkingSlot).WithMany(p => p.ParkingSessions)
-                .HasForeignKey(d => d.ParkingSlotId)
+            entity.HasOne(d => d.parking_slot).WithMany(p => p.parking_sessions)
+                .HasForeignKey(d => d.parking_slot_id)
                 .HasConstraintName("FK_parking_sessions_slot");
 
-            entity.HasOne(d => d.RegisteredVehicle).WithMany(p => p.ParkingSessions)
-                .HasForeignKey(d => d.RegisteredVehicleId)
+            entity.HasOne(d => d.registered_vehicle).WithMany(p => p.parking_sessions)
+                .HasForeignKey(d => d.registered_vehicle_id)
                 .HasConstraintName("FK__parking_s__regis__440B1D61");
 
-            entity.HasOne(d => d.VehicleType).WithMany(p => p.ParkingSessions)
-                .HasForeignKey(d => d.VehicleTypeId)
+            entity.HasOne(d => d.vehicle_type).WithMany(p => p.parking_sessions)
+                .HasForeignKey(d => d.vehicle_type_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__parking_s__vehic__4316F928");
         });
 
         modelBuilder.Entity<ParkingSlot>(entity =>
         {
-            entity.ToTable("parking_slots");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CurrentSessionId).HasColumnName("current_session_id");
-            entity.Property(e => e.IsOccupied).HasColumnName("is_occupied");
-            entity.Property(e => e.SlotNumber).HasColumnName("slot_number");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-
-            entity.HasOne(d => d.CurrentSession).WithMany(p => p.ParkingSlots)
-                .HasForeignKey(d => d.CurrentSessionId)
+            entity.HasOne(d => d.current_session).WithMany(p => p.parking_slots)
+                .HasForeignKey(d => d.current_session_id)
                 .HasConstraintName("FK_parking_slots_session");
         });
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__payments__3213E83FC860615E");
+            entity.HasKey(e => e.id).HasName("PK__payments__3213E83FC860615E");
 
-            entity.ToTable("payments");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.AmountDue)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("amount_due");
-            entity.Property(e => e.CollectedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("collected_at");
-            entity.Property(e => e.CollectedBy).HasColumnName("collected_by");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
-            entity.Property(e => e.DeletedBy).HasColumnName("deleted_by");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.PaymentMethod)
+            entity.Property(e => e.amount_due).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.collected_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.payment_method)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("payment_method");
-            entity.Property(e => e.PaymentReference)
-                .HasMaxLength(100)
-                .HasColumnName("payment_reference");
-            entity.Property(e => e.SessionId).HasColumnName("session_id");
+                .HasMaxLength(20);
+            entity.Property(e => e.payment_reference).HasMaxLength(100);
 
-            entity.HasOne(d => d.CollectedByNavigation).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.CollectedBy)
+            entity.HasOne(d => d.collected_byNavigation).WithMany(p => p.payments)
+                .HasForeignKey(d => d.collected_by)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__payments__collec__47DBAE45");
 
-            entity.HasOne(d => d.Session).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.SessionId)
+            entity.HasOne(d => d.session).WithMany(p => p.payments)
+                .HasForeignKey(d => d.session_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__payments__sessio__46E78A0C");
         });
 
         modelBuilder.Entity<RegisteredVehicle>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__register__3213E83F900EC7EE");
+            entity.HasKey(e => e.id).HasName("PK__register__3213E83F900EC7EE");
 
-            entity.ToTable("registered_vehicles");
+            entity.HasIndex(e => e.plate, "UQ__register__0C04E256A2EE3C46").IsUnique();
 
-            entity.HasIndex(e => e.Plate, "UQ__register__0C04E256A2EE3C46").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
-            entity.Property(e => e.DeletedBy).HasColumnName("deleted_by");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("is_active");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.Notes).HasColumnName("notes");
-            entity.Property(e => e.OwnerCedula)
-                .HasMaxLength(20)
-                .HasColumnName("owner_cedula");
-            entity.Property(e => e.OwnerEmail)
-                .HasMaxLength(120)
-                .HasColumnName("owner_email");
-            entity.Property(e => e.OwnerName)
-                .HasMaxLength(120)
-                .HasColumnName("owner_name");
-            entity.Property(e => e.OwnerPhone)
-                .HasMaxLength(20)
-                .HasColumnName("owner_phone");
-            entity.Property(e => e.Plate)
+            entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.is_active).HasDefaultValue(true);
+            entity.Property(e => e.owner_cedula).HasMaxLength(20);
+            entity.Property(e => e.owner_email).HasMaxLength(120);
+            entity.Property(e => e.owner_name).HasMaxLength(120);
+            entity.Property(e => e.owner_phone).HasMaxLength(20);
+            entity.Property(e => e.plate)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("plate");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.VehicleTypeId).HasColumnName("vehicle_type_id");
+                .HasMaxLength(20);
 
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.RegisteredVehicles)
-                .HasForeignKey(d => d.CreatedBy)
+            entity.HasOne(d => d.created_byNavigation).WithMany(p => p.registered_vehicles)
+                .HasForeignKey(d => d.created_by)
                 .HasConstraintName("FK__registere__creat__49C3F6B7");
 
-            entity.HasOne(d => d.VehicleType).WithMany(p => p.RegisteredVehicles)
-                .HasForeignKey(d => d.VehicleTypeId)
+            entity.HasOne(d => d.vehicle_type).WithMany(p => p.registered_vehicles)
+                .HasForeignKey(d => d.vehicle_type_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__registere__vehic__48CFD27E");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__users__3213E83FF10AB662");
+            entity.HasKey(e => e.id).HasName("PK__users__3213E83FF10AB662");
 
-            entity.ToTable("users");
+            entity.HasIndex(e => e.username, "UQ__users__F3DBC572AD411580").IsUnique();
 
-            entity.HasIndex(e => e.Username, "UQ__users__F3DBC572AD411580").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
-            entity.Property(e => e.DeletedBy).HasColumnName("deleted_by");
-            entity.Property(e => e.FullName)
+            entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.full_name)
                 .IsRequired()
-                .HasMaxLength(120)
-                .HasColumnName("full_name");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("is_active");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.LastLogin).HasColumnName("last_login");
-            entity.Property(e => e.LockedUntil).HasColumnName("locked_until");
-            entity.Property(e => e.LoginAttempts).HasColumnName("login_attempts");
-            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(120);
+            entity.Property(e => e.is_active).HasDefaultValue(true);
+            entity.Property(e => e.password_hash)
                 .IsRequired()
-                .HasMaxLength(256)
-                .HasColumnName("password_hash");
-            entity.Property(e => e.Role)
+                .HasMaxLength(256);
+            entity.Property(e => e.role)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("role");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
-            entity.Property(e => e.Username)
+                .HasMaxLength(20);
+            entity.Property(e => e.username)
                 .IsRequired()
-                .HasMaxLength(50)
-                .HasColumnName("username");
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<VehicleType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__vehicle___3213E83F3F31EEA0");
+            entity.HasKey(e => e.id).HasName("PK__vehicle___3213E83F3F31EEA0");
 
-            entity.ToTable("vehicle_types");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(sysdatetime())")
-                .HasColumnName("created_at");
-            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
-            entity.Property(e => e.DeletedBy).HasColumnName("deleted_by");
-            entity.Property(e => e.HourlyRate)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("hourly_rate");
-            entity.Property(e => e.Icon)
+            entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.fraction_minutes).HasDefaultValue(15);
+            entity.Property(e => e.fraction_rate)
+                .HasDefaultValue(0.25m)
+                .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.grace_minutes).HasDefaultValue(5);
+            entity.Property(e => e.hourly_rate).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.icon)
                 .IsRequired()
-                .HasMaxLength(10)
-                .HasColumnName("icon");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("is_active");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            entity.Property(e => e.Name)
+                .HasMaxLength(10);
+            entity.Property(e => e.is_active).HasDefaultValue(true);
+            entity.Property(e => e.name)
                 .IsRequired()
-                .HasMaxLength(60)
-                .HasColumnName("name");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
+                .HasMaxLength(60);
         });
 
         OnModelCreatingPartial(modelBuilder);

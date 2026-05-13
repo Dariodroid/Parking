@@ -7,43 +7,43 @@ namespace Parking.Domain.Model.Models;
 
 public partial class RegisteredVehicle
 {
-    public int Id { get; set; }
+    public int id { get; set; }
 
-    public string Plate { get; set; }
+    public string plate { get; set; }
 
-    public int VehicleTypeId { get; set; }
+    public int vehicle_type_id { get; set; }
 
-    public string OwnerName { get; set; }
+    public string owner_name { get; set; }
 
-    public string OwnerPhone { get; set; }
+    public string owner_phone { get; set; }
 
-    public string OwnerEmail { get; set; }
+    public string owner_email { get; set; }
 
-    public string OwnerCedula { get; set; }
+    public string owner_cedula { get; set; }
 
-    public string Notes { get; set; }
+    public string notes { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool is_active { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime created_at { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public int? created_by { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? updated_at { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public int? updated_by { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool is_deleted { get; set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? deleted_at { get; set; }
 
-    public int? DeletedBy { get; set; }
+    public int? deleted_by { get; set; }
 
-    public virtual User CreatedByNavigation { get; set; }
+    public virtual User created_byNavigation { get; set; }
 
-    public virtual ICollection<FingerprintTemplate> FingerprintTemplates { get; set; } = new List<FingerprintTemplate>();
+    public virtual ICollection<FingerprintTemplate> fingerprint_templates { get; set; } = new List<FingerprintTemplate>();
 
-    public virtual ICollection<ParkingSession> ParkingSessions { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<ParkingSession> parking_sessions { get; set; } = new List<ParkingSession>();
 
-    public virtual VehicleType VehicleType { get; set; }
+    public virtual VehicleType vehicle_type { get; set; }
 }

@@ -7,67 +7,67 @@ namespace Parking.Domain.Model.Models;
 
 public partial class ParkingSession
 {
-    public long Id { get; set; }
+    public long id { get; set; }
 
-    public string SessionCode { get; set; }
+    public string session_code { get; set; }
 
-    public string Plate { get; set; }
+    public string plate { get; set; }
 
-    public int VehicleTypeId { get; set; }
+    public int vehicle_type_id { get; set; }
 
-    public int? RegisteredVehicleId { get; set; }
+    public int? registered_vehicle_id { get; set; }
 
-    public DateTime EntryTime { get; set; }
+    public DateTime entry_time { get; set; }
 
-    public DateTime? ExitTime { get; set; }
+    public DateTime? exit_time { get; set; }
 
-    public int? DurationMinutes { get; set; }
+    public int? duration_minutes { get; set; }
 
-    public int? ChargeableMinutes { get; set; }
+    public int? chargeable_minutes { get; set; }
 
-    public decimal? AmountDue { get; set; }
+    public decimal? amount_due { get; set; }
 
-    public string Status { get; set; }
+    public string status { get; set; }
 
-    public string QrData { get; set; }
+    public string qr_data { get; set; }
 
-    public string EntryPhotoPath { get; set; }
+    public string entry_photo_path { get; set; }
 
-    public string Notes { get; set; }
+    public string notes { get; set; }
 
-    public int EntryOperatorId { get; set; }
+    public int entry_operator_id { get; set; }
 
-    public int? ExitOperatorId { get; set; }
+    public int? exit_operator_id { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime created_at { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public int? created_by { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? updated_at { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public int? updated_by { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool is_deleted { get; set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? deleted_at { get; set; }
 
-    public int? DeletedBy { get; set; }
+    public int? deleted_by { get; set; }
 
-    public int? ParkingSlotId { get; set; }
+    public int? parking_slot_id { get; set; }
 
-    public bool HasKeyDeposit { get; set; }
+    public bool has_key_deposit { get; set; }
 
-    public virtual User EntryOperator { get; set; }
+    public virtual User entry_operator { get; set; }
 
-    public virtual User ExitOperator { get; set; }
+    public virtual User exit_operator { get; set; }
 
-    public virtual ParkingSlot? ParkingSlot { get; set; }
+    public virtual ParkingSlot parking_slot { get; set; }
 
-    public virtual ICollection<ParkingSlot> ParkingSlots { get; set; } = new List<ParkingSlot>();
+    public virtual ICollection<ParkingSlot> parking_slots { get; set; } = new List<ParkingSlot>();
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public virtual ICollection<Payment> payments { get; set; } = new List<Payment>();
 
-    public virtual RegisteredVehicle RegisteredVehicle { get; set; }
+    public virtual RegisteredVehicle registered_vehicle { get; set; }
 
-    public virtual VehicleType VehicleType { get; set; }
+    public virtual VehicleType vehicle_type { get; set; }
 }

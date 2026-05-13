@@ -110,11 +110,11 @@ public class VehicleTypeViewModel : BaseViewModel
 
     private void LoadSelected(VehicleType item)
     {
-        Id = item.Id;
-        Name = item.Name ?? string.Empty;
-        Icon = item.Icon ?? string.Empty;
-        HourlyRate = item.HourlyRate;
-        IsActive = item.IsActive;
+        Id = item.id;
+        Name = item.name ?? string.Empty;
+        Icon = item.icon ?? string.Empty;
+        HourlyRate = item.hourly_rate;
+        IsActive = item.is_active;
     }
 
     private bool Validate()
@@ -149,13 +149,13 @@ public class VehicleTypeViewModel : BaseViewModel
 
             var entity = new VehicleType
             {
-                Name = Name.Trim(),
-                Icon = Icon?.Trim(),
-                HourlyRate = HourlyRate,
-                IsActive = IsActive,
-                CreatedAt = DateTime.Now,
-                CreatedBy = _currentUserId,
-                IsDeleted = false
+                name = Name.Trim(),
+                icon = Icon?.Trim(),
+                hourly_rate = HourlyRate,
+                is_active = IsActive,
+                created_at = DateTime.Now,
+                created_by = _currentUserId,
+                is_deleted = false
             };
 
             await _repository.AddAsync(entity);
@@ -193,12 +193,12 @@ public class VehicleTypeViewModel : BaseViewModel
                 return;
             }
 
-            entity.Name = Name.Trim();
-            entity.Icon = Icon?.Trim();
-            entity.HourlyRate = HourlyRate;
-            entity.IsActive = IsActive;
-            entity.UpdatedAt = DateTime.Now;
-            entity.UpdatedBy = _currentUserId;
+            entity.name = Name.Trim();
+            entity.icon = Icon?.Trim();
+            entity.hourly_rate = HourlyRate;
+            entity.is_active = IsActive;
+            entity.updated_at = DateTime.Now;
+            entity.updated_by = _currentUserId;
 
             await _repository.UpdateAsync(entity);
             await _repository.SaveChangesAsync();
@@ -232,9 +232,9 @@ public class VehicleTypeViewModel : BaseViewModel
                 return;
             }
 
-            entity.IsDeleted = true;
-            entity.DeletedAt = DateTime.Now;
-            entity.DeletedBy = _currentUserId;
+            entity.is_deleted = true;
+            entity.deleted_at = DateTime.Now;
+            entity.deleted_by = _currentUserId;
 
             await _repository.SoftDeleteAsync(entity);
             await _repository.SaveChangesAsync();

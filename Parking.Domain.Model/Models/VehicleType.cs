@@ -7,31 +7,37 @@ namespace Parking.Domain.Model.Models;
 
 public partial class VehicleType
 {
-    public int Id { get; set; }
+    public int id { get; set; }
 
-    public string Name { get; set; }
+    public string name { get; set; }
 
-    public string Icon { get; set; }
+    public string icon { get; set; }
 
-    public decimal HourlyRate { get; set; }
+    public decimal hourly_rate { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool is_active { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime created_at { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public int? created_by { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? updated_at { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public int? updated_by { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool is_deleted { get; set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? deleted_at { get; set; }
 
-    public int? DeletedBy { get; set; }
+    public int? deleted_by { get; set; }
 
-    public virtual ICollection<ParkingSession> ParkingSessions { get; set; } = new List<ParkingSession>();
+    public int grace_minutes { get; set; }
 
-    public virtual ICollection<RegisteredVehicle> RegisteredVehicles { get; set; } = new List<RegisteredVehicle>();
+    public int fraction_minutes { get; set; }
+
+    public decimal fraction_rate { get; set; }
+
+    public virtual ICollection<ParkingSession> parking_sessions { get; set; } = new List<ParkingSession>();
+
+    public virtual ICollection<RegisteredVehicle> registered_vehicles { get; set; } = new List<RegisteredVehicle>();
 }

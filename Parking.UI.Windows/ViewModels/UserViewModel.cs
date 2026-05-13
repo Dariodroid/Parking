@@ -121,11 +121,11 @@ public class UserViewModel : BaseViewModel
 
     private void LoadSelected(User item)
     {
-        Id = item.Id;
-        Username = item.Username;
-        FullName = item.FullName;
-        Enum.Parse<UserRole>(item.Role);
-        IsActive = item.IsActive;
+        Id = item.id;
+        Username = item.username;
+        FullName = item.full_name;
+        Enum.Parse<UserRole>(item.role);
+        IsActive = item.is_active;
         Password = string.Empty;
         ConfirmPassword = string.Empty;
     }
@@ -185,15 +185,15 @@ public class UserViewModel : BaseViewModel
 
             var entity = new User
             {
-                Username = Username.Trim(),
-                FullName = FullName.Trim(),
-                Role = SelectedRole.ToString(),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Password),
-                IsActive = IsActive,
-                CreatedAt = DateTime.Now,
-                CreatedBy = _currentUserId,
-                LoginAttempts = 0,
-                IsDeleted = false
+                username = Username.Trim(),
+                full_name = FullName.Trim(),
+                role = SelectedRole.ToString(),
+                password_hash = BCrypt.Net.BCrypt.HashPassword(Password),
+                is_active = IsActive,
+                created_at = DateTime.Now,
+                created_by = _currentUserId,
+                login_attempts = 0,
+                is_deleted = false
             };
 
             await _repository.AddAsync(entity);
@@ -232,12 +232,12 @@ public class UserViewModel : BaseViewModel
             return;
         }
 
-        entity.Username = Username.Trim();
-        entity.FullName = FullName.Trim();
-        entity.Role = SelectedRole.ToString();
-        entity.IsActive = IsActive;
-        entity.UpdatedAt = DateTime.Now;
-        entity.UpdatedBy = _currentUserId;
+        entity.username = Username.Trim();
+        entity.full_name = FullName.Trim();
+        entity.role = SelectedRole.ToString();
+        entity.is_active = IsActive;
+        entity.updated_at = DateTime.Now;
+        entity.updated_by = _currentUserId;
 
         if (!string.IsNullOrWhiteSpace(Password))
         {
@@ -247,7 +247,7 @@ public class UserViewModel : BaseViewModel
                 return;
             }
 
-            entity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(Password);
+            entity.password_hash = BCrypt.Net.BCrypt.HashPassword(Password);
         }
 
         await _repository.UpdateAsync(entity);
@@ -276,9 +276,9 @@ public class UserViewModel : BaseViewModel
             return;
         }
 
-        entity.IsDeleted = true;
-        entity.DeletedAt = DateTime.Now;
-        entity.DeletedBy = _currentUserId;
+        entity.is_deleted = true;
+        entity.deleted_at = DateTime.Now;
+        entity.deleted_by = _currentUserId;
 
         await _repository.UpdateAsync(entity);
 

@@ -7,17 +7,17 @@ namespace Parking.Domain.Model.Models;
 
 public partial class ParkingSlot
 {
-    public int Id { get; set; }
+    public int id { get; set; }
 
-    public int SlotNumber { get; set; }
+    public int slot_number { get; set; }
 
-    public bool IsOccupied { get; set; }
+    public bool is_occupied { get; set; }
 
-    public long? CurrentSessionId { get; set; }
+    public long? current_session_id { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? updated_at { get; set; }
 
-    public virtual ParkingSession CurrentSession { get; set; }
+    public virtual ParkingSession current_session { get; set; }
 
-    public virtual ICollection<ParkingSession> ParkingSessions { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<ParkingSession> parking_sessions { get; set; } = new List<ParkingSession>();
 }

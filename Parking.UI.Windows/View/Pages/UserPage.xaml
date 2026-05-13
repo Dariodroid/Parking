@@ -783,15 +783,15 @@
                 <DataGrid.Columns>
 
                     <DataGridTextColumn Header="Usuario"
-                                        Binding="{Binding Username}"
+                                        Binding="{Binding username}"
                                         Width="120"/>
 
                     <DataGridTextColumn Header="Nombre"
-                                        Binding="{Binding FullName}"
+                                        Binding="{Binding full_name}"
                                         Width="*"/>
 
                     <DataGridTextColumn Header="Rol"
-                                        Binding="{Binding Role}"
+                                        Binding="{Binding role}"
                                         Width="140"/>
 
                     <DataGridTemplateColumn Header="Activo"
@@ -803,7 +803,7 @@
 
                                 <TextBlock HorizontalAlignment="Center"
                                            Foreground="White"
-                                           Text="{Binding IsActive, Converter={StaticResource BooleanToCheckConverter}}"/>
+                                           Text="{Binding is_active, Converter={StaticResource BooleanToCheckConverter}}"/>
 
                             </DataTemplate>
 

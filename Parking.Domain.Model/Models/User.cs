@@ -7,45 +7,45 @@ namespace Parking.Domain.Model.Models;
 
 public partial class User
 {
-    public int Id { get; set; }
+    public int id { get; set; }
 
-    public string Username { get; set; }
+    public string username { get; set; }
 
-    public string PasswordHash { get; set; }
+    public string password_hash { get; set; }
 
-    public string FullName { get; set; }
+    public string full_name { get; set; }
 
-    public string Role { get; set; }
+    public string role { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool is_active { get; set; }
 
-    public DateTime? LastLogin { get; set; }
+    public DateTime? last_login { get; set; }
 
-    public int LoginAttempts { get; set; }
+    public int login_attempts { get; set; }
 
-    public DateTime? LockedUntil { get; set; }
+    public DateTime? locked_until { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime created_at { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public int? created_by { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? updated_at { get; set; }
 
-    public int? UpdatedBy { get; set; }
+    public int? updated_by { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public bool is_deleted { get; set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? deleted_at { get; set; }
 
-    public int? DeletedBy { get; set; }
+    public int? deleted_by { get; set; }
 
-    public virtual ICollection<FingerprintTemplate> FingerprintTemplates { get; set; } = new List<FingerprintTemplate>();
+    public virtual ICollection<FingerprintTemplate> fingerprint_templates { get; set; } = new List<FingerprintTemplate>();
 
-    public virtual ICollection<ParkingSession> ParkingSessionEntryOperators { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<ParkingSession> parking_sessionentry_operators { get; set; } = new List<ParkingSession>();
 
-    public virtual ICollection<ParkingSession> ParkingSessionExitOperators { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<ParkingSession> parking_sessionexit_operators { get; set; } = new List<ParkingSession>();
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public virtual ICollection<Payment> payments { get; set; } = new List<Payment>();
 
-    public virtual ICollection<RegisteredVehicle> RegisteredVehicles { get; set; } = new List<RegisteredVehicle>();
+    public virtual ICollection<RegisteredVehicle> registered_vehicles { get; set; } = new List<RegisteredVehicle>();
 }

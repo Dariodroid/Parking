@@ -15,17 +15,17 @@ namespace Parking.Infrastructure.DataAccess.Repository
         public async Task<ParkingSession?> GetActiveSessionByPlateAsync(string plate)
         {
             return await _context.Set<ParkingSession>()
-                .FirstOrDefaultAsync(s => s.Plate == plate
-                                       && s.ExitTime == null
-                                       && !s.IsDeleted);
+                .FirstOrDefaultAsync(s => s.plate == plate
+                                       && s.exit_time == null
+                                       && !s.is_deleted);
         }
 
         public async Task<ParkingSession?> GetActiveSessionByQrAsync(string qrCode)
         {
             return await _context.Set<ParkingSession>()
-                .FirstOrDefaultAsync(s => s.QrData == qrCode
-                                       && s.ExitTime == null
-                                       && !s.IsDeleted);
+                .FirstOrDefaultAsync(s => s.qr_data == qrCode
+                                       && s.exit_time == null
+                                       && !s.is_deleted);
         }
     }
 }

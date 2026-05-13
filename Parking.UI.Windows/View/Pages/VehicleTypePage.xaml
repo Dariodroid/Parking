@@ -253,15 +253,15 @@
                 <DataGrid.Columns>
 
                     <DataGridTextColumn Header="Nombre"
-                                        Binding="{Binding Name}"
+                                        Binding="{Binding name}"
                                         Width="*"/>
 
                     <DataGridTextColumn Header="Icono"
-                                        Binding="{Binding Icon}"
+                                        Binding="{Binding icon}"
                                         Width="100"/>
 
                     <DataGridTextColumn Header="Tarifa"
-                                        Binding="{Binding HourlyRate, StringFormat={}{0:N2}}"
+                                        Binding="{Binding hourly_rate, StringFormat={}{0:N2}}"
                                         Width="80"/>
 
                     <DataGridTemplateColumn Header="Activo"

@@ -31,15 +31,15 @@ namespace Parking.Application.UseCases
 
                 var session = new ParkingSession
                 {
-                    Plate = normalized,
-                    SessionCode = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
-                    QrData = $"SESSION-{Guid.NewGuid():N}".ToUpper(),
-                    EntryTime = DateTime.UtcNow,
-                    Status = "active",
-                    VehicleTypeId = 1,
-                    EntryOperatorId = 1,
-                    CreatedAt = DateTime.UtcNow,
-                    IsDeleted = false
+                    plate = normalized,
+                    session_code = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
+                    qr_data = $"SESSION-{Guid.NewGuid():N}".ToUpper(),
+                    entry_time = DateTime.UtcNow,
+                    status = "active",
+                    vehicle_type_id = 1,
+                    entry_operator_id = 1,
+                    created_at = DateTime.UtcNow,
+                    is_deleted = false
                 };
 
                 await _sessionRepo.AddAsync(session);
@@ -65,10 +65,10 @@ namespace Parking.Application.UseCases
             if (session == null) return false;
 
             // 1. Establecer hora de salida
-            session.ExitTime = DateTime.UtcNow;
+            session.exit_time = DateTime.UtcNow;
 
             // 2. Calcular duración real
-            TimeSpan duration = session.ExitTime.Value - session.EntryTime;
+            TimeSpan duration = session.exit_time.Value - session.entry_time;
 
             // 3. CÁLCULO ESTRICTO: Hora o Fracción
             // Si duration.TotalHours es 5.01, Math.Ceiling devuelve 6.
@@ -77,12 +77,12 @@ namespace Parking.Application.UseCases
             // Garantizar cobro mínimo de 1 hora si el tiempo es muy corto
             if (hoursToCharge < 1) hoursToCharge = 1;
 
-            session.DurationMinutes = (int)duration.TotalMinutes;
-            session.AmountDue = hoursToCharge * 1.00m; // Tarifa de $1 por cada hora/fracción
+            session.duration_minutes = (int)duration.TotalMinutes;
+            session.amount_due = hoursToCharge * 1.00m; // Tarifa de $1 por cada hora/fracción
 
             // 4. Cerrar sesión
-            session.Status = "paid";
-            session.UpdatedAt = DateTime.UtcNow;
+            session.status = "paid";
+            session.updated_at = DateTime.UtcNow;
 
             await _sessionRepo.UpdateAsync(session);
             return await _sessionRepo.SaveChangesAsync();
