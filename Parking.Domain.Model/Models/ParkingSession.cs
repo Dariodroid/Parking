@@ -2,7 +2,6 @@
 #nullable disable
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema; // <-- AGREGADO PARA EL FOREIGN KEY
 
 namespace Parking.Domain.Model.Models;
 
@@ -54,13 +53,17 @@ public partial class ParkingSession
 
     public int? DeletedBy { get; set; }
 
-    // <-- SOLUCIÓN AQUÍ: Se le dice explícitamente qué ID usar
-    [ForeignKey(nameof(EntryOperatorId))]
+    public int? ParkingSlotId { get; set; }
+
+    public bool HasKeyDeposit { get; set; }
+
     public virtual User EntryOperator { get; set; }
 
-    // <-- SOLUCIÓN AQUÍ: Se le dice explícitamente qué ID usar
-    [ForeignKey(nameof(ExitOperatorId))]
     public virtual User ExitOperator { get; set; }
+
+    public virtual ParkingSlot? ParkingSlot { get; set; }
+
+    public virtual ICollection<ParkingSlot> ParkingSlots { get; set; } = new List<ParkingSlot>();
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 

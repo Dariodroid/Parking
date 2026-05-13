@@ -13,6 +13,10 @@
 
         <conv:BooleanToCheckConverter x:Key="BooleanToCheckConverter"/>
 
+        <!-- ========================= -->
+        <!-- ESTILOS GENERALES -->
+        <!-- ========================= -->
+
         <Style x:Key="SectionStyle" TargetType="Border">
             <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="BorderBrush" Value="#333333"/>
@@ -59,6 +63,181 @@
             <Setter Property="MinWidth" Value="95"/>
         </Style>
 
+        <!-- ========================= -->
+        <!-- COMBOBOX DAVINCI STYLE -->
+        <!-- ========================= -->
+
+        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
+
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Background" Value="#0F0F0F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+
+            <!-- ITEMS -->
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+
+                    <Style TargetType="ComboBoxItem">
+
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="Background" Value="#1E1E1E"/>
+                        <Setter Property="Padding" Value="8,5"/>
+
+                        <Style.Triggers>
+
+                            <!-- Hover -->
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#2D2D2D"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+
+                            <!-- Seleccionado -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+
+                        </Style.Triggers>
+
+                    </Style>
+
+                </Setter.Value>
+            </Setter>
+
+            <!-- TEMPLATE COMPLETO -->
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="ComboBox">
+
+                        <Grid>
+
+                            <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="2">
+
+                                <Grid>
+
+                                    <!-- TEXTO SELECCIONADO -->
+                                    <ContentPresenter Margin="10,0,35,0"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              RecognizesAccessKey="True"
+                                              TextElement.Foreground="White"/>
+
+                                    <!-- BOTON -->
+                                    <ToggleButton Grid.Column="1"
+                                          HorizontalAlignment="Right"
+                                          Width="30"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+
+                                        <ToggleButton.Template>
+
+                                            <ControlTemplate TargetType="ToggleButton">
+
+                                                <Border Background="#1E1E1E">
+
+                                                    <TextBlock Text="▼"
+                                                       Foreground="White"
+                                                       FontSize="10"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+
+                                                </Border>
+
+                                            </ControlTemplate>
+
+                                        </ToggleButton.Template>
+
+                                    </ToggleButton>
+
+                                </Grid>
+
+                            </Border>
+
+                            <!-- DROPDOWN -->
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   Focusable="False"
+                                   AllowsTransparency="True"
+                                   PopupAnimation="Fade">
+
+                                                            <Border Background="#1E1E1E"
+                                        BorderBrush="#555555"
+                                        BorderThickness="1"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+
+                                                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+
+                                                                    <StackPanel IsItemsHost="True"
+                                                    Background="#1E1E1E"/>
+
+                                                                </ScrollViewer>
+
+                                                            </Border>
+
+                            </Popup>
+                        </Grid>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
+        </Style>
+        <!-- ========================= -->
+        <!-- DATAGRID -->
+        <!-- ========================= -->
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#2A2A2A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="#1A1A1A"/>
+            <Setter Property="Foreground" Value="White"/>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2A2A2A"/>
+                </Trigger>
+
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1565C0"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+
+            </Style.Triggers>
+
+        </Style>
+
     </UserControl.Resources>
 
     <Grid Margin="10">
@@ -75,7 +254,9 @@
 
             <StackPanel>
 
+                <!-- FORMULARIO -->
                 <Border Style="{StaticResource SectionStyle}">
+
                     <StackPanel>
 
                         <TextBlock Text="USUARIOS"
@@ -84,27 +265,367 @@
                                    FontWeight="Bold"
                                    Margin="0,0,0,15"/>
 
-                        <TextBlock Text="USUARIO" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="USUARIO"
+                                   Style="{StaticResource LabelStyle}"/>
+
                         <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputStyle}"/>
 
-                        <TextBlock Text="NOMBRE COMPLETO" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="NOMBRE COMPLETO"
+                                   Style="{StaticResource LabelStyle}"/>
+
                         <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputStyle}"/>
 
-                        <TextBlock Text="ROL" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding Role, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}"/>
+                        <TextBlock Text="ROL"
+                                   Style="{StaticResource LabelStyle}"/>
 
-                        <TextBlock Text="CONTRASEÑA" Style="{StaticResource LabelStyle}"/>
-                        <PasswordBox x:Name="PasswordBox"
-                                     PasswordChanged="PasswordBox_PasswordChanged"
-                                     Style="{StaticResource PasswordStyle}"/>
+                        <ComboBox ItemsSource="{Binding Roles}"
+                                  SelectedItem="{Binding SelectedRole, Mode=TwoWay}"
+                                  Style="{StaticResource DarkComboBoxStyle}"/>
 
-                        <TextBlock Text="CONFIRMAR CONTRASEÑA" Style="{StaticResource LabelStyle}"/>
-                        <PasswordBox x:Name="ConfirmPasswordBox"
-                                     PasswordChanged="ConfirmPasswordBox_PasswordChanged"
-                                     Style="{StaticResource PasswordStyle}"/>
+                        <TextBlock Text="CONTRASEÑA"
+           Style="{StaticResource LabelStyle}"/>
+
+                        <Grid Margin="0,0,0,8">
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- PASSWORD -->
+                            <TextBlock Text="CONTRASEÑA"
+           Style="{StaticResource LabelStyle}"/>
+
+                            <Grid Margin="0,0,0,8">
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="40"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- PASSWORDBOX -->
+                                <PasswordBox x:Name="PasswordBox"
+                 Grid.Column="0"
+                 PasswordChanged="PasswordBox_PasswordChanged"
+                 Height="34"
+                 Background="#0A0A0A"
+                 Foreground="White"
+                 BorderBrush="#444444"
+                 BorderThickness="1"
+                 Padding="8,4">
+
+                                    <PasswordBox.Style>
+                                        <Style TargetType="PasswordBox">
+                                            <Setter Property="Visibility"
+                        Value="Visible"/>
+
+                                            <Style.Triggers>
+
+                                                <DataTrigger Binding="{Binding IsChecked, ElementName=ShowPasswordButton}"
+                                 Value="True">
+
+                                                    <Setter Property="Visibility"
+                                Value="Collapsed"/>
+
+                                                </DataTrigger>
+
+                                            </Style.Triggers>
+
+                                        </Style>
+                                    </PasswordBox.Style>
+
+                                </PasswordBox>
+
+                                <!-- TEXTBOX -->
+                                <TextBox x:Name="PasswordTextBox"
+             Grid.Column="0"
+             Height="34"
+             Background="#0A0A0A"
+             Foreground="White"
+             BorderBrush="#444444"
+             BorderThickness="1"
+             Padding="8,4"
+             TextChanged="PasswordTextBox_TextChanged">
+
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+
+                                            <Setter Property="Visibility"
+                        Value="Collapsed"/>
+
+                                            <Style.Triggers>
+
+                                                <DataTrigger Binding="{Binding IsChecked, ElementName=ShowPasswordButton}"
+                                 Value="True">
+
+                                                    <Setter Property="Visibility"
+                                Value="Visible"/>
+
+                                                </DataTrigger>
+
+                                            </Style.Triggers>
+
+                                        </Style>
+                                    </TextBox.Style>
+
+                                </TextBox>
+
+                                <!-- BOTON OJO -->
+                                <ToggleButton x:Name="ShowPasswordButton"
+                  Grid.Column="1"
+                  Width="40"
+                  Height="34"
+                  Margin="5,0,0,0"
+                  Background="#2A2A2A"
+                  Foreground="White"
+                  BorderBrush="#444444"
+                  BorderThickness="1"
+                  Cursor="Hand">
+
+                                    <Grid>
+
+                                        <TextBlock x:Name="EyeOpen1"
+                       Text="👁"
+                       FontSize="14"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+                                        <TextBlock x:Name="EyeClose1"
+                       Text="◉"
+                       FontSize="12"
+                       Opacity="0"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+                                    </Grid>
+
+                                    <ToggleButton.Triggers>
+
+                                        <EventTrigger RoutedEvent="ToggleButton.Checked">
+
+                                            <BeginStoryboard>
+
+                                                <Storyboard>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeOpen1"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="0"
+                                         Duration="0:0:0.15"/>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeClose1"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="1"
+                                         Duration="0:0:0.15"/>
+
+                                                </Storyboard>
+
+                                            </BeginStoryboard>
+
+                                        </EventTrigger>
+
+                                        <EventTrigger RoutedEvent="ToggleButton.Unchecked">
+
+                                            <BeginStoryboard>
+
+                                                <Storyboard>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeOpen1"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="1"
+                                         Duration="0:0:0.15"/>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeClose1"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="0"
+                                         Duration="0:0:0.15"/>
+
+                                                </Storyboard>
+
+                                            </BeginStoryboard>
+
+                                        </EventTrigger>
+
+                                    </ToggleButton.Triggers>
+
+                                </ToggleButton>
+
+                            </Grid>
+
+                        </Grid>
+
+                        <TextBlock Text="CONFIRMAR CONTRASEÑA"
+           Style="{StaticResource LabelStyle}"/>
+
+                        <Grid Margin="0,0,0,8">
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- PASSWORD -->
+                            <TextBlock Text="CONFIRMAR CONTRASEÑA"
+           Style="{StaticResource LabelStyle}"/>
+
+                            <Grid Margin="0,0,0,8">
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="40"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- PASSWORDBOX -->
+                                <PasswordBox x:Name="ConfirmPasswordBox"
+                 Grid.Column="0"
+                 PasswordChanged="ConfirmPasswordBox_PasswordChanged"
+                 Height="34"
+                 Background="#0A0A0A"
+                 Foreground="White"
+                 BorderBrush="#444444"
+                 BorderThickness="1"
+                 Padding="8,4">
+
+                                    <PasswordBox.Style>
+                                        <Style TargetType="PasswordBox">
+
+                                            <Setter Property="Visibility"
+                        Value="Visible"/>
+
+                                            <Style.Triggers>
+
+                                                <DataTrigger Binding="{Binding IsChecked, ElementName=ShowConfirmPasswordButton}"
+                                 Value="True">
+
+                                                    <Setter Property="Visibility"
+                                Value="Collapsed"/>
+
+                                                </DataTrigger>
+
+                                            </Style.Triggers>
+
+                                        </Style>
+                                    </PasswordBox.Style>
+
+                                </PasswordBox>
+
+                                <!-- TEXTBOX -->
+                                <TextBox x:Name="ConfirmPasswordTextBox"
+             Grid.Column="0"
+             Height="34"
+             Background="#0A0A0A"
+             Foreground="White"
+             BorderBrush="#444444"
+             BorderThickness="1"
+             Padding="8,4"
+             TextChanged="ConfirmPasswordTextBox_TextChanged">
+
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+
+                                            <Setter Property="Visibility"
+                        Value="Collapsed"/>
+
+                                            <Style.Triggers>
+
+                                                <DataTrigger Binding="{Binding IsChecked, ElementName=ShowConfirmPasswordButton}"
+                                 Value="True">
+
+                                                    <Setter Property="Visibility"
+                                Value="Visible"/>
+
+                                                </DataTrigger>
+
+                                            </Style.Triggers>
+
+                                        </Style>
+                                    </TextBox.Style>
+
+                                </TextBox>
+
+                                <!-- BOTON OJO -->
+                                <ToggleButton x:Name="ShowConfirmPasswordButton"
+                  Grid.Column="1"
+                  Width="40"
+                  Height="34"
+                  Margin="5,0,0,0"
+                  Background="#2A2A2A"
+                  Foreground="White"
+                  BorderBrush="#444444"
+                  BorderThickness="1"
+                  Cursor="Hand">
+
+                                    <Grid>
+
+                                        <TextBlock x:Name="EyeOpen2"
+                       Text="👁"
+                       FontSize="14"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+                                        <TextBlock x:Name="EyeClose2"
+                       Text="◉"
+                       FontSize="12"
+                       Opacity="0"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+                                    </Grid>
+
+                                    <ToggleButton.Triggers>
+
+                                        <EventTrigger RoutedEvent="ToggleButton.Checked">
+
+                                            <BeginStoryboard>
+
+                                                <Storyboard>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeOpen2"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="0"
+                                         Duration="0:0:0.15"/>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeClose2"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="1"
+                                         Duration="0:0:0.15"/>
+
+                                                </Storyboard>
+
+                                            </BeginStoryboard>
+
+                                        </EventTrigger>
+
+                                        <EventTrigger RoutedEvent="ToggleButton.Unchecked">
+
+                                            <BeginStoryboard>
+
+                                                <Storyboard>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeOpen2"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="1"
+                                         Duration="0:0:0.15"/>
+
+                                                    <DoubleAnimation Storyboard.TargetName="EyeClose2"
+                                         Storyboard.TargetProperty="Opacity"
+                                         To="0"
+                                         Duration="0:0:0.15"/>
+
+                                                </Storyboard>
+
+                                            </BeginStoryboard>
+
+                                        </EventTrigger>
+
+                                    </ToggleButton.Triggers>
+
+                                </ToggleButton>
+
+                            </Grid>
+
+                        </Grid>
 
                         <TextBlock Text="ESTADO"
                                    Style="{StaticResource LabelStyle}"
@@ -119,9 +640,13 @@
                                       Focusable="False">
 
                             <ToggleButton.Template>
+
                                 <ControlTemplate TargetType="ToggleButton">
+
                                     <Border Background="Transparent">
-                                        <Grid Width="150" Height="36">
+
+                                        <Grid Width="150"
+                                              Height="36">
 
                                             <Border x:Name="SwitchBackground"
                                                     CornerRadius="18"
@@ -142,26 +667,45 @@
                                                     Background="White"
                                                     HorizontalAlignment="Right"
                                                     Margin="4"/>
+
                                         </Grid>
+
                                     </Border>
 
                                     <ControlTemplate.Triggers>
-                                        <Trigger Property="IsChecked" Value="False">
-                                            <Setter TargetName="SwitchBackground" Property="Background" Value="#666666"/>
-                                            <Setter TargetName="SwitchText" Property="Text" Value="INACTIVO"/>
-                                            <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Left"/>
+
+                                        <Trigger Property="IsChecked"
+                                                 Value="False">
+
+                                            <Setter TargetName="SwitchBackground"
+                                                    Property="Background"
+                                                    Value="#666666"/>
+
+                                            <Setter TargetName="SwitchText"
+                                                    Property="Text"
+                                                    Value="INACTIVO"/>
+
+                                            <Setter TargetName="Knob"
+                                                    Property="HorizontalAlignment"
+                                                    Value="Left"/>
+
                                         </Trigger>
+
                                     </ControlTemplate.Triggers>
+
                                 </ControlTemplate>
+
                             </ToggleButton.Template>
 
                         </ToggleButton>
 
                     </StackPanel>
+
                 </Border>
 
                 <!-- BOTONES -->
                 <Border Style="{StaticResource SectionStyle}">
+
                     <WrapPanel>
 
                         <Button Content="GUARDAR"
@@ -189,11 +733,14 @@
                                 Style="{StaticResource ActionButtonStyle}"/>
 
                     </WrapPanel>
+
                 </Border>
 
                 <!-- ESTADO -->
                 <Border Style="{StaticResource SectionStyle}">
+
                     <StackPanel>
+
                         <TextBlock Text="ESTADO"
                                    Foreground="#888888"
                                    FontSize="11"
@@ -203,7 +750,9 @@
                         <TextBlock Text="{Binding StatusMessage}"
                                    Foreground="#CCCCCC"
                                    TextWrapping="Wrap"/>
+
                     </StackPanel>
+
                 </Border>
 
             </StackPanel>
@@ -234,26 +783,32 @@
                 <DataGrid.Columns>
 
                     <DataGridTextColumn Header="Usuario"
-                                        Binding="{Binding username}"
+                                        Binding="{Binding Username}"
                                         Width="120"/>
 
                     <DataGridTextColumn Header="Nombre"
-                                        Binding="{Binding full_name}"
+                                        Binding="{Binding FullName}"
                                         Width="*"/>
 
                     <DataGridTextColumn Header="Rol"
-                                        Binding="{Binding role}"
-                                        Width="100"/>
+                                        Binding="{Binding Role}"
+                                        Width="140"/>
 
                     <DataGridTemplateColumn Header="Activo"
-                                            Width="70">
+                                            Width="80">
+
                         <DataGridTemplateColumn.CellTemplate>
+
                             <DataTemplate>
+
                                 <TextBlock HorizontalAlignment="Center"
                                            Foreground="White"
-                                           Text="{Binding is_active, Converter={StaticResource BooleanToCheckConverter}}"/>
+                                           Text="{Binding IsActive, Converter={StaticResource BooleanToCheckConverter}}"/>
+
                             </DataTemplate>
+
                         </DataGridTemplateColumn.CellTemplate>
+
                     </DataGridTemplateColumn>
 
                 </DataGrid.Columns>
@@ -263,4 +818,5 @@
         </Border>
 
     </Grid>
+
 </UserControl>

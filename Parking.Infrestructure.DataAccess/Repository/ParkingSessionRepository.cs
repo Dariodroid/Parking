@@ -7,7 +7,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
 {
     public class ParkingSessionRepository : BaseRepository<ParkingSession>, IParkingSessionRepository
     {
-        public ParkingSessionRepository(ParkingDbContext context)
+        public ParkingSessionRepository(parking_dbContext context)
             : base(context)
         {
         }

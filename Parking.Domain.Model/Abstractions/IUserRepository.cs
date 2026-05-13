@@ -33,5 +33,9 @@ namespace Parking.Domain.Model.Abstractions
 
         // Registrar el último acceso (útil para auditoría de seguridad)
         Task UpdateLastLoginAsync(int userId);
+
+        Task<bool> ExistsByUsernameAsync(string username);
+
+        Task<User?> GetByUsernameAsync(string username);
     }
 }

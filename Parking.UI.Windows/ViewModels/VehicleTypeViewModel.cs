@@ -114,7 +114,7 @@ public class VehicleTypeViewModel : BaseViewModel
         Name = item.Name ?? string.Empty;
         Icon = item.Icon ?? string.Empty;
         HourlyRate = item.HourlyRate;
-        IsActive = item.is_active;
+        IsActive = item.IsActive;
     }
 
     private bool Validate()
@@ -152,10 +152,10 @@ public class VehicleTypeViewModel : BaseViewModel
                 Name = Name.Trim(),
                 Icon = Icon?.Trim(),
                 HourlyRate = HourlyRate,
-                is_active = IsActive,
+                IsActive = IsActive,
                 CreatedAt = DateTime.Now,
                 CreatedBy = _currentUserId,
-                is_deleted = false
+                IsDeleted = false
             };
 
             await _repository.AddAsync(entity);
@@ -196,7 +196,7 @@ public class VehicleTypeViewModel : BaseViewModel
             entity.Name = Name.Trim();
             entity.Icon = Icon?.Trim();
             entity.HourlyRate = HourlyRate;
-            entity.is_active = IsActive;
+            entity.IsActive = IsActive;
             entity.UpdatedAt = DateTime.Now;
             entity.UpdatedBy = _currentUserId;
 
@@ -232,7 +232,7 @@ public class VehicleTypeViewModel : BaseViewModel
                 return;
             }
 
-            entity.is_deleted = true;
+            entity.IsDeleted = true;
             entity.DeletedAt = DateTime.Now;
             entity.DeletedBy = _currentUserId;
 

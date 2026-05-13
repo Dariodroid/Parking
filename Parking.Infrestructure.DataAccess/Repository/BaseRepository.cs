@@ -10,9 +10,9 @@ namespace Parking.Infrastructure.DataAccess.Repository
 {
     public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
-        protected readonly ParkingDbContext _context;
+        protected readonly parking_dbContext _context;
 
-        public BaseRepository(ParkingDbContext context)
+        public BaseRepository(parking_dbContext context)
         {
             _context = context;
         }

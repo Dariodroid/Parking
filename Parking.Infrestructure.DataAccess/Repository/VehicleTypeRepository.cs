@@ -6,9 +6,9 @@ namespace Parking.Infrastructure.DataAccess.Repository
 {
     public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeRepository
     {
-        private readonly ParkingDbContext _context;
+        private readonly parking_dbContext _context;
 
-        public VehicleTypeRepository(ParkingDbContext context)
+        public VehicleTypeRepository(parking_dbContext context)
         {
             _context = context;
         }
@@ -26,7 +26,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
 
             if (entity != null)
             {
-                entity.is_deleted = true;
+                entity.IsDeleted = true;
                 entity.DeletedAt = DateTime.Now;
             }
         }
@@ -35,7 +35,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
         {
             return await _context.VehicleTypes
                 .AsNoTracking()
-                .Where(x => !x.is_deleted)
+                .Where(x => !x.IsDeleted)
                 .OrderBy(x => x.Name)
                 .Select(x => new VehicleType
                 {
@@ -43,7 +43,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
                     Name = x.Name,
                     Icon = x.Icon,
                     HourlyRate = x.HourlyRate,
-                    is_active = x.is_active
+                    IsActive = x.IsActive
                 })
                 .ToListAsync();
         }
@@ -51,7 +51,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
         public async Task<VehicleType?> GetByIdAsync(long id)
         {
             return await _context.VehicleTypes
-                .FirstOrDefaultAsync(x => x.Id == id && !x.is_deleted);
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
 
         public Task UpdateAsync(VehicleType entity)

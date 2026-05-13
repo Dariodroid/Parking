@@ -1,9 +1,10 @@
-﻿using Parking.Domain.Model.Abstractions;
+﻿using BCrypt.Net;
+using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Enums;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
-using System.Security.Cryptography;
-using System.Text;
+using System.Windows;
 using System.Windows.Input;
 
 namespace Parking.UI.Windows.ViewModels;
@@ -12,6 +13,11 @@ public class UserViewModel : BaseViewModel
 {
     private readonly IUserRepository _repository;
     private readonly int _currentUserId = 1;
+
+    public List<UserRole> Roles { get; } =
+    Enum.GetValues(typeof(UserRole))
+        .Cast<UserRole>()
+        .ToList();
 
     public ObservableCollection<User> Users { get; } = new();
 
@@ -51,11 +57,12 @@ public class UserViewModel : BaseViewModel
         set => SetProperty(ref _fullName, value);
     }
 
-    private string _role = string.Empty;
-    public string Role
+    private UserRole _selectedRole = UserRole.Operador;
+
+    public UserRole SelectedRole
     {
-        get => _role;
-        set => SetProperty(ref _role, value);
+        get => _selectedRole;
+        set => SetProperty(ref _selectedRole, value);
     }
 
     private string _password = string.Empty;
@@ -115,11 +122,10 @@ public class UserViewModel : BaseViewModel
     private void LoadSelected(User item)
     {
         Id = item.Id;
-        Username = item.Username ?? string.Empty;
-        FullName = item.FullName ?? string.Empty;
-        Role = item.Role ?? string.Empty;
+        Username = item.Username;
+        FullName = item.FullName;
+        Enum.Parse<UserRole>(item.Role);
         IsActive = item.IsActive;
-
         Password = string.Empty;
         ConfirmPassword = string.Empty;
     }
@@ -138,9 +144,9 @@ public class UserViewModel : BaseViewModel
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(Role))
+        if (!Enum.IsDefined(typeof(UserRole), SelectedRole))
         {
-            StatusMessage = "Ingrese el rol.";
+            StatusMessage = "Seleccione el rol.";
             return false;
         }
 
@@ -164,36 +170,57 @@ public class UserViewModel : BaseViewModel
 
     private async Task SaveAsync()
     {
-        if (!Validate(true))
-            return;
-
-        var entity = new User
+        try
         {
-            Username = Username.Trim(),
-            FullName = FullName.Trim(),
-            Role = Role.Trim(),
-            PasswordHash = HashPassword(Password),
-            IsActive = IsActive,
-            CreatedAt = DateTime.Now,
-            CreatedBy = _currentUserId,
-            IsDeleted = false,
-            LoginAttempts = 0
-        };
+            if (!Validate(true))
+                return;
 
-        await _repository.AddAsync(entity);
-        await _repository.SaveChangesAsync();
+            var exists = await _repository.ExistsByUsernameAsync(Username);
 
-        StatusMessage = "Usuario registrado.";
+            if (exists)
+            {
+                StatusMessage = "El usuario ya existe.";
+                return;
+            }
 
-        await LoadAsync();
-        ClearForm();
+            var entity = new User
+            {
+                Username = Username.Trim(),
+                FullName = FullName.Trim(),
+                Role = SelectedRole.ToString(),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Password),
+                IsActive = IsActive,
+                CreatedAt = DateTime.Now,
+                CreatedBy = _currentUserId,
+                LoginAttempts = 0,
+                IsDeleted = false
+            };
+
+            await _repository.AddAsync(entity);
+            await _repository.SaveChangesAsync();
+
+            StatusMessage = "Usuario registrado correctamente.";
+
+            await LoadAsync();
+
+            ClearForm();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = ex.Message;
+
+            MessageBox.Show(
+                ex.ToString(),
+                "ERROR",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
-
     private async Task UpdateAsync()
     {
         if (Id == 0)
         {
-            StatusMessage = "Seleccione un registro.";
+            StatusMessage = "Seleccione un usuario.";
             return;
         }
 
@@ -207,7 +234,7 @@ public class UserViewModel : BaseViewModel
 
         entity.Username = Username.Trim();
         entity.FullName = FullName.Trim();
-        entity.Role = Role.Trim();
+        entity.Role = SelectedRole.ToString();
         entity.IsActive = IsActive;
         entity.UpdatedAt = DateTime.Now;
         entity.UpdatedBy = _currentUserId;
@@ -220,7 +247,7 @@ public class UserViewModel : BaseViewModel
                 return;
             }
 
-            entity.PasswordHash = HashPassword(Password);
+            entity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(Password);
         }
 
         await _repository.UpdateAsync(entity);
@@ -229,6 +256,7 @@ public class UserViewModel : BaseViewModel
         StatusMessage = "Usuario actualizado.";
 
         await LoadAsync();
+
         ClearForm();
     }
 
@@ -236,7 +264,7 @@ public class UserViewModel : BaseViewModel
     {
         if (Id == 0)
         {
-            StatusMessage = "Seleccione un registro.";
+            StatusMessage = "Seleccione un usuario.";
             return;
         }
 
@@ -253,11 +281,11 @@ public class UserViewModel : BaseViewModel
         entity.DeletedBy = _currentUserId;
 
         await _repository.UpdateAsync(entity);
-        await _repository.SaveChangesAsync();
 
         StatusMessage = "Usuario eliminado.";
 
         await LoadAsync();
+
         ClearForm();
     }
 
@@ -266,17 +294,9 @@ public class UserViewModel : BaseViewModel
         Id = 0;
         Username = string.Empty;
         FullName = string.Empty;
-        Role = string.Empty;
-        Password = string.Empty;
+        SelectedRole = UserRole.Operador; Password = string.Empty;
         ConfirmPassword = string.Empty;
         IsActive = true;
         SelectedUser = null;
-    }
-
-    private string HashPassword(string password)
-    {
-        using var sha = SHA256.Create();
-        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexString(bytes);
     }
 }

@@ -1,40 +1,66 @@
 ﻿using Parking.UI.Windows.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Parking.UI.Windows.View.Pages
 {
-    /// <summary>
-    /// Lógica de interacción para UserPage.xaml
-    /// </summary>
     public partial class UserPage : UserControl
     {
         public UserPage()
         {
             InitializeComponent();
         }
+
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
+            if (PasswordTextBox.Text != PasswordBox.Password)
+            {
+                PasswordTextBox.Text = PasswordBox.Password;
+            }
+
             if (DataContext is UserViewModel vm)
-                vm.Password = ((PasswordBox)sender).Password;
+            {
+                vm.Password = PasswordBox.Password;
+            }
         }
 
         private void ConfirmPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
+            if (ConfirmPasswordTextBox.Text != ConfirmPasswordBox.Password)
+            {
+                ConfirmPasswordTextBox.Text = ConfirmPasswordBox.Password;
+            }
+
             if (DataContext is UserViewModel vm)
-                vm.ConfirmPassword = ((PasswordBox)sender).Password;
+            {
+                vm.ConfirmPassword = ConfirmPasswordBox.Password;
+            }
+        }
+
+        private void PasswordTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (PasswordBox.Password != PasswordTextBox.Text)
+            {
+                PasswordBox.Password = PasswordTextBox.Text;
+            }
+
+            if (DataContext is UserViewModel vm)
+            {
+                vm.Password = PasswordTextBox.Text;
+            }
+        }
+
+        private void ConfirmPasswordTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (ConfirmPasswordBox.Password != ConfirmPasswordTextBox.Text)
+            {
+                ConfirmPasswordBox.Password = ConfirmPasswordTextBox.Text;
+            }
+
+            if (DataContext is UserViewModel vm)
+            {
+                vm.ConfirmPassword = ConfirmPasswordTextBox.Text;
+            }
         }
     }
 }

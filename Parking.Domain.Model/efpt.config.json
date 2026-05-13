@@ -27,6 +27,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[parking_slots]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[payments]",
          "ObjectType": 0
       },

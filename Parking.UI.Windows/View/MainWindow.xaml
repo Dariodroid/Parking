@@ -8,40 +8,54 @@
         Width="1200"
         WindowStartupLocation="CenterScreen">
 
-    <!-- 🔥 AQUÍ ESTÁ LA SOLUCIÓN -->
     <Window.Resources>
+
+        <!-- VISTAS -->
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
             <views:PlateReaderPage/>
         </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:VehicleTypeViewModel}">
             <views:VehicleTypePage/>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:UserViewModel}">
+            <views:UserPage/>
+        </DataTemplate>
+
+        <!-- ESTILO MENÚ -->
         <Style x:Key="MenuButtonStyle" TargetType="Button">
             <Setter Property="Margin" Value="5"/>
             <Setter Property="Height" Value="40"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="15,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
+
     </Window.Resources>
 
     <Grid>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
-        <StackPanel Background="#1E293B" Grid.Column="0">
+        <StackPanel Background="#1E293B"
+                    Grid.Column="0">
 
             <TextBlock Text="🚗 PARKING"
                        Foreground="White"
-                       FontSize="18"
-                       Margin="10"
+                       FontSize="20"
+                       Margin="15"
                        FontWeight="Bold"/>
 
-            <!-- BOTONES -->
+            <!-- MENÚ -->
             <Button Content="🏠 Dashboard"
                     Command="{Binding NavigateCommand}"
                     CommandParameter="Dashboard"
@@ -60,6 +74,11 @@
             <Button Content="👥 Clientes"
                     Command="{Binding NavigateCommand}"
                     CommandParameter="Clientes"
+                    Style="{StaticResource MenuButtonStyle}"/>
+
+            <Button Content="👤 Usuarios"
+                    Command="{Binding NavigateCommand}"
+                    CommandParameter="Usuarios"
                     Style="{StaticResource MenuButtonStyle}"/>
 
             <Button Content="🔐 Seguridad"
@@ -85,9 +104,13 @@
         </StackPanel>
 
         <!-- CONTENIDO -->
-        <Grid Grid.Column="1" Background="#F1F5F9">
+        <Grid Grid.Column="1"
+              Background="#F1F5F9">
+
             <ContentControl Content="{Binding CurrentView}"/>
+
         </Grid>
 
     </Grid>
+
 </Window>

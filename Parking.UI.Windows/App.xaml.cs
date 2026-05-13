@@ -24,7 +24,7 @@ namespace Parking.UI.Windows
             var serviceCollection = new ServiceCollection();
 
             // ====================== 1. ENTITY FRAMEWORK CORE ======================
-            serviceCollection.AddDbContext<ParkingDbContext>(options =>
+            serviceCollection.AddDbContext<parking_dbContext>(options =>
             {
                 options.UseSqlServer(
                     "Server=LAPTOP-E00ITAMO\\SQLEXPRESS;Database=parking_db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true;",
@@ -35,6 +35,7 @@ namespace Parking.UI.Windows
             // ====================== 2. REPOSITORIOS ======================
             serviceCollection.AddScoped<IParkingSessionRepository, ParkingSessionRepository>();
             serviceCollection.AddScoped<IVehicleTypeRepository, VehicleTypeRepository>();
+            serviceCollection.AddScoped<IUserRepository, UserRepository>();
 
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
@@ -51,6 +52,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<MainWindowViewModel>();
             serviceCollection.AddTransient<PlateReaderViewModel>();
             serviceCollection.AddTransient<VehicleTypeViewModel>();
+            serviceCollection.AddTransient<UserViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();
