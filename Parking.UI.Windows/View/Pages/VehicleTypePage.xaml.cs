@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,6 +34,49 @@ namespace Parking.UI.Windows.View.Pages
                     textBox.SelectAll();
                 }));
             }
+        }
+
+        // SOLO ENTEROS
+        private void IntegerTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new("[^0-9]+");
+
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        // DECIMALES
+        private void DecimalTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+
+            if (textBox == null)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            // Permitir números
+            if (char.IsDigit(e.Text, 0))
+            {
+                e.Handled = false;
+                return;
+            }
+
+            // Permitir SOLO un punto decimal
+            if (e.Text == ".")
+            {
+                if (textBox.Text.Contains("."))
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                e.Handled = false;
+                return;
+            }
+
+            // Bloquear todo lo demás
+            e.Handled = true;
         }
     }
 }

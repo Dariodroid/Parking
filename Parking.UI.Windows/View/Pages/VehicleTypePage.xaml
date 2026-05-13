@@ -50,7 +50,7 @@
             <Setter Property="Height" Value="36"/>
         </Style>
 
-        <!-- NUEVO: ESTILO HEADER DATAGRID -->
+        <!-- HEADER OSCURO -->
         <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="#2A2A2A"/>
             <Setter Property="Foreground" Value="White"/>
@@ -104,25 +104,29 @@
                         <TextBlock Text="TARIFA POR HORA"
                                    Style="{StaticResource LabelStyle}"/>
 
-                        <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=LostFocus}"
+                                 PreviewTextInput="DecimalTextBox_PreviewTextInput"
                                  Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="MINUTOS DE GRACIA"
                                    Style="{StaticResource LabelStyle}"/>
 
                         <TextBox Text="{Binding GraceMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="IntegerTextBox_PreviewTextInput"
                                  Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="MINUTOS POR FRACCIÓN"
                                    Style="{StaticResource LabelStyle}"/>
 
                         <TextBox Text="{Binding FractionMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="IntegerTextBox_PreviewTextInput"
                                  Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="TARIFA FRACCIÓN"
                                    Style="{StaticResource LabelStyle}"/>
 
-                        <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=LostFocus}"
+                                 PreviewTextInput="DecimalTextBox_PreviewTextInput"
                                  Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="ESTADO"

@@ -1,8 +1,9 @@
-﻿using Parking.Domain.Model.Abstractions;
-using Parking.Domain.Model.Models;
-using Parking.UI.Windows.ViewModels.Base;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Models;
+using Parking.UI.Windows.ViewModels.Base;
 
 namespace Parking.UI.Windows.ViewModels;
 
@@ -54,28 +55,52 @@ public class VehicleTypeViewModel : BaseViewModel
     public decimal HourlyRate
     {
         get => _hourlyRate;
-        set => SetProperty(ref _hourlyRate, value);
+        set
+        {
+            if (value < 0)
+                value = 0;
+
+            SetProperty(ref _hourlyRate, Math.Round(value, 2));
+        }
     }
 
     private int _graceMinutes = 5;
     public int GraceMinutes
     {
         get => _graceMinutes;
-        set => SetProperty(ref _graceMinutes, value);
+        set
+        {
+            if (value < 0)
+                value = 0;
+
+            SetProperty(ref _graceMinutes, value);
+        }
     }
 
     private int _fractionMinutes = 15;
     public int FractionMinutes
     {
         get => _fractionMinutes;
-        set => SetProperty(ref _fractionMinutes, value);
+        set
+        {
+            if (value < 0)
+                value = 0;
+
+            SetProperty(ref _fractionMinutes, value);
+        }
     }
 
     private decimal _fractionRate;
     public decimal FractionRate
     {
         get => _fractionRate;
-        set => SetProperty(ref _fractionRate, value);
+        set
+        {
+            if (value < 0)
+                value = 0;
+
+            SetProperty(ref _fractionRate, Math.Round(value, 2));
+        }
     }
 
     private bool _isActive = true;
@@ -132,13 +157,16 @@ public class VehicleTypeViewModel : BaseViewModel
     private void LoadSelected(VehicleType item)
     {
         Id = item.id;
+
         Name = item.name ?? string.Empty;
         Icon = item.icon ?? string.Empty;
 
         HourlyRate = item.hourly_rate;
 
         GraceMinutes = item.grace_minutes;
+
         FractionMinutes = item.fraction_minutes;
+
         FractionRate = item.fraction_rate;
 
         IsActive = item.is_active;
@@ -200,6 +228,7 @@ public class VehicleTypeViewModel : BaseViewModel
             };
 
             await _repository.AddAsync(entity);
+
             await _repository.SaveChangesAsync();
 
             StatusMessage = "Tipo de vehículo registrado.";
@@ -250,6 +279,7 @@ public class VehicleTypeViewModel : BaseViewModel
             entity.updated_by = _currentUserId;
 
             await _repository.UpdateAsync(entity);
+
             await _repository.SaveChangesAsync();
 
             StatusMessage = "Registro actualizado.";
@@ -287,6 +317,7 @@ public class VehicleTypeViewModel : BaseViewModel
             entity.deleted_by = _currentUserId;
 
             await _repository.SoftDeleteAsync(entity);
+
             await _repository.SaveChangesAsync();
 
             StatusMessage = "Registro eliminado.";
@@ -311,7 +342,9 @@ public class VehicleTypeViewModel : BaseViewModel
         HourlyRate = 0;
 
         GraceMinutes = 5;
+
         FractionMinutes = 15;
+
         FractionRate = 0;
 
         IsActive = true;
