@@ -50,7 +50,6 @@
             <Setter Property="Height" Value="36"/>
         </Style>
 
-        <!-- HEADER OSCURO -->
         <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="#2A2A2A"/>
             <Setter Property="Foreground" Value="White"/>
@@ -101,33 +100,50 @@
                         <TextBox Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputStyle}"/>
 
-                        <TextBlock Text="TARIFA POR HORA"
-                                   Style="{StaticResource LabelStyle}"/>
+                        
 
-                        <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=LostFocus}"
-                                 PreviewTextInput="DecimalTextBox_PreviewTextInput"
-                                 Style="{StaticResource InputStyle}"/>
+                        <!-- PANEL CONFIGURACIÓN DE COBRO -->
+                        <Border Background="#181818"
+                                BorderBrush="#3A3A3A"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="12"
+                                Margin="0,12,0,10">
 
-                        <TextBlock Text="MINUTOS DE GRACIA"
-                                   Style="{StaticResource LabelStyle}"/>
+                            <StackPanel>
 
-                        <TextBox Text="{Binding GraceMinutes, UpdateSourceTrigger=PropertyChanged}"
-                                 PreviewTextInput="IntegerTextBox_PreviewTextInput"
-                                 Style="{StaticResource InputStyle}"/>
+                                <TextBlock Text="CONFIGURACIÓN TARIFARIA"
+                                           Foreground="#4FC3F7"
+                                           FontSize="13"
+                                           FontWeight="Bold"
+                                           Margin="0,0,0,12"/>
+                                <TextBlock Text="TARIFA POR HORA"
+                                           Style="{StaticResource LabelStyle}"/>
 
-                        <TextBlock Text="MINUTOS POR FRACCIÓN"
-                                   Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=LostFocus}"
+                                         Style="{StaticResource InputStyle}"/>
 
-                        <TextBox Text="{Binding FractionMinutes, UpdateSourceTrigger=PropertyChanged}"
-                                 PreviewTextInput="IntegerTextBox_PreviewTextInput"
-                                 Style="{StaticResource InputStyle}"/>
+                                <TextBlock Text="MINUTOS DE GRACIA"
+                                           Style="{StaticResource LabelStyle}"/>
 
-                        <TextBlock Text="TARIFA FRACCIÓN"
-                                   Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding GraceMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource InputStyle}"/>
 
-                        <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=LostFocus}"
-                                 PreviewTextInput="DecimalTextBox_PreviewTextInput"
-                                 Style="{StaticResource InputStyle}"/>
+                                <TextBlock Text="MINUTOS POR FRACCIÓN"
+                                           Style="{StaticResource LabelStyle}"/>
+
+                                <TextBox Text="{Binding FractionMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource InputStyle}"/>
+
+                                <TextBlock Text="TARIFA FRACCIÓN"
+                                           Style="{StaticResource LabelStyle}"/>
+
+                                <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=LostFocus}"
+                                         Style="{StaticResource InputStyle}"/>
+
+                            </StackPanel>
+
+                        </Border>
 
                         <TextBlock Text="ESTADO"
                                    Style="{StaticResource LabelStyle}"
@@ -191,23 +207,6 @@
                                             <Setter TargetName="Knob"
                                                     Property="HorizontalAlignment"
                                                     Value="Left"/>
-
-                                        </Trigger>
-
-                                        <Trigger Property="IsChecked"
-                                                 Value="True">
-
-                                            <Setter TargetName="SwitchBackground"
-                                                    Property="Background"
-                                                    Value="#2E7D32"/>
-
-                                            <Setter TargetName="SwitchText"
-                                                    Property="Text"
-                                                    Value="ACTIVO"/>
-
-                                            <Setter TargetName="Knob"
-                                                    Property="HorizontalAlignment"
-                                                    Value="Right"/>
 
                                         </Trigger>
 
@@ -309,26 +308,14 @@
 
                     <DataGridTextColumn Header="Icono"
                                         Binding="{Binding icon}"
-                                        Width="100"/>
+                                        Width="120"/>
 
-                    <DataGridTextColumn Header="Hora"
+                    <DataGridTextColumn Header="Tarifa Hora"
                                         Binding="{Binding hourly_rate, StringFormat={}{0:N2}}"
-                                        Width="80"/>
-
-                    <DataGridTextColumn Header="Gracia"
-                                        Binding="{Binding grace_minutes}"
-                                        Width="70"/>
-
-                    <DataGridTextColumn Header="Fracción"
-                                        Binding="{Binding fraction_minutes}"
-                                        Width="80"/>
-
-                    <DataGridTextColumn Header="Tarifa Fracción"
-                                        Binding="{Binding fraction_rate, StringFormat={}{0:N2}}"
                                         Width="120"/>
 
                     <DataGridTemplateColumn Header="Activo"
-                                            Width="65">
+                                            Width="80">
 
                         <DataGridTemplateColumn.CellTemplate>
 

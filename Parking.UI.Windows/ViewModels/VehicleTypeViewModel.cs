@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Windows.Input;
-using Parking.Domain.Model.Abstractions;
+﻿using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.ViewModels.Base;
+using System;
+using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Input;
+using Parking.UI.Windows.View.Dialogs;
 
 namespace Parking.UI.Windows.ViewModels;
 
@@ -312,6 +314,18 @@ public class VehicleTypeViewModel : BaseViewModel
                 return;
             }
 
+            var owner = System.Windows.Application.Current.MainWindow;
+            var dialog = new ConfirmDialog(
+                owner,
+                $"¿Está seguro de eliminar el tipo de vehículo '{entity.name}'?");
+            var result = dialog.ShowDialog();
+
+            if (result != true)
+            {
+                StatusMessage = "Eliminación cancelada.";
+                return;
+            }
+
             entity.is_deleted = true;
             entity.deleted_at = DateTime.Now;
             entity.deleted_by = _currentUserId;
@@ -331,7 +345,6 @@ public class VehicleTypeViewModel : BaseViewModel
             StatusMessage = ex.Message;
         }
     }
-
     private void ClearForm()
     {
         Id = 0;
