@@ -9,8 +9,8 @@
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
             <views:PlateReaderPage/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:VehicleTypeViewModel}">
-            <views:VehicleTypePage/>
+        <DataTemplate DataType="{x:Type vm:vehicle_typeViewModel}">
+            <views:vehicle_typePage/>
         </DataTemplate>
     </Application.Resources>
 </Application>

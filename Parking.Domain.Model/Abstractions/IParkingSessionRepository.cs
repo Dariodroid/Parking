@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace Parking.Domain.Model.Abstractions
 {
-    public interface IParkingSessionRepository : IBaseRepository<ParkingSession>
+    public interface Iparking_sessionRepository : IBaseRepository<parking_session>
     {
         // Método para buscar si un vehículo ya está dentro y no ha salido
-        Task<ParkingSession> GetActiveSessionByPlateAsync(string plate);
-        Task<ParkingSession> GetActiveSessionByQrAsync(string qrCode);
+        Task<parking_session> GetActiveSessionByPlateAsync(string plate);
+        Task<parking_session> GetActiveSessionByQrAsync(string qrCode);
     }
 }

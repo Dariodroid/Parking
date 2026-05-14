@@ -15,12 +15,12 @@
             <views:PlateReaderPage/>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:VehicleTypeViewModel}">
-            <views:VehicleTypePage/>
+        <DataTemplate DataType="{x:Type vm:vehicle_typeViewModel}">
+            <views:vehicle_typePage/>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:UserViewModel}">
-            <views:UserPage/>
+        <DataTemplate DataType="{x:Type vm:userViewModel}">
+            <views:userPage/>
         </DataTemplate>
 
         <!-- ESTILO MENÚ -->

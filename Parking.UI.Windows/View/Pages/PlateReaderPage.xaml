@@ -86,8 +86,8 @@
                    FontWeight="Bold"
                    Margin="0,0,0,10"/>
 
-                                <ComboBox ItemsSource="{Binding VehicleTypes}"
-                  SelectedItem="{Binding SelectedVehicleType}"
+                                <ComboBox ItemsSource="{Binding vehicle_types}"
+                  SelectedItem="{Binding Selectedvehicle_type}"
                   Height="42"
                   FontSize="14"
                   Background="#0A0A0A"

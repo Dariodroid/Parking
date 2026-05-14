@@ -8,14 +8,14 @@ namespace Parking.Application.UseCases
 {
     public class EntryService : IEntryService
     {
-        private readonly IParkingSessionRepository _sessionRepo;
+        private readonly Iparking_sessionRepository _sessionRepo;
 
-        public EntryService(IParkingSessionRepository sessionRepo)
+        public EntryService(Iparking_sessionRepository sessionRepo)
         {
             _sessionRepo = sessionRepo;
         }
 
-        public async Task<ParkingSession?> GetActiveSessionByPlateAsync(string plateNumber)
+        public async Task<parking_session?> GetActiveSessionByPlateAsync(string plateNumber)
         {
             return await _sessionRepo.GetActiveSessionByPlateAsync(plateNumber.Trim().ToUpperInvariant());
         }
@@ -29,7 +29,7 @@ namespace Parking.Application.UseCases
                 var activeSession = await _sessionRepo.GetActiveSessionByPlateAsync(normalized);
                 if (activeSession != null) return true;
 
-                var session = new ParkingSession
+                var session = new parking_session
                 {
                     plate = normalized,
                     session_code = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper(),
@@ -60,7 +60,7 @@ namespace Parking.Application.UseCases
             return await FinalizeSession(session);
         }
 
-        private async Task<bool> FinalizeSession(ParkingSession? session)
+        private async Task<bool> FinalizeSession(parking_session? session)
         {
             if (session == null) return false;
 
@@ -88,7 +88,7 @@ namespace Parking.Application.UseCases
             return await _sessionRepo.SaveChangesAsync();
         }
 
-        public async Task<ParkingSession?> GetActiveSessionByQrAsync(string qrCode)
+        public async Task<parking_session?> GetActiveSessionByQrAsync(string qrCode)
         {
             return await _sessionRepo.GetActiveSessionByQrAsync(qrCode.Trim());
         }

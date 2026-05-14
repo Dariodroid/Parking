@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace Parking.Domain.Model.Abstractions
 {
-    public interface IUserRepository : IBaseRepository<User>
+    public interface IuserRepository : IBaseRepository<user>
     {
         // --- Autenticación y Seguridad ---
 
         // Para el Login: Busca al usuario por su credencial única
-        Task<User?> GetByEmailAsync(string email);
+        Task<user?> GetByEmailAsync(string email);
 
         // Para verificar si el usuario existe antes de registrarlo
         Task<bool> ExistsByEmailAsync(string email);
@@ -20,10 +20,10 @@ namespace Parking.Domain.Model.Abstractions
         // --- Gestión de Parqueo y Roles ---
 
         // Para obtener usuarios según su rol (ej. 'Admin', 'Operador', 'Cliente')
-        Task<IEnumerable<User>> GetUsersByRoleAsync(string roleName);
+        Task<IEnumerable<user>> GetusersByRoleAsync(string roleName);
 
         // Para saber qué operario está activo en un turno de parqueo
-        Task<IEnumerable<User>> GetActiveOperatorsAsync();
+        Task<IEnumerable<user>> GetActiveOperatorsAsync();
 
         // --- Auditoría y Estado ---
 
@@ -34,8 +34,8 @@ namespace Parking.Domain.Model.Abstractions
         // Registrar el último acceso (útil para auditoría de seguridad)
         Task UpdateLastLoginAsync(int userId);
 
-        Task<bool> ExistsByUsernameAsync(string username);
+        Task<bool> ExistsByusernameAsync(string username);
 
-        Task<User?> GetByUsernameAsync(string username);
+        Task<user?> GetByusernameAsync(string username);
     }
 }

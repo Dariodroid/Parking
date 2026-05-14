@@ -91,7 +91,7 @@ namespace Parking.UI.Windows.ViewModels
                 case "Tipos Vehículo":
 
                     var vehicleVm =
-                        _serviceProvider.GetRequiredService<VehicleTypeViewModel>();
+                        _serviceProvider.GetRequiredService<vehicle_typeViewModel>();
 
                     CurrentView = vehicleVm;
                     PageTitle = "Tipos de Vehículos";
@@ -103,7 +103,7 @@ namespace Parking.UI.Windows.ViewModels
                 case "Usuarios":
 
                     var userVm =
-                        _serviceProvider.GetRequiredService<UserViewModel>();
+                        _serviceProvider.GetRequiredService<userViewModel>();
 
                     CurrentView = userVm;
                     PageTitle = "Gestión de Usuarios";

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace Parking.Domain.Model.Abstractions
 {
-    public interface IVehicleTypeRepository : IBaseRepository<VehicleType>
+    public interface Ivehicle_typeRepository : IBaseRepository<vehicle_type>
     {
-        Task SoftDeleteAsync(VehicleType entity);
+        Task SoftDeleteAsync(vehicle_type entity);
     }
 }

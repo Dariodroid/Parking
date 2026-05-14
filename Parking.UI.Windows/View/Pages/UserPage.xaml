@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.UserPage"
+﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.userPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -268,7 +268,7 @@
                         <TextBlock Text="USUARIO"
                                    Style="{StaticResource LabelStyle}"/>
 
-                        <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox Text="{Binding username, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource InputStyle}"/>
 
                         <TextBlock Text="NOMBRE COMPLETO"
@@ -767,8 +767,8 @@
                 CornerRadius="4"
                 Padding="10">
 
-            <DataGrid ItemsSource="{Binding Users}"
-                      SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+            <DataGrid ItemsSource="{Binding users}"
+                      SelectedItem="{Binding Selecteduser, Mode=TwoWay}"
                       AutoGenerateColumns="False"
                       Background="#1A1A1A"
                       Foreground="White"

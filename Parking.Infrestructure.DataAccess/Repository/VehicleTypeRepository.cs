@@ -4,16 +4,16 @@ using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 
-public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeRepository
+public class vehicle_typeRepository : IBaseRepository<vehicle_type>, Ivehicle_typeRepository
 {
     private readonly parking_dbContext _context;
 
-    public VehicleTypeRepository(parking_dbContext context)
+    public vehicle_typeRepository(parking_dbContext context)
     {
         _context = context;
     }
 
-    public async Task<VehicleType> AddAsync(VehicleType entity)
+    public async Task<vehicle_type> AddAsync(vehicle_type entity)
     {
         await _context.vehicle_types.AddAsync(entity);
 
@@ -32,13 +32,13 @@ public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeR
         }
     }
 
-    public async Task<IEnumerable<VehicleType>> GetAllAsync()
+    public async Task<IEnumerable<vehicle_type>> GetAllAsync()
     {
         return await _context.vehicle_types
             .AsNoTracking()
             .Where(x => !x.is_deleted)
             .OrderBy(x => x.name)
-            .Select(x => new VehicleType
+            .Select(x => new vehicle_type
             {
                 id = x.id,
 
@@ -56,13 +56,13 @@ public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeR
             .ToListAsync();
     }
 
-    public async Task<VehicleType?> GetByIdAsync(long id)
+    public async Task<vehicle_type?> GetByIdAsync(long id)
     {
         return await _context.vehicle_types
             .FirstOrDefaultAsync(x => x.id == id && !x.is_deleted);
     }
 
-    public Task UpdateAsync(VehicleType entity)
+    public Task UpdateAsync(vehicle_type entity)
     {
         _context.vehicle_types.Update(entity);
 
@@ -74,7 +74,7 @@ public class VehicleTypeRepository : IBaseRepository<VehicleType>, IVehicleTypeR
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task SoftDeleteAsync(VehicleType entity)
+    public async Task SoftDeleteAsync(vehicle_type entity)
     {
         _context.vehicle_types.Update(entity);
 

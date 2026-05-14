@@ -5,24 +5,24 @@ using System.Threading.Tasks;
 
 namespace Parking.Infrastructure.DataAccess.Repository
 {
-    public class ParkingSessionRepository : BaseRepository<ParkingSession>, IParkingSessionRepository
+    public class parking_sessionRepository : BaseRepository<parking_session>, Iparking_sessionRepository
     {
-        public ParkingSessionRepository(parking_dbContext context)
+        public parking_sessionRepository(parking_dbContext context)
             : base(context)
         {
         }
 
-        public async Task<ParkingSession?> GetActiveSessionByPlateAsync(string plate)
+        public async Task<parking_session?> GetActiveSessionByPlateAsync(string plate)
         {
-            return await _context.Set<ParkingSession>()
+            return await _context.Set<parking_session>()
                 .FirstOrDefaultAsync(s => s.plate == plate
                                        && s.exit_time == null
                                        && !s.is_deleted);
         }
 
-        public async Task<ParkingSession?> GetActiveSessionByQrAsync(string qrCode)
+        public async Task<parking_session?> GetActiveSessionByQrAsync(string qrCode)
         {
-            return await _context.Set<ParkingSession>()
+            return await _context.Set<parking_session>()
                 .FirstOrDefaultAsync(s => s.qr_data == qrCode
                                        && s.exit_time == null
                                        && !s.is_deleted);

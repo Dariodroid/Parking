@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class ParkingSlot
+public partial class parking_slot
 {
     public int id { get; set; }
 
@@ -17,7 +17,7 @@ public partial class ParkingSlot
 
     public DateTime? updated_at { get; set; }
 
-    public virtual ParkingSession current_session { get; set; }
+    public virtual parking_session current_session { get; set; }
 
-    public virtual ICollection<ParkingSession> parking_sessions { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<parking_session> parking_sessions { get; set; } = new List<parking_session>();
 }

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class FingerprintTemplate
+public partial class fingerprint_template
 {
     public int id { get; set; }
 
@@ -27,7 +27,7 @@ public partial class FingerprintTemplate
 
     public int? deleted_by { get; set; }
 
-    public virtual User enrolled_byNavigation { get; set; }
+    public virtual user enrolled_byNavigation { get; set; }
 
-    public virtual RegisteredVehicle vehicle { get; set; }
+    public virtual registered_vehicle vehicle { get; set; }
 }

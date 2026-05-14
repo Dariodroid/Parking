@@ -33,13 +33,13 @@ namespace Parking.UI.Windows
             });
 
             // ====================== 2. REPOSITORIOS ======================
-            serviceCollection.AddScoped<IParkingSessionRepository, ParkingSessionRepository>();
-            serviceCollection.AddScoped<IVehicleTypeRepository, VehicleTypeRepository>();
-            serviceCollection.AddScoped<IUserRepository, UserRepository>();
+            serviceCollection.AddScoped<Iparking_sessionRepository, parking_sessionRepository>();
+            serviceCollection.AddScoped<Ivehicle_typeRepository, vehicle_typeRepository>();
+            serviceCollection.AddScoped<IuserRepository, userRepository>();
 
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
-                new RfdetrPlateDetector(@"C:\Users\Dario Castillo\source\repos\Parking\Parking.Infreastructure.ExternalServices\Model\rfdetr_alpr.onnx"));
+                new RfdetrPlateDetector(@"C:\users\Dario Castillo\source\repos\Parking\Parking.Infreastructure.ExternalServices\Model\rfdetr_alpr.onnx"));
 
             serviceCollection.AddSingleton<ICameraService, OpenCvCameraService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
@@ -51,8 +51,8 @@ namespace Parking.UI.Windows
             // ====================== 5. VIEWMODELS ======================
             serviceCollection.AddTransient<MainWindowViewModel>();
             serviceCollection.AddTransient<PlateReaderViewModel>();
-            serviceCollection.AddTransient<VehicleTypeViewModel>();
-            serviceCollection.AddTransient<UserViewModel>();
+            serviceCollection.AddTransient<vehicle_typeViewModel>();
+            serviceCollection.AddTransient<userViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();

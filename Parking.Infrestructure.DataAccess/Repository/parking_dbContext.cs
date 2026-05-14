@@ -14,23 +14,25 @@ public partial class parking_dbContext : DbContext
     {
     }
 
-    public virtual DbSet<FingerprintTemplate> fingerprint_templates { get; set; }
+    public virtual DbSet<fingerprint_template> fingerprint_templates { get; set; }
 
-    public virtual DbSet<ParkingSession> parking_sessions { get; set; }
+    public virtual DbSet<monthly_vehicle_schedule> monthly_vehicle_schedules { get; set; }
 
-    public virtual DbSet<ParkingSlot> parking_slots { get; set; }
+    public virtual DbSet<parking_session> parking_sessions { get; set; }
 
-    public virtual DbSet<Payment> payments { get; set; }
+    public virtual DbSet<parking_slot> parking_slots { get; set; }
 
-    public virtual DbSet<RegisteredVehicle> registered_vehicles { get; set; }
+    public virtual DbSet<payment> payments { get; set; }
 
-    public virtual DbSet<User> users { get; set; }
+    public virtual DbSet<registered_vehicle> registered_vehicles { get; set; }
 
-    public virtual DbSet<VehicleType> vehicle_types { get; set; }
+    public virtual DbSet<user> users { get; set; }
+
+    public virtual DbSet<vehicle_type> vehicle_types { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<FingerprintTemplate>(entity =>
+        modelBuilder.Entity<fingerprint_template>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__fingerpr__3213E83FDBBEBB05");
 
@@ -47,7 +49,22 @@ public partial class parking_dbContext : DbContext
                 .HasConstraintName("FK__fingerpri__vehic__412EB0B6");
         });
 
-        modelBuilder.Entity<ParkingSession>(entity =>
+        modelBuilder.Entity<monthly_vehicle_schedule>(entity =>
+        {
+            entity.HasKey(e => e.id).HasName("PK__monthly___3213E83F779E6BD1");
+
+            entity.Property(e => e.created_at)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.is_active).HasDefaultValue(true);
+
+            entity.HasOne(d => d.registered_vehicle).WithMany(p => p.monthly_vehicle_schedules)
+                .HasForeignKey(d => d.registered_vehicle_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__monthly_v__regis__05D8E0BE");
+        });
+
+        modelBuilder.Entity<parking_session>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__parking___3213E83F56D9C37C");
 
@@ -89,14 +106,14 @@ public partial class parking_dbContext : DbContext
                 .HasConstraintName("FK__parking_s__vehic__4316F928");
         });
 
-        modelBuilder.Entity<ParkingSlot>(entity =>
+        modelBuilder.Entity<parking_slot>(entity =>
         {
             entity.HasOne(d => d.current_session).WithMany(p => p.parking_slots)
                 .HasForeignKey(d => d.current_session_id)
                 .HasConstraintName("FK_parking_slots_session");
         });
 
-        modelBuilder.Entity<Payment>(entity =>
+        modelBuilder.Entity<payment>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__payments__3213E83FC860615E");
 
@@ -119,7 +136,7 @@ public partial class parking_dbContext : DbContext
                 .HasConstraintName("FK__payments__sessio__46E78A0C");
         });
 
-        modelBuilder.Entity<RegisteredVehicle>(entity =>
+        modelBuilder.Entity<registered_vehicle>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__register__3213E83F900EC7EE");
 
@@ -127,6 +144,7 @@ public partial class parking_dbContext : DbContext
 
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.is_active).HasDefaultValue(true);
+            entity.Property(e => e.monthly_fee).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.owner_cedula).HasMaxLength(20);
             entity.Property(e => e.owner_email).HasMaxLength(120);
             entity.Property(e => e.owner_name).HasMaxLength(120);
@@ -145,7 +163,7 @@ public partial class parking_dbContext : DbContext
                 .HasConstraintName("FK__registere__vehic__48CFD27E");
         });
 
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.Entity<user>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__users__3213E83FF10AB662");
 
@@ -167,7 +185,7 @@ public partial class parking_dbContext : DbContext
                 .HasMaxLength(50);
         });
 
-        modelBuilder.Entity<VehicleType>(entity =>
+        modelBuilder.Entity<vehicle_type>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__vehicle___3213E83F3F31EEA0");
 

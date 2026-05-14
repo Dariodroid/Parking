@@ -9,20 +9,20 @@ using Parking.UI.Windows.View.Dialogs;
 
 namespace Parking.UI.Windows.ViewModels;
 
-public class VehicleTypeViewModel : BaseViewModel
+public class vehicle_typeViewModel : BaseViewModel
 {
-    private readonly IVehicleTypeRepository _repository;
+    private readonly Ivehicle_typeRepository _repository;
 
-    private readonly int _currentUserId = 1;
+    private readonly int _currentuserId = 1;
 
-    public ObservableCollection<VehicleType> VehicleTypes { get; } = new();
+    public ObservableCollection<vehicle_type> vehicle_types { get; } = new();
 
     public ICommand SaveCommand { get; }
     public ICommand UpdateCommand { get; }
     public ICommand NewCommand { get; }
     public ICommand DeleteCommand { get; }
 
-    public VehicleTypeViewModel(IVehicleTypeRepository repository)
+    public vehicle_typeViewModel(Ivehicle_typeRepository repository)
     {
         _repository = repository;
 
@@ -119,13 +119,13 @@ public class VehicleTypeViewModel : BaseViewModel
         set => SetProperty(ref _statusMessage, value);
     }
 
-    private VehicleType? _selectedVehicleType;
-    public VehicleType? SelectedVehicleType
+    private vehicle_type? _selectedvehicle_type;
+    public vehicle_type? Selectedvehicle_type
     {
-        get => _selectedVehicleType;
+        get => _selectedvehicle_type;
         set
         {
-            if (SetProperty(ref _selectedVehicleType, value) && value != null)
+            if (SetProperty(ref _selectedvehicle_type, value) && value != null)
             {
                 LoadSelected(value);
             }
@@ -146,17 +146,17 @@ public class VehicleTypeViewModel : BaseViewModel
 
     private async Task LoadAsync()
     {
-        VehicleTypes.Clear();
+        vehicle_types.Clear();
 
         var items = await _repository.GetAllAsync();
 
         foreach (var item in items)
         {
-            VehicleTypes.Add(item);
+            vehicle_types.Add(item);
         }
     }
 
-    private void LoadSelected(VehicleType item)
+    private void LoadSelected(vehicle_type item)
     {
         Id = item.id;
 
@@ -210,7 +210,7 @@ public class VehicleTypeViewModel : BaseViewModel
                 return;
             }
 
-            var entity = new VehicleType
+            var entity = new vehicle_type
             {
                 name = Name.Trim(),
                 icon = Icon?.Trim(),
@@ -224,7 +224,7 @@ public class VehicleTypeViewModel : BaseViewModel
                 is_active = IsActive,
 
                 created_at = DateTime.Now,
-                created_by = _currentUserId,
+                created_by = _currentuserId,
 
                 is_deleted = false
             };
@@ -278,7 +278,7 @@ public class VehicleTypeViewModel : BaseViewModel
             entity.is_active = IsActive;
 
             entity.updated_at = DateTime.Now;
-            entity.updated_by = _currentUserId;
+            entity.updated_by = _currentuserId;
 
             await _repository.UpdateAsync(entity);
 
@@ -328,7 +328,7 @@ public class VehicleTypeViewModel : BaseViewModel
 
             entity.is_deleted = true;
             entity.deleted_at = DateTime.Now;
-            entity.deleted_by = _currentUserId;
+            entity.deleted_by = _currentuserId;
 
             await _repository.SoftDeleteAsync(entity);
 
@@ -362,6 +362,6 @@ public class VehicleTypeViewModel : BaseViewModel
 
         IsActive = true;
 
-        SelectedVehicleType = null;
+        Selectedvehicle_type = null;
     }
 }

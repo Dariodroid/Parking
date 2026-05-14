@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class User
+public partial class user
 {
     public int id { get; set; }
 
@@ -39,13 +39,13 @@ public partial class User
 
     public int? deleted_by { get; set; }
 
-    public virtual ICollection<FingerprintTemplate> fingerprint_templates { get; set; } = new List<FingerprintTemplate>();
+    public virtual ICollection<fingerprint_template> fingerprint_templates { get; set; } = new List<fingerprint_template>();
 
-    public virtual ICollection<ParkingSession> parking_sessionentry_operators { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<parking_session> parking_sessionentry_operators { get; set; } = new List<parking_session>();
 
-    public virtual ICollection<ParkingSession> parking_sessionexit_operators { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<parking_session> parking_sessionexit_operators { get; set; } = new List<parking_session>();
 
-    public virtual ICollection<Payment> payments { get; set; } = new List<Payment>();
+    public virtual ICollection<payment> payments { get; set; } = new List<payment>();
 
-    public virtual ICollection<RegisteredVehicle> registered_vehicles { get; set; } = new List<RegisteredVehicle>();
+    public virtual ICollection<registered_vehicle> registered_vehicles { get; set; } = new List<registered_vehicle>();
 }

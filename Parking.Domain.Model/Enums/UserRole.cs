@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Parking.Domain.Model.Enums
 {
-    public enum UserRole
+    public enum userRole
     {
         Administrador = 1,
         Operador = 2

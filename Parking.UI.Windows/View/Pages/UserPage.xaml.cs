@@ -4,9 +4,9 @@ using System.Windows.Controls;
 
 namespace Parking.UI.Windows.View.Pages
 {
-    public partial class UserPage : UserControl
+    public partial class userPage : UserControl
     {
-        public UserPage()
+        public userPage()
         {
             InitializeComponent();
         }
@@ -18,7 +18,7 @@ namespace Parking.UI.Windows.View.Pages
                 PasswordTextBox.Text = PasswordBox.Password;
             }
 
-            if (DataContext is UserViewModel vm)
+            if (DataContext is userViewModel vm)
             {
                 vm.Password = PasswordBox.Password;
             }
@@ -31,7 +31,7 @@ namespace Parking.UI.Windows.View.Pages
                 ConfirmPasswordTextBox.Text = ConfirmPasswordBox.Password;
             }
 
-            if (DataContext is UserViewModel vm)
+            if (DataContext is userViewModel vm)
             {
                 vm.ConfirmPassword = ConfirmPasswordBox.Password;
             }
@@ -44,7 +44,7 @@ namespace Parking.UI.Windows.View.Pages
                 PasswordBox.Password = PasswordTextBox.Text;
             }
 
-            if (DataContext is UserViewModel vm)
+            if (DataContext is userViewModel vm)
             {
                 vm.Password = PasswordTextBox.Text;
             }
@@ -57,7 +57,7 @@ namespace Parking.UI.Windows.View.Pages
                 ConfirmPasswordBox.Password = ConfirmPasswordTextBox.Text;
             }
 
-            if (DataContext is UserViewModel vm)
+            if (DataContext is userViewModel vm)
             {
                 vm.ConfirmPassword = ConfirmPasswordTextBox.Text;
             }

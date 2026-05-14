@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class VehicleType
+public partial class vehicle_type
 {
     public int id { get; set; }
 
@@ -37,7 +37,7 @@ public partial class VehicleType
 
     public decimal fraction_rate { get; set; }
 
-    public virtual ICollection<ParkingSession> parking_sessions { get; set; } = new List<ParkingSession>();
+    public virtual ICollection<parking_session> parking_sessions { get; set; } = new List<parking_session>();
 
-    public virtual ICollection<RegisteredVehicle> registered_vehicles { get; set; } = new List<RegisteredVehicle>();
+    public virtual ICollection<registered_vehicle> registered_vehicles { get; set; } = new List<registered_vehicle>();
 }

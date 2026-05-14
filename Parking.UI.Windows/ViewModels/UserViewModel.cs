@@ -9,24 +9,24 @@ using System.Windows.Input;
 
 namespace Parking.UI.Windows.ViewModels;
 
-public class UserViewModel : BaseViewModel
+public class userViewModel : BaseViewModel
 {
-    private readonly IUserRepository _repository;
-    private readonly int _currentUserId = 1;
+    private readonly IuserRepository _repository;
+    private readonly int _currentuserId = 1;
 
-    public List<UserRole> Roles { get; } =
-    Enum.GetValues(typeof(UserRole))
-        .Cast<UserRole>()
+    public List<userRole> Roles { get; } =
+    Enum.GetValues(typeof(userRole))
+        .Cast<userRole>()
         .ToList();
 
-    public ObservableCollection<User> Users { get; } = new();
+    public ObservableCollection<user> users { get; } = new();
 
     public ICommand SaveCommand { get; }
     public ICommand UpdateCommand { get; }
     public ICommand DeleteCommand { get; }
     public ICommand NewCommand { get; }
 
-    public UserViewModel(IUserRepository repository)
+    public userViewModel(IuserRepository repository)
     {
         _repository = repository;
 
@@ -44,7 +44,7 @@ public class UserViewModel : BaseViewModel
     }
 
     private string _username = string.Empty;
-    public string Username
+    public string username
     {
         get => _username;
         set => SetProperty(ref _username, value);
@@ -57,9 +57,9 @@ public class UserViewModel : BaseViewModel
         set => SetProperty(ref _fullName, value);
     }
 
-    private UserRole _selectedRole = UserRole.Operador;
+    private userRole _selectedRole = userRole.Operador;
 
-    public UserRole SelectedRole
+    public userRole SelectedRole
     {
         get => _selectedRole;
         set => SetProperty(ref _selectedRole, value);
@@ -93,13 +93,13 @@ public class UserViewModel : BaseViewModel
         set => SetProperty(ref _statusMessage, value);
     }
 
-    private User? _selectedUser;
-    public User? SelectedUser
+    private user? _selecteduser;
+    public user? Selecteduser
     {
-        get => _selectedUser;
+        get => _selecteduser;
         set
         {
-            if (SetProperty(ref _selectedUser, value) && value != null)
+            if (SetProperty(ref _selecteduser, value) && value != null)
                 LoadSelected(value);
         }
     }
@@ -111,20 +111,20 @@ public class UserViewModel : BaseViewModel
 
     private async Task LoadAsync()
     {
-        Users.Clear();
+        users.Clear();
 
         var items = await _repository.GetAllAsync();
 
         foreach (var item in items)
-            Users.Add(item);
+            users.Add(item);
     }
 
-    private void LoadSelected(User item)
+    private void LoadSelected(user item)
     {
         Id = item.id;
-        Username = item.username;
+        username = item.username;
         FullName = item.full_name;
-        Enum.Parse<UserRole>(item.role);
+        Enum.Parse<userRole>(item.role);
         IsActive = item.is_active;
         Password = string.Empty;
         ConfirmPassword = string.Empty;
@@ -132,7 +132,7 @@ public class UserViewModel : BaseViewModel
 
     private bool Validate(bool requirePassword)
     {
-        if (string.IsNullOrWhiteSpace(Username))
+        if (string.IsNullOrWhiteSpace(username))
         {
             StatusMessage = "Ingrese el usuario.";
             return false;
@@ -144,7 +144,7 @@ public class UserViewModel : BaseViewModel
             return false;
         }
 
-        if (!Enum.IsDefined(typeof(UserRole), SelectedRole))
+        if (!Enum.IsDefined(typeof(userRole), SelectedRole))
         {
             StatusMessage = "Seleccione el rol.";
             return false;
@@ -175,7 +175,7 @@ public class UserViewModel : BaseViewModel
             if (!Validate(true))
                 return;
 
-            var exists = await _repository.ExistsByUsernameAsync(Username);
+            var exists = await _repository.ExistsByusernameAsync(username);
 
             if (exists)
             {
@@ -183,15 +183,15 @@ public class UserViewModel : BaseViewModel
                 return;
             }
 
-            var entity = new User
+            var entity = new user
             {
-                username = Username.Trim(),
+                username = username.Trim(),
                 full_name = FullName.Trim(),
                 role = SelectedRole.ToString(),
                 password_hash = BCrypt.Net.BCrypt.HashPassword(Password),
                 is_active = IsActive,
                 created_at = DateTime.Now,
-                created_by = _currentUserId,
+                created_by = _currentuserId,
                 login_attempts = 0,
                 is_deleted = false
             };
@@ -232,12 +232,12 @@ public class UserViewModel : BaseViewModel
             return;
         }
 
-        entity.username = Username.Trim();
+        entity.username = username.Trim();
         entity.full_name = FullName.Trim();
         entity.role = SelectedRole.ToString();
         entity.is_active = IsActive;
         entity.updated_at = DateTime.Now;
-        entity.updated_by = _currentUserId;
+        entity.updated_by = _currentuserId;
 
         if (!string.IsNullOrWhiteSpace(Password))
         {
@@ -278,7 +278,7 @@ public class UserViewModel : BaseViewModel
 
         entity.is_deleted = true;
         entity.deleted_at = DateTime.Now;
-        entity.deleted_by = _currentUserId;
+        entity.deleted_by = _currentuserId;
 
         await _repository.UpdateAsync(entity);
 
@@ -292,11 +292,11 @@ public class UserViewModel : BaseViewModel
     private void ClearForm()
     {
         Id = 0;
-        Username = string.Empty;
+        username = string.Empty;
         FullName = string.Empty;
-        SelectedRole = UserRole.Operador; Password = string.Empty;
+        SelectedRole = userRole.Operador; Password = string.Empty;
         ConfirmPassword = string.Empty;
         IsActive = true;
-        SelectedUser = null;
+        Selecteduser = null;
     }
 }

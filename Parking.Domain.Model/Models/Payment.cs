@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class Payment
+public partial class payment
 {
     public long id { get; set; }
 
@@ -31,7 +31,7 @@ public partial class Payment
 
     public int? deleted_by { get; set; }
 
-    public virtual User collected_byNavigation { get; set; }
+    public virtual user collected_byNavigation { get; set; }
 
-    public virtual ParkingSession session { get; set; }
+    public virtual parking_session session { get; set; }
 }

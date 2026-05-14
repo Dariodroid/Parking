@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class ParkingSession
+public partial class parking_session
 {
     public long id { get; set; }
 
@@ -57,17 +57,17 @@ public partial class ParkingSession
 
     public bool has_key_deposit { get; set; }
 
-    public virtual User entry_operator { get; set; }
+    public virtual user entry_operator { get; set; }
 
-    public virtual User exit_operator { get; set; }
+    public virtual user exit_operator { get; set; }
 
-    public virtual ParkingSlot parking_slot { get; set; }
+    public virtual parking_slot parking_slot { get; set; }
 
-    public virtual ICollection<ParkingSlot> parking_slots { get; set; } = new List<ParkingSlot>();
+    public virtual ICollection<parking_slot> parking_slots { get; set; } = new List<parking_slot>();
 
-    public virtual ICollection<Payment> payments { get; set; } = new List<Payment>();
+    public virtual ICollection<payment> payments { get; set; } = new List<payment>();
 
-    public virtual RegisteredVehicle registered_vehicle { get; set; }
+    public virtual registered_vehicle registered_vehicle { get; set; }
 
-    public virtual VehicleType vehicle_type { get; set; }
+    public virtual vehicle_type vehicle_type { get; set; }
 }

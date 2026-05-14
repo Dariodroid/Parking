@@ -4,28 +4,28 @@ using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 
-public class UserRepository : IBaseRepository<User>, IUserRepository
+public class userRepository : IBaseRepository<user>, IuserRepository
 {
     private readonly parking_dbContext _context;
 
-    public UserRepository(parking_dbContext context)
+    public userRepository(parking_dbContext context)
     {
         _context = context;
     }
 
-    public async Task<User> AddAsync(User entity)
+    public async Task<user> AddAsync(user entity)
     {
         await _context.users.AddAsync(entity);
         return entity;
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<IEnumerable<user>> GetAllAsync()
     {
         return await _context.users
             .AsNoTracking()
             .Where(x => !x.is_deleted)
             .OrderBy(x => x.full_name)
-            .Select(x => new User
+            .Select(x => new user
             {
                 id = x.id,
                 username = x.username,
@@ -39,7 +39,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
             .ToListAsync();
     }
 
-    public async Task<User?> GetByIdAsync(long id)
+    public async Task<user?> GetByIdAsync(long id)
     {
         return await _context.users
             .FirstOrDefaultAsync(x =>
@@ -47,7 +47,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
                 !x.is_deleted);
     }
 
-    public async Task<User?> GetByEmailAsync(string email)
+    public async Task<user?> GetByEmailAsync(string email)
     {
         return await _context.users
             .AsNoTracking()
@@ -64,7 +64,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
                 !x.is_deleted);
     }
 
-    public async Task<IEnumerable<User>> GetUsersByRoleAsync(string roleName)
+    public async Task<IEnumerable<user>> GetusersByRoleAsync(string roleName)
     {
         return await _context.users
             .AsNoTracking()
@@ -75,7 +75,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<User>> GetActiveOperatorsAsync()
+    public async Task<IEnumerable<user>> GetActiveOperatorsAsync()
     {
         return await _context.users
             .AsNoTracking()
@@ -119,7 +119,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
         _context.users.Update(user);
     }
 
-    public Task UpdateAsync(User entity)
+    public Task UpdateAsync(user entity)
     {
         _context.users.Update(entity);
         return Task.CompletedTask;
@@ -146,7 +146,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> ExistsByUsernameAsync(string username)
+    public async Task<bool> ExistsByusernameAsync(string username)
     {
         return await _context.users
             .AnyAsync(x =>
@@ -154,7 +154,7 @@ public class UserRepository : IBaseRepository<User>, IUserRepository
                 !x.is_deleted);
     }
 
-    public async Task<User?> GetByUsernameAsync(string username)
+    public async Task<user?> GetByusernameAsync(string username)
     {
         return await _context.users
             .FirstOrDefaultAsync(x =>

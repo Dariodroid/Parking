@@ -7,7 +7,7 @@ namespace Parking.Application.EntityService
         Task<bool> RegisterEntryAsync(string plateNumber);
         Task<bool> RegisterExitByPlateAsync(string plateNumber);
         Task<bool> RegisterExitByQrAsync(string qrCode);
-        Task<ParkingSession?> GetActiveSessionByPlateAsync(string plateNumber);
-        Task<ParkingSession?> GetActiveSessionByQrAsync(string qrCode);
+        Task<parking_session?> GetActiveSessionByPlateAsync(string plateNumber);
+        Task<parking_session?> GetActiveSessionByQrAsync(string qrCode);
     }
 }

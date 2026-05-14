@@ -17,11 +17,11 @@ using System.Windows.Shapes;
 namespace Parking.UI.Windows.View.Pages
 {
     /// <summary>
-    /// Lógica de interacción para VehicleTypePage.xaml
+    /// Lógica de interacción para vehicle_typePage.xaml
     /// </summary>
-    public partial class VehicleTypePage : UserControl
+    public partial class vehicle_typePage : UserControl
     {
-        public VehicleTypePage()
+        public vehicle_typePage()
         {
             InitializeComponent();
         }

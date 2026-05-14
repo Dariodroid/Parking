@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class RegisteredVehicle
+public partial class registered_vehicle
 {
     public int id { get; set; }
 
@@ -39,11 +39,19 @@ public partial class RegisteredVehicle
 
     public int? deleted_by { get; set; }
 
-    public virtual User created_byNavigation { get; set; }
+    public decimal? monthly_fee { get; set; }
 
-    public virtual ICollection<FingerprintTemplate> fingerprint_templates { get; set; } = new List<FingerprintTemplate>();
+    public DateTime? monthly_start_date { get; set; }
 
-    public virtual ICollection<ParkingSession> parking_sessions { get; set; } = new List<ParkingSession>();
+    public DateTime? monthly_end_date { get; set; }
 
-    public virtual VehicleType vehicle_type { get; set; }
+    public virtual user created_byNavigation { get; set; }
+
+    public virtual ICollection<fingerprint_template> fingerprint_templates { get; set; } = new List<fingerprint_template>();
+
+    public virtual ICollection<monthly_vehicle_schedule> monthly_vehicle_schedules { get; set; } = new List<monthly_vehicle_schedule>();
+
+    public virtual ICollection<parking_session> parking_sessions { get; set; } = new List<parking_session>();
+
+    public virtual vehicle_type vehicle_type { get; set; }
 }
