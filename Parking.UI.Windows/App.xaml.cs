@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Parking.Application.EntityService;
 using Parking.Application.UseCases;
 using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Models;
 using Parking.Infrastructure.DataAccess;
 using Parking.Infrastructure.DataAccess.Repository;
 using Parking.Infrastructure.ExternalServices;
@@ -36,6 +37,8 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<Iparking_sessionRepository, parking_sessionRepository>();
             serviceCollection.AddScoped<Ivehicle_typeRepository, vehicle_typeRepository>();
             serviceCollection.AddScoped<IuserRepository, userRepository>();
+            serviceCollection.AddScoped<IBaseRepository<vehicle_type>, BaseRepository<vehicle_type>>();
+            serviceCollection.AddScoped<IRegisteredVehicle, RegisteredVehicleRepository>();
 
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
@@ -53,6 +56,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<PlateReaderViewModel>();
             serviceCollection.AddTransient<vehicle_typeViewModel>();
             serviceCollection.AddTransient<userViewModel>();
+            serviceCollection.AddTransient<RegisteredVehicleViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();

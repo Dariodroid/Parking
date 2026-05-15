@@ -4,13 +4,29 @@
              xmlns:local="clr-namespace:Parking.UI.Windows"
              xmlns:vm="clr-namespace:Parking.UI.Windows.ViewModels"
              xmlns:views="clr-namespace:Parking.UI.Windows.View.Pages">
+
     <Application.Resources>
-        <!-- ViewModel → View -->
+
+        <!-- PLACAS -->
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
             <views:PlateReaderPage/>
         </DataTemplate>
+
+        <!-- TIPOS VEHÍCULO -->
         <DataTemplate DataType="{x:Type vm:vehicle_typeViewModel}">
             <views:vehicle_typePage/>
         </DataTemplate>
+
+        <!-- USUARIOS -->
+        <DataTemplate DataType="{x:Type vm:userViewModel}">
+            <views:userPage/>
+        </DataTemplate>
+
+        <!-- CLIENTES -->
+        <DataTemplate DataType="{x:Type vm:RegisteredVehicleViewModel}">
+            <views:RegisteredVehiclePage/>
+        </DataTemplate>
+
     </Application.Resources>
+
 </Application>

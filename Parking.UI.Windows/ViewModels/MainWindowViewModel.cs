@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Parking.Domain.Model.Models;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Windows.Input;
 
@@ -70,12 +71,6 @@ namespace Parking.UI.Windows.ViewModels
 
                     break;
 
-                case "Clientes":
-
-                    PageTitle = "Gestión de Clientes";
-
-                    break;
-
                 case "Seguridad":
 
                     PageTitle = "Seguridad";
@@ -97,6 +92,18 @@ namespace Parking.UI.Windows.ViewModels
                     PageTitle = "Tipos de Vehículos";
 
                     await vehicleVm.InitializeAsync();
+
+                    break;
+
+                case "Clientes":
+
+                    var client =
+                        _serviceProvider.GetRequiredService<RegisteredVehicleViewModel>();
+
+                    CurrentView = client;
+                    PageTitle = "Clientes";
+
+                    await client.InitializeAsync();
 
                     break;
 
