@@ -76,8 +76,10 @@
 
                                     <ContentPresenter Margin="10,0,35,0"
                                                       VerticalAlignment="Center"
-                                                      HorizontalAlignment="Left"
+                                                      HorizontalAlignment="Stretch"
                                                       Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      RecognizesAccessKey="True"
                                                       TextElement.Foreground="White"/>
 
                                     <ToggleButton Grid.Column="1"
@@ -351,11 +353,21 @@
                                 <TextBlock Text="TIPO VEHÍCULO"
                                            Style="{StaticResource LabelStyle}"/>
 
+
+
                                 <ComboBox ItemsSource="{Binding VehicleTypes}"
-                                          SelectedValue="{Binding VehicleTypeId}"
-                                          SelectedValuePath="id"
-                                          DisplayMemberPath="name"
-                                          Style="{StaticResource DarkComboBoxStyle}"/>
+          SelectedValue="{Binding VehicleTypeId, Mode=TwoWay}"
+          SelectedValuePath="id"
+          Style="{StaticResource DarkComboBoxStyle}">
+
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding name}"
+                       Foreground="White"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+
+                                </ComboBox>
 
                             </StackPanel>
 

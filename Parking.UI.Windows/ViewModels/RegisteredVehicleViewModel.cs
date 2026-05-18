@@ -17,7 +17,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
     private readonly int _currentUserId = 1;
 
     public ObservableCollection<registered_vehicle> RegisteredVehicles { get; } = new();
-
     public ObservableCollection<vehicle_type> VehicleTypes { get; } = new();
 
     public ICommand SaveCommand { get; }
@@ -33,11 +32,8 @@ public class RegisteredVehicleViewModel : BaseViewModel
         _vehicleTypeRepository = vehicleTypeRepository;
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync());
-
         UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
-
         DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
-
         NewCommand = new RelayCommand(_ => ClearForm());
     }
 
@@ -98,15 +94,12 @@ public class RegisteredVehicleViewModel : BaseViewModel
         get => _monthlyFee;
         set
         {
-            if (value < 0)
-                value = 0;
-
+            if (value < 0) value = 0;
             SetProperty(ref _monthlyFee, value);
         }
     }
 
     private DateTime? _monthlyStartDate = DateTime.Today;
-
     public DateTime? MonthlyStartDate
     {
         get => _monthlyStartDate;
@@ -114,7 +107,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private DateTime? _monthlyEndDate = DateTime.Today.AddMonths(1);
-
     public DateTime? MonthlyEndDate
     {
         get => _monthlyEndDate;
@@ -122,7 +114,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _notes = string.Empty;
-
     public string Notes
     {
         get => _notes;
@@ -130,7 +121,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private bool _isActive = true;
-
     public bool IsActive
     {
         get => _isActive;
@@ -138,7 +128,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _statusMessage = string.Empty;
-
     public string StatusMessage
     {
         get => _statusMessage;
@@ -146,16 +135,13 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private registered_vehicle? _selectedRegisteredVehicle;
-
     public registered_vehicle? SelectedRegisteredVehicle
     {
         get => _selectedRegisteredVehicle;
         set
         {
             if (SetProperty(ref _selectedRegisteredVehicle, value) && value != null)
-            {
                 LoadSelected(value);
-            }
         }
     }
 
@@ -165,13 +151,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
     public async Task InitializeAsync()
     {
-        if (_isLoaded)
-            return;
+        if (_isLoaded) return;
 
         _isLoaded = true;
 
         await LoadVehicleTypesAsync();
-
         await LoadAsync();
     }
 
@@ -184,9 +168,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         foreach (var item in items)
         {
             if (!item.is_deleted)
-            {
                 VehicleTypes.Add(item);
-            }
         }
     }
 
@@ -199,36 +181,27 @@ public class RegisteredVehicleViewModel : BaseViewModel
         foreach (var item in items)
         {
             if (!item.is_deleted)
-            {
                 RegisteredVehicles.Add(item);
-            }
         }
     }
 
     private void LoadSelected(registered_vehicle item)
     {
         Id = item.id;
-
         Plate = item.plate;
 
         VehicleTypeId = item.vehicle_type_id;
 
         OwnerName = item.owner_name ?? string.Empty;
-
         OwnerPhone = item.owner_phone ?? string.Empty;
-
         OwnerEmail = item.owner_email ?? string.Empty;
-
         OwnerCedula = item.owner_cedula ?? string.Empty;
 
         MonthlyFee = item.monthly_fee;
-
         MonthlyStartDate = item.monthly_start_date;
-
         MonthlyEndDate = item.monthly_end_date;
 
         Notes = item.notes ?? string.Empty;
-
         IsActive = item.is_active;
     }
 
@@ -277,8 +250,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         try
         {
-            if (!Validate())
-                return;
+            if (!Validate()) return;
 
             var exists = await _repository.ExistsByPlateAsync(Plate.Trim());
 
@@ -291,42 +263,27 @@ public class RegisteredVehicleViewModel : BaseViewModel
             var entity = new registered_vehicle
             {
                 plate = Plate.Trim().ToUpper(),
-
                 vehicle_type_id = VehicleTypeId,
-
                 owner_name = OwnerName?.Trim(),
-
                 owner_phone = OwnerPhone?.Trim(),
-
                 owner_email = OwnerEmail?.Trim(),
-
                 owner_cedula = OwnerCedula?.Trim(),
-
                 monthly_fee = MonthlyFee,
-
                 monthly_start_date = MonthlyStartDate,
-
                 monthly_end_date = MonthlyEndDate,
-
                 notes = Notes?.Trim(),
-
                 is_active = IsActive,
-
                 created_at = DateTime.Now,
-
                 created_by = _currentUserId,
-
                 is_deleted = false
             };
 
             await _repository.AddAsync(entity);
-
             await _repository.SaveChangesAsync();
 
             StatusMessage = "Cliente mensualizado registrado.";
 
             await LoadAsync();
-
             ClearForm();
         }
         catch (Exception ex)
@@ -339,8 +296,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         try
         {
-            if (!Validate())
-                return;
+            if (!Validate()) return;
 
             if (Id == 0)
             {
@@ -357,39 +313,25 @@ public class RegisteredVehicleViewModel : BaseViewModel
             }
 
             entity.plate = Plate.Trim().ToUpper();
-
             entity.vehicle_type_id = VehicleTypeId;
-
             entity.owner_name = OwnerName?.Trim();
-
             entity.owner_phone = OwnerPhone?.Trim();
-
             entity.owner_email = OwnerEmail?.Trim();
-
             entity.owner_cedula = OwnerCedula?.Trim();
-
             entity.monthly_fee = MonthlyFee;
-
             entity.monthly_start_date = MonthlyStartDate;
-
             entity.monthly_end_date = MonthlyEndDate;
-
             entity.notes = Notes?.Trim();
-
             entity.is_active = IsActive;
-
             entity.updated_at = DateTime.Now;
-
             entity.updated_by = _currentUserId;
 
             await _repository.UpdateAsync(entity);
-
             await _repository.SaveChangesAsync();
 
             StatusMessage = "Registro actualizado.";
 
             await LoadAsync();
-
             ClearForm();
         }
         catch (Exception ex)
@@ -429,13 +371,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
             }
 
             await _repository.SoftDeleteAsync(entity, _currentUserId);
-
             await _repository.SaveChangesAsync();
 
             StatusMessage = "Registro eliminado.";
 
             await LoadAsync();
-
             ClearForm();
         }
         catch (Exception ex)
@@ -447,29 +387,17 @@ public class RegisteredVehicleViewModel : BaseViewModel
     private void ClearForm()
     {
         Id = 0;
-
         Plate = string.Empty;
-
         VehicleTypeId = 0;
-
         OwnerName = string.Empty;
-
         OwnerPhone = string.Empty;
-
         OwnerEmail = string.Empty;
-
         OwnerCedula = string.Empty;
-
         MonthlyFee = 0;
-
         MonthlyStartDate = DateTime.Today;
-
         MonthlyEndDate = DateTime.Today.AddMonths(1);
-
         Notes = string.Empty;
-
         IsActive = true;
-
         SelectedRegisteredVehicle = null;
     }
 }
