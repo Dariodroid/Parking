@@ -11,7 +11,7 @@ public partial class payment
 
     public long session_id { get; set; }
 
-    public decimal amount_due { get; set; }
+    public decimal amount_paid { get; set; }
 
     public string payment_method { get; set; }
 
@@ -31,7 +31,13 @@ public partial class payment
 
     public int? deleted_by { get; set; }
 
+    public DateTime? updated_at { get; set; }
+
+    public int? updated_by { get; set; }
+
     public virtual user collected_byNavigation { get; set; }
 
     public virtual parking_session session { get; set; }
+
+    public virtual user updated_byNavigation { get; set; }
 }

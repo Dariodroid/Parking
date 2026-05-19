@@ -1,9 +1,8 @@
 ﻿using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
+using Parking.UI.Windows.View.Dialogs;
 using Parking.UI.Windows.ViewModels.Base;
-using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -12,16 +11,24 @@ namespace Parking.UI.Windows.ViewModels;
 public class RegisteredVehicleViewModel : BaseViewModel
 {
     private readonly IRegisteredVehicle _repository;
+
     private readonly IBaseRepository<vehicle_type> _vehicleTypeRepository;
 
     private readonly int _currentUserId = 1;
 
     public ObservableCollection<registered_vehicle> RegisteredVehicles { get; } = new();
+
     public ObservableCollection<vehicle_type> VehicleTypes { get; } = new();
 
+    public ObservableCollection<VehicleScheduleItemViewModel> VehicleSchedules { get; }
+    = new();
+
     public ICommand SaveCommand { get; }
+
     public ICommand UpdateCommand { get; }
+
     public ICommand DeleteCommand { get; }
+
     public ICommand NewCommand { get; }
 
     public RegisteredVehicleViewModel(
@@ -29,17 +36,24 @@ public class RegisteredVehicleViewModel : BaseViewModel
         IBaseRepository<vehicle_type> vehicleTypeRepository)
     {
         _repository = repository;
+
         _vehicleTypeRepository = vehicleTypeRepository;
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync());
+
         UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
+
         DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
+
         NewCommand = new RelayCommand(_ => ClearForm());
+
+        InitializeSchedules();
     }
 
     #region PROPERTIES
 
     private int _id;
+
     public int Id
     {
         get => _id;
@@ -47,6 +61,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _plate = string.Empty;
+
     public string Plate
     {
         get => _plate;
@@ -54,6 +69,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private int _vehicleTypeId;
+
     public int VehicleTypeId
     {
         get => _vehicleTypeId;
@@ -61,6 +77,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _ownerName = string.Empty;
+
     public string OwnerName
     {
         get => _ownerName;
@@ -68,6 +85,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _ownerPhone = string.Empty;
+
     public string OwnerPhone
     {
         get => _ownerPhone;
@@ -75,6 +93,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _ownerEmail = string.Empty;
+
     public string OwnerEmail
     {
         get => _ownerEmail;
@@ -82,6 +101,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _ownerCedula = string.Empty;
+
     public string OwnerCedula
     {
         get => _ownerCedula;
@@ -89,17 +109,21 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private decimal? _monthlyFee;
+
     public decimal? MonthlyFee
     {
         get => _monthlyFee;
         set
         {
-            if (value < 0) value = 0;
+            if (value < 0)
+                value = 0;
+
             SetProperty(ref _monthlyFee, value);
         }
     }
 
     private DateTime? _monthlyStartDate = DateTime.Today;
+
     public DateTime? MonthlyStartDate
     {
         get => _monthlyStartDate;
@@ -107,6 +131,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private DateTime? _monthlyEndDate = DateTime.Today.AddMonths(1);
+
     public DateTime? MonthlyEndDate
     {
         get => _monthlyEndDate;
@@ -114,6 +139,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _notes = string.Empty;
+
     public string Notes
     {
         get => _notes;
@@ -121,6 +147,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private bool _isActive = true;
+
     public bool IsActive
     {
         get => _isActive;
@@ -128,6 +155,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private string _statusMessage = string.Empty;
+
     public string StatusMessage
     {
         get => _statusMessage;
@@ -135,13 +163,17 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     private registered_vehicle? _selectedRegisteredVehicle;
+
     public registered_vehicle? SelectedRegisteredVehicle
     {
         get => _selectedRegisteredVehicle;
         set
         {
-            if (SetProperty(ref _selectedRegisteredVehicle, value) && value != null)
+            if (SetProperty(ref _selectedRegisteredVehicle, value)
+                && value != null)
+            {
                 LoadSelected(value);
+            }
         }
     }
 
@@ -149,13 +181,91 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
     private bool _isLoaded;
 
+    private void InitializeSchedules()
+    {
+        VehicleSchedules.Clear();
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 1,
+            DayName = "LUNES",
+            IsEnabled = true,
+            StartTime = new TimeSpan(7, 0, 0),
+            EndTime = new TimeSpan(19, 0, 0),
+            IsFullDay = false
+        });
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 2,
+            DayName = "MARTES",
+            IsEnabled = true,
+            StartTime = new TimeSpan(7, 0, 0),
+            EndTime = new TimeSpan(19, 0, 0),
+            IsFullDay = false
+        });
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 3,
+            DayName = "MIÉRCOLES",
+            IsEnabled = true,
+            StartTime = new TimeSpan(7, 0, 0),
+            EndTime = new TimeSpan(19, 0, 0),
+            IsFullDay = false
+        });
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 4,
+            DayName = "JUEVES",
+            IsEnabled = true,
+            StartTime = new TimeSpan(7, 0, 0),
+            EndTime = new TimeSpan(19, 0, 0),
+            IsFullDay = false
+        });
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 5,
+            DayName = "VIERNES",
+            IsEnabled = true,
+            StartTime = new TimeSpan(7, 0, 0),
+            EndTime = new TimeSpan(19, 0, 0),
+            IsFullDay = false
+        });
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 6,
+            DayName = "SÁBADO",
+            IsEnabled = true,
+            StartTime = new TimeSpan(8, 0, 0),
+            EndTime = new TimeSpan(18, 0, 0),
+            IsFullDay = false
+        });
+
+        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        {
+            DayOfWeek = 0,
+            DayName = "DOMINGO",
+            IsEnabled = false,
+            StartTime = new TimeSpan(8, 0, 0),
+            EndTime = new TimeSpan(18, 0, 0),
+            IsFullDay = false
+        });
+    }
     public async Task InitializeAsync()
     {
-        if (_isLoaded) return;
+        if (_isLoaded)
+            return;
 
         _isLoaded = true;
 
         await LoadVehicleTypesAsync();
+
+        InitializeSchedules();
+
         await LoadAsync();
     }
 
@@ -168,7 +278,9 @@ public class RegisteredVehicleViewModel : BaseViewModel
         foreach (var item in items)
         {
             if (!item.is_deleted)
+            {
                 VehicleTypes.Add(item);
+            }
         }
     }
 
@@ -176,35 +288,104 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         RegisteredVehicles.Clear();
 
-        var items = await _repository.GetAllAsync();
+        var items =
+            await _repository.GetAllCompleteAsync();
 
         foreach (var item in items)
         {
-            if (!item.is_deleted)
-                RegisteredVehicles.Add(item);
+            RegisteredVehicles.Add(item);
         }
     }
 
-    private void LoadSelected(registered_vehicle item)
+    private void LoadSelected(
+        registered_vehicle item)
     {
         Id = item.id;
+
         Plate = item.plate;
 
         VehicleTypeId = item.vehicle_type_id;
 
         OwnerName = item.owner_name ?? string.Empty;
+
         OwnerPhone = item.owner_phone ?? string.Empty;
+
         OwnerEmail = item.owner_email ?? string.Empty;
+
         OwnerCedula = item.owner_cedula ?? string.Empty;
 
-        MonthlyFee = item.monthly_fee;
-        MonthlyStartDate = item.monthly_start_date;
-        MonthlyEndDate = item.monthly_end_date;
-
         Notes = item.notes ?? string.Empty;
-        IsActive = item.is_active;
-    }
 
+        IsActive = item.is_active;
+
+        // =========================
+        // PLAN
+        // =========================
+
+        if (item.vehicle_monthly_plan != null)
+        {
+            MonthlyFee =
+                item.vehicle_monthly_plan.monthly_fee;
+
+            MonthlyStartDate =
+                item.vehicle_monthly_plan.start_date;
+
+            MonthlyEndDate =
+                item.vehicle_monthly_plan.end_date;
+        }
+
+        // =========================
+        // RESETEAR HORARIOS
+        // =========================
+
+        foreach (var schedule in VehicleSchedules)
+        {
+            schedule.IsEnabled = false;
+
+            schedule.IsFullDay = false;
+
+            schedule.StartTime =
+                new TimeSpan(7, 0, 0);
+
+            schedule.EndTime =
+                new TimeSpan(19, 0, 0);
+        }
+
+        // =========================
+        // CARGAR HORARIOS REALES
+        // =========================
+
+        if (item.monthly_vehicle_schedules != null
+            && item.monthly_vehicle_schedules.Any())
+        {
+            foreach (var schedule
+                in VehicleSchedules)
+            {
+                var dbSchedule =
+                    item.monthly_vehicle_schedules
+                        .Where(x => !x.is_deleted)
+                        .FirstOrDefault(x =>
+                            x.day_of_week ==
+                            schedule.DayOfWeek);
+
+                if (dbSchedule != null)
+                {
+                    schedule.IsEnabled = true;
+
+                    schedule.StartTime =
+                        dbSchedule.start_time
+                            .ToTimeSpan();
+
+                    schedule.EndTime =
+                        dbSchedule.end_time
+                            .ToTimeSpan();
+
+                    schedule.IsFullDay =
+                        dbSchedule.is_full_day;
+                }
+            }
+        }
+    }
     private bool Validate()
     {
         if (string.IsNullOrWhiteSpace(Plate))
@@ -221,19 +402,19 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
         if (MonthlyFee == null || MonthlyFee <= 0)
         {
-            StatusMessage = "Ingrese la mensualidad.";
+            StatusMessage = "Ingrese el valor mensual.";
             return false;
         }
 
         if (MonthlyStartDate == null)
         {
-            StatusMessage = "Seleccione la fecha inicial.";
+            StatusMessage = "Seleccione fecha inicial.";
             return false;
         }
 
         if (MonthlyEndDate == null)
         {
-            StatusMessage = "Seleccione la fecha final.";
+            StatusMessage = "Seleccione fecha final.";
             return false;
         }
 
@@ -250,40 +431,150 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         try
         {
-            if (!Validate()) return;
+            if (!Validate())
+                return;
 
-            var exists = await _repository.ExistsByPlateAsync(Plate.Trim());
+            var exists =
+                await _repository.ExistsByPlateAsync(
+                    Plate.Trim().ToUpper());
 
             if (exists)
             {
-                StatusMessage = "La placa ya está registrada.";
+                StatusMessage =
+                    "La placa ya existe.";
+
                 return;
             }
 
-            var entity = new registered_vehicle
+            // =========================
+            // 1. GUARDAR VEHÍCULO
+            // =========================
+
+            var vehicle = new registered_vehicle
             {
                 plate = Plate.Trim().ToUpper(),
+
                 vehicle_type_id = VehicleTypeId,
+
                 owner_name = OwnerName?.Trim(),
+
                 owner_phone = OwnerPhone?.Trim(),
+
                 owner_email = OwnerEmail?.Trim(),
+
                 owner_cedula = OwnerCedula?.Trim(),
-                monthly_fee = MonthlyFee,
-                monthly_start_date = MonthlyStartDate,
-                monthly_end_date = MonthlyEndDate,
+
                 notes = Notes?.Trim(),
+
                 is_active = IsActive,
+
                 created_at = DateTime.Now,
+
                 created_by = _currentUserId,
+
                 is_deleted = false
             };
 
-            await _repository.AddAsync(entity);
+            await _repository.AddAsync(vehicle);
+
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Cliente mensualizado registrado.";
+            // YA TENEMOS EL ID
+            int registeredVehicleId = vehicle.id;
+
+            // =========================
+            // 2. GUARDAR PLAN
+            // =========================
+
+            var plan = new vehicle_monthly_plan
+            {
+                registered_vehicle_id =
+                    registeredVehicleId,
+
+                monthly_fee =
+                    MonthlyFee ?? 0,
+
+                start_date =
+                    MonthlyStartDate ??
+                    DateTime.Today,
+
+                end_date =
+                    MonthlyEndDate ??
+                    DateTime.Today.AddMonths(1),
+
+                payment_date = DateTime.Now,
+
+                is_active = IsActive,
+
+                notes = Notes?.Trim(),
+
+                created_at = DateTime.Now,
+
+                created_by = _currentUserId,
+
+                is_deleted = false,
+
+                status = IsActive
+                    ? "active"
+                    : "cancelled",
+
+                collected_by = _currentUserId
+            };
+
+            await _repository
+                .AddMonthlyPlanAsync(plan);
+
+            await _repository.SaveChangesAsync();
+
+            // =========================
+            // 3. GUARDAR HORARIOS
+            // =========================
+
+            var schedules =
+                VehicleSchedules
+                .Where(x => x.IsEnabled)
+                .Select(x =>
+                    new monthly_vehicle_schedule
+                    {
+                        registered_vehicle_id =
+                            registeredVehicleId,
+
+                        day_of_week =
+                            x.DayOfWeek,
+
+                        start_time =
+                            TimeOnly.FromTimeSpan(
+                                x.StartTime),
+
+                        end_time =
+                            TimeOnly.FromTimeSpan(
+                                x.EndTime),
+
+                        is_active = true,
+
+                        is_full_day =
+                            x.IsFullDay,
+
+                        created_at =
+                            DateTime.Now,
+
+                        created_by =
+                            _currentUserId,
+
+                        is_deleted = false
+                    })
+                .ToList();
+
+            await _repository
+                .AddSchedulesAsync(schedules);
+
+            await _repository.SaveChangesAsync();
+
+            StatusMessage =
+                "Cliente mensualizado registrado.";
 
             await LoadAsync();
+
             ClearForm();
         }
         catch (Exception ex)
@@ -296,42 +587,175 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         try
         {
-            if (!Validate()) return;
+            if (!Validate())
+                return;
 
             if (Id == 0)
             {
-                StatusMessage = "Seleccione un registro.";
+                StatusMessage =
+                    "Seleccione un registro.";
+
                 return;
             }
 
-            var entity = await _repository.GetByIdAsync(Id);
+            var entity =
+                await _repository
+                    .GetCompleteByIdAsync(Id);
 
             if (entity == null)
             {
-                StatusMessage = "Registro no encontrado.";
+                StatusMessage =
+                    "Registro no encontrado.";
+
                 return;
             }
 
-            entity.plate = Plate.Trim().ToUpper();
-            entity.vehicle_type_id = VehicleTypeId;
-            entity.owner_name = OwnerName?.Trim();
-            entity.owner_phone = OwnerPhone?.Trim();
-            entity.owner_email = OwnerEmail?.Trim();
-            entity.owner_cedula = OwnerCedula?.Trim();
-            entity.monthly_fee = MonthlyFee;
-            entity.monthly_start_date = MonthlyStartDate;
-            entity.monthly_end_date = MonthlyEndDate;
-            entity.notes = Notes?.Trim();
-            entity.is_active = IsActive;
-            entity.updated_at = DateTime.Now;
-            entity.updated_by = _currentUserId;
+            // =========================
+            // VEHÍCULO
+            // =========================
+
+            entity.plate =
+                Plate.Trim().ToUpper();
+
+            entity.vehicle_type_id =
+                VehicleTypeId;
+
+            entity.owner_name =
+                OwnerName?.Trim();
+
+            entity.owner_phone =
+                OwnerPhone?.Trim();
+
+            entity.owner_email =
+                OwnerEmail?.Trim();
+
+            entity.owner_cedula =
+                OwnerCedula?.Trim();
+
+            entity.notes =
+                Notes?.Trim();
+
+            entity.is_active =
+                IsActive;
+
+            entity.updated_at =
+                DateTime.Now;
+
+            entity.updated_by =
+                _currentUserId;
+
+            // =========================
+            // PLAN
+            // =========================
+
+            if (entity.vehicle_monthly_plan != null)
+            {
+                entity.vehicle_monthly_plan
+                    .monthly_fee =
+                    MonthlyFee ?? 0;
+
+                entity.vehicle_monthly_plan
+                    .start_date =
+                    MonthlyStartDate ??
+                    DateTime.Today;
+
+                entity.vehicle_monthly_plan
+                    .end_date =
+                    MonthlyEndDate ??
+                    DateTime.Today.AddMonths(1);
+
+                entity.vehicle_monthly_plan
+                    .is_active =
+                    IsActive;
+
+                entity.vehicle_monthly_plan
+                    .notes =
+                    Notes?.Trim();
+
+                entity.vehicle_monthly_plan
+                    .updated_at =
+                    DateTime.Now;
+
+                entity.vehicle_monthly_plan
+                    .updated_by =
+                    _currentUserId;
+
+                entity.vehicle_monthly_plan
+                    .status =
+                    IsActive
+                        ? "active"
+                        : "cancelled";
+            }
+
+            // =========================
+            // ELIMINAR HORARIOS VIEJOS
+            // =========================
+
+            var oldSchedules =
+                entity.monthly_vehicle_schedules
+                    .Where(x => !x.is_deleted)
+                    .ToList();
+
+            await _repository
+                .RemoveSchedulesAsync(
+                    oldSchedules);
+
+            // =========================
+            // CREAR NUEVOS HORARIOS
+            // =========================
+
+            var newSchedules =
+                VehicleSchedules
+                .Where(x => x.IsEnabled)
+                .Select(x =>
+                    new monthly_vehicle_schedule
+                    {
+                        registered_vehicle_id =
+                            entity.id,
+
+                        day_of_week =
+                            x.DayOfWeek,
+
+                        start_time =
+                            TimeOnly.FromTimeSpan(
+                                x.StartTime),
+
+                        end_time =
+                            TimeOnly.FromTimeSpan(
+                                x.EndTime),
+
+                        is_active = true,
+
+                        is_full_day =
+                            x.IsFullDay,
+
+                        created_at =
+                            DateTime.Now,
+
+                        created_by =
+                            _currentUserId,
+
+                        is_deleted = false
+                    })
+                .ToList();
+
+            await _repository
+                .AddSchedulesAsync(
+                    newSchedules);
+
+            // =========================
+            // GUARDAR TODO
+            // =========================
 
             await _repository.UpdateAsync(entity);
+
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Registro actualizado.";
+            StatusMessage =
+                "Registro actualizado.";
 
             await LoadAsync();
+
             ClearForm();
         }
         catch (Exception ex)
@@ -346,36 +770,54 @@ public class RegisteredVehicleViewModel : BaseViewModel
         {
             if (Id == 0)
             {
-                StatusMessage = "Seleccione un registro.";
+                StatusMessage =
+                    "Seleccione un registro.";
+
                 return;
             }
 
-            var entity = await _repository.GetByIdAsync(Id);
+            var entity =
+                await _repository
+                    .GetCompleteByIdAsync(Id);
 
             if (entity == null)
             {
-                StatusMessage = "Registro no encontrado.";
+                StatusMessage =
+                    "Registro no encontrado.";
+
                 return;
             }
 
-            var result = MessageBox.Show(
-                $"¿Eliminar cliente mensualizado '{entity.plate}'?",
-                "Confirmación",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            var owner = System.Windows.Application.Current.MainWindow;
 
-            if (result != MessageBoxResult.Yes)
+            var dialog =
+                new ConfirmDialog(
+                    owner,
+                    $"¿Está seguro de eliminar a: '{entity.owner_name}'?");
+
+            var result =
+                dialog.ShowDialog();
+
+            if (result != true)
             {
-                StatusMessage = "Operación cancelada.";
+                StatusMessage =
+                    "Eliminación cancelada.";
+
                 return;
             }
 
-            await _repository.SoftDeleteAsync(entity, _currentUserId);
+            await _repository
+                .SoftDeleteAsync(
+                    entity,
+                    _currentUserId);
+
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Registro eliminado.";
+            StatusMessage =
+                "Registro eliminado.";
 
             await LoadAsync();
+
             ClearForm();
         }
         catch (Exception ex)
@@ -383,21 +825,34 @@ public class RegisteredVehicleViewModel : BaseViewModel
             StatusMessage = ex.Message;
         }
     }
-
     private void ClearForm()
     {
         Id = 0;
+
         Plate = string.Empty;
+
         VehicleTypeId = 0;
+
         OwnerName = string.Empty;
+
         OwnerPhone = string.Empty;
+
         OwnerEmail = string.Empty;
+
         OwnerCedula = string.Empty;
+
         MonthlyFee = 0;
+
         MonthlyStartDate = DateTime.Today;
+
         MonthlyEndDate = DateTime.Today.AddMonths(1);
+
         Notes = string.Empty;
+
         IsActive = true;
+
         SelectedRegisteredVehicle = null;
+
+        InitializeSchedules();
     }
 }

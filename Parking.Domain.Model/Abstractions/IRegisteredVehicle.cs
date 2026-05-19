@@ -1,12 +1,26 @@
 ﻿using Parking.Domain.Model.Models;
-using System.Threading.Tasks;
 
-namespace Parking.Domain.Model.Abstractions
+namespace Parking.Domain.Model.Abstractions;
+
+public interface IRegisteredVehicle
+    : IBaseRepository<registered_vehicle>
 {
-    public interface IRegisteredVehicle : IBaseRepository<registered_vehicle>
-    {
-        Task<bool> ExistsByPlateAsync(string plate);
+    Task<bool> ExistsByPlateAsync(string plate);
 
-        Task SoftDeleteAsync(registered_vehicle entity, int deletedBy);
-    }
+    Task<registered_vehicle?> GetCompleteByIdAsync(int id);
+
+    Task<List<registered_vehicle>> GetAllCompleteAsync();
+
+    Task SoftDeleteAsync(
+        registered_vehicle entity,
+        int deletedBy);
+
+    Task AddMonthlyPlanAsync(
+        vehicle_monthly_plan plan);
+
+    Task AddSchedulesAsync(
+        List<monthly_vehicle_schedule> schedules);
+
+    Task RemoveSchedulesAsync(
+        List<monthly_vehicle_schedule> schedules);
 }

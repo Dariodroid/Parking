@@ -41,11 +41,25 @@ public partial class user
 
     public virtual ICollection<fingerprint_template> fingerprint_templates { get; set; } = new List<fingerprint_template>();
 
+    public virtual ICollection<monthly_vehicle_schedule> monthly_vehicle_schedulecreated_byNavigations { get; set; } = new List<monthly_vehicle_schedule>();
+
+    public virtual ICollection<monthly_vehicle_schedule> monthly_vehicle_scheduleupdated_byNavigations { get; set; } = new List<monthly_vehicle_schedule>();
+
     public virtual ICollection<parking_session> parking_sessionentry_operators { get; set; } = new List<parking_session>();
 
     public virtual ICollection<parking_session> parking_sessionexit_operators { get; set; } = new List<parking_session>();
 
-    public virtual ICollection<payment> payments { get; set; } = new List<payment>();
+    public virtual ICollection<payment> paymentcollected_byNavigations { get; set; } = new List<payment>();
+
+    public virtual ICollection<payment> paymentupdated_byNavigations { get; set; } = new List<payment>();
 
     public virtual ICollection<registered_vehicle> registered_vehicles { get; set; } = new List<registered_vehicle>();
+
+    public virtual ICollection<vehicle_monthly_plan> vehicle_monthly_plancollected_byNavigations { get; set; } = new List<vehicle_monthly_plan>();
+
+    public virtual ICollection<vehicle_monthly_plan> vehicle_monthly_plancreated_byNavigations { get; set; } = new List<vehicle_monthly_plan>();
+
+    public virtual ICollection<vehicle_type> vehicle_typecreated_byNavigations { get; set; } = new List<vehicle_type>();
+
+    public virtual ICollection<vehicle_type> vehicle_typeupdated_byNavigations { get; set; } = new List<vehicle_type>();
 }

@@ -21,5 +21,23 @@ public partial class monthly_vehicle_schedule
 
     public DateTime created_at { get; set; }
 
+    public DateTime? updated_at { get; set; }
+
+    public int? updated_by { get; set; }
+
+    public bool is_deleted { get; set; }
+
+    public DateTime? deleted_at { get; set; }
+
+    public int? deleted_by { get; set; }
+
+    public int? created_by { get; set; }
+
+    public bool is_full_day { get; set; }
+
+    public virtual user created_byNavigation { get; set; }
+
     public virtual registered_vehicle registered_vehicle { get; set; }
+
+    public virtual user updated_byNavigation { get; set; }
 }

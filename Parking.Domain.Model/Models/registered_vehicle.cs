@@ -39,12 +39,6 @@ public partial class registered_vehicle
 
     public int? deleted_by { get; set; }
 
-    public decimal? monthly_fee { get; set; }
-
-    public DateTime? monthly_start_date { get; set; }
-
-    public DateTime? monthly_end_date { get; set; }
-
     public virtual user created_byNavigation { get; set; }
 
     public virtual ICollection<fingerprint_template> fingerprint_templates { get; set; } = new List<fingerprint_template>();
@@ -52,6 +46,8 @@ public partial class registered_vehicle
     public virtual ICollection<monthly_vehicle_schedule> monthly_vehicle_schedules { get; set; } = new List<monthly_vehicle_schedule>();
 
     public virtual ICollection<parking_session> parking_sessions { get; set; } = new List<parking_session>();
+
+    public virtual vehicle_monthly_plan vehicle_monthly_plan { get; set; }
 
     public virtual vehicle_type vehicle_type { get; set; }
 }

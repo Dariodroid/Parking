@@ -11,6 +11,103 @@
 
     <UserControl.Resources>
 
+        <Style x:Key="DarkComboBoxStyle"
+       TargetType="ComboBox">
+
+            <Setter Property="Height"
+            Value="30"/>
+
+            <Setter Property="Background"
+            Value="#0A0A0A"/>
+
+            <Setter Property="Foreground"
+            Value="White"/>
+
+            <Setter Property="BorderBrush"
+            Value="#444444"/>
+
+            <Setter Property="BorderThickness"
+            Value="1"/>
+
+            <Setter Property="Padding"
+            Value="6,2"/>
+
+            <Setter Property="FontSize"
+            Value="12"/>
+
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="ComboBox">
+
+                        <Grid>
+
+                            <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="2">
+
+                                <Grid>
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="30"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Margin="8,0,0,0"
+           VerticalAlignment="Center"
+           Foreground="White"
+           Text="{Binding SelectedItem.name,
+                          RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                                    <ToggleButton Grid.Column="1"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                          Background="#1E1E1E"
+                                          BorderThickness="0">
+
+                                        <TextBlock Text="▼"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+
+                                    </ToggleButton>
+
+                                </Grid>
+
+                            </Border>
+
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
+                           Placement="Bottom"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           PopupAnimation="Slide">
+
+                                <Border Background="#0A0A0A"
+                                BorderBrush="#444444"
+                                BorderThickness="1">
+
+                                    <ScrollViewer>
+
+                                        <StackPanel IsItemsHost="True"/>
+
+                                    </ScrollViewer>
+
+                                </Border>
+
+                            </Popup>
+
+                        </Grid>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
+        </Style>
         <conv:BooleanToCheckConverter x:Key="BooleanToCheckConverter"/>
 
         <!-- ========================= -->
@@ -46,212 +143,28 @@
         </Style>
 
         <!-- ========================= -->
-        <!-- COMBOBOX OSCURO -->
+        <!-- HORARIOS -->
         <!-- ========================= -->
 
-        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
-
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Background" Value="#0F0F0F"/>
+        <Style x:Key="HourBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Width" Value="70"/>
+            <Setter Property="Background" Value="#0A0A0A"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#555555"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="8,2"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-
-            <Setter Property="Template">
-                <Setter.Value>
-
-                    <ControlTemplate TargetType="ComboBox">
-
-                        <Grid>
-
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="2">
-
-                                <Grid>
-
-                                    <ContentPresenter Margin="10,0,35,0"
-                                                      VerticalAlignment="Center"
-                                                      HorizontalAlignment="Stretch"
-                                                      Content="{TemplateBinding SelectionBoxItem}"
-                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                      RecognizesAccessKey="True"
-                                                      TextElement.Foreground="White"/>
-
-                                    <ToggleButton Grid.Column="1"
-                                                  HorizontalAlignment="Right"
-                                                  Width="30"
-                                                  Focusable="False"
-                                                  Background="#1E1E1E"
-                                                  BorderThickness="0"
-                                                  IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
-
-                                        <TextBlock Text="▼"
-                                                   Foreground="White"
-                                                   FontSize="10"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-
-                                    </ToggleButton>
-
-                                </Grid>
-
-                            </Border>
-
-                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   Placement="Bottom"
-                                   AllowsTransparency="True"
-                                   Focusable="False"
-                                   PopupAnimation="Fade">
-
-                                <Border Background="#1E1E1E"
-                                        BorderBrush="#555555"
-                                        BorderThickness="1"
-                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
-
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-
-                                        <ItemsPresenter/>
-
-                                    </ScrollViewer>
-
-                                </Border>
-
-                            </Popup>
-
-                        </Grid>
-
-                    </ControlTemplate>
-
-                </Setter.Value>
-            </Setter>
-
-            <Setter Property="ItemContainerStyle">
-                <Setter.Value>
-
-                    <Style TargetType="ComboBoxItem">
-
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="Background" Value="#1E1E1E"/>
-                        <Setter Property="Padding" Value="8,5"/>
-
-                        <Style.Triggers>
-
-                            <Trigger Property="IsHighlighted" Value="True">
-                                <Setter Property="Background" Value="#2D2D2D"/>
-                            </Trigger>
-
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#1565C0"/>
-                            </Trigger>
-
-                        </Style.Triggers>
-
-                    </Style>
-
-                </Setter.Value>
-            </Setter>
-
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="FontSize" Value="11"/>
         </Style>
 
-        <!-- ========================= -->
-        <!-- DATEPICKER -->
-        <!-- ========================= -->
-
-        <Style x:Key="DarkDatePickerStyle" TargetType="DatePicker">
-
-            <Style.Resources>
-
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
-                         Color="#1565C0"/>
-
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                         Color="White"/>
-
-            </Style.Resources>
-
-            <Setter Property="Height" Value="30"/>
+        <Style x:Key="DayCheckStyle" TargetType="CheckBox">
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#0F0F0F"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-
-            <Setter Property="Template">
-
-                <Setter.Value>
-
-                    <ControlTemplate TargetType="DatePicker">
-
-                        <Grid>
-
-                            <Border Background="#0F0F0F"
-                            BorderBrush="#555555"
-                            BorderThickness="1"
-                            CornerRadius="2">
-
-                                <Grid>
-
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="30"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <DatePickerTextBox x:Name="PART_TextBox"
-                                               Grid.Column="0"
-                                               Background="#0F0F0F"
-                                               Foreground="White"
-                                               BorderThickness="0"
-                                               CaretBrush="White"
-                                               Padding="8,3"/>
-
-                                    <Button x:Name="PART_Button"
-                                    Grid.Column="1"
-                                    Background="#1E1E1E"
-                                    BorderThickness="0"
-                                    Focusable="False">
-
-                                        <TextBlock Text="📅"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-
-                                    </Button>
-
-                                </Grid>
-
-                            </Border>
-
-                            <Popup x:Name="PART_Popup"
-                           Placement="Bottom"
-                           AllowsTransparency="True"
-                           PopupAnimation="Fade">
-
-                                <Border Background="#1E1E1E"
-                                BorderBrush="#555555"
-                                BorderThickness="1">
-
-                                    <Calendar Background="#1E1E1E"
-                                      Foreground="White"/>
-
-                                </Border>
-
-                            </Popup>
-
-                        </Grid>
-
-                    </ControlTemplate>
-
-                </Setter.Value>
-
-            </Setter>
-
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+
         <!-- ========================= -->
         <!-- BOTONES -->
         <!-- ========================= -->
@@ -308,7 +221,7 @@
     <Grid Margin="8">
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="420"/>
+            <ColumnDefinition Width="430"/>
             <ColumnDefinition Width="10"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
@@ -353,21 +266,12 @@
                                 <TextBlock Text="TIPO VEHÍCULO"
                                            Style="{StaticResource LabelStyle}"/>
 
-
-
+                               
                                 <ComboBox ItemsSource="{Binding VehicleTypes}"
-          SelectedValue="{Binding VehicleTypeId, Mode=TwoWay}"
+          SelectedValue="{Binding VehicleTypeId}"
           SelectedValuePath="id"
-          Style="{StaticResource DarkComboBoxStyle}">
-
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding name}"
-                       Foreground="White"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-
-                                </ComboBox>
+          DisplayMemberPath="name"
+          Style="{StaticResource DarkComboBoxStyle}"/>
 
                             </StackPanel>
 
@@ -454,65 +358,91 @@
                                            Style="{StaticResource LabelStyle}"/>
 
                                 <ToggleButton IsChecked="{Binding IsActive}"
-                                              Width="140"
-                                              Height="30"
-                                              HorizontalAlignment="Left"
-                                              Cursor="Hand"
-                                              BorderThickness="0">
+              Width="70"
+              Height="30"
+              Cursor="Hand"
+              BorderThickness="0">
 
-                                    <ToggleButton.Template>
+                                    <ToggleButton.Style>
 
-                                        <ControlTemplate TargetType="ToggleButton">
+                                        <Style TargetType="ToggleButton">
 
-                                            <Grid Width="140"
-                                                  Height="30">
+                                            <Setter Property="Background" Value="#C62828"/>
 
-                                                <Border x:Name="SwitchBackground"
-                                                        Background="#2E7D32"
-                                                        CornerRadius="15"/>
+                                            <Setter Property="Template">
 
-                                                <TextBlock x:Name="SwitchText"
-                                                           Text="ACTIVO"
-                                                           Foreground="White"
-                                                           FontWeight="SemiBold"
-                                                           FontSize="11"
-                                                           VerticalAlignment="Center"
-                                                           HorizontalAlignment="Center"/>
+                                                <Setter.Value>
 
-                                                <Border x:Name="Knob"
-                                                        Width="22"
-                                                        Height="22"
-                                                        CornerRadius="11"
-                                                        Background="White"
-                                                        HorizontalAlignment="Right"
-                                                        Margin="4"/>
+                                                    <ControlTemplate TargetType="ToggleButton">
 
-                                            </Grid>
+                                                        <Border Width="70"
+                                Height="30"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="15">
 
-                                            <ControlTemplate.Triggers>
+                                                            <Grid>
 
-                                                <Trigger Property="IsChecked"
-                                                         Value="False">
+                                                                <Ellipse x:Name="SwitchThumb"
+                                         Width="24"
+                                         Height="24"
+                                         Fill="White"
+                                         HorizontalAlignment="Left"
+                                         Margin="3,0,0,0"/>
 
-                                                    <Setter TargetName="SwitchBackground"
-                                                            Property="Background"
-                                                            Value="#666666"/>
+                                                                <TextBlock x:Name="SwitchText"
+                                           Text="OFF"
+                                           Foreground="White"
+                                           FontWeight="Bold"
+                                           FontSize="10"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Right"
+                                           Margin="0,0,10,0"/>
 
-                                                    <Setter TargetName="SwitchText"
-                                                            Property="Text"
-                                                            Value="INACTIVO"/>
+                                                            </Grid>
 
-                                                    <Setter TargetName="Knob"
-                                                            Property="HorizontalAlignment"
-                                                            Value="Left"/>
+                                                        </Border>
 
-                                                </Trigger>
+                                                        <ControlTemplate.Triggers>
 
-                                            </ControlTemplate.Triggers>
+                                                            <Trigger Property="IsChecked"
+                                     Value="True">
 
-                                        </ControlTemplate>
+                                                                <Setter Property="Background"
+                                        Value="#2E7D32"/>
 
-                                    </ToggleButton.Template>
+                                                                <Setter TargetName="SwitchThumb"
+                                        Property="HorizontalAlignment"
+                                        Value="Right"/>
+
+                                                                <Setter TargetName="SwitchThumb"
+                                        Property="Margin"
+                                        Value="0,0,3,0"/>
+
+                                                                <Setter TargetName="SwitchText"
+                                        Property="Text"
+                                        Value="ON"/>
+
+                                                                <Setter TargetName="SwitchText"
+                                        Property="HorizontalAlignment"
+                                        Value="Left"/>
+
+                                                                <Setter TargetName="SwitchText"
+                                        Property="Margin"
+                                        Value="10,0,0,0"/>
+
+                                                            </Trigger>
+
+                                                        </ControlTemplate.Triggers>
+
+                                                    </ControlTemplate>
+
+                                                </Setter.Value>
+
+                                            </Setter>
+
+                                        </Style>
+
+                                    </ToggleButton.Style>
 
                                 </ToggleButton>
 
@@ -533,8 +463,7 @@
                                 <TextBlock Text="FECHA INICIO"
                                            Style="{StaticResource LabelStyle}"/>
 
-                                <DatePicker SelectedDate="{Binding MonthlyStartDate}"
-                                            Style="{StaticResource DarkDatePickerStyle}"/>
+                                <DatePicker SelectedDate="{Binding MonthlyStartDate}"/>
 
                             </StackPanel>
 
@@ -543,8 +472,7 @@
                                 <TextBlock Text="FECHA FIN"
                                            Style="{StaticResource LabelStyle}"/>
 
-                                <DatePicker SelectedDate="{Binding MonthlyEndDate}"
-                                            Style="{StaticResource DarkDatePickerStyle}"/>
+                                <DatePicker SelectedDate="{Binding MonthlyEndDate}"/>
 
                             </StackPanel>
 
@@ -597,103 +525,170 @@
 
                 </Border>
 
-                <!-- ESTADO -->
-                <Border Style="{StaticResource SectionStyle}">
-
-                    <StackPanel>
-
-                        <TextBlock Text="ESTADO"
-                                   Foreground="#888888"
-                                   FontSize="10"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,6"/>
-
-                        <TextBlock Text="{Binding StatusMessage}"
-                                   Foreground="#CCCCCC"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"/>
-
-                    </StackPanel>
-
-                </Border>
-
             </StackPanel>
 
         </ScrollViewer>
 
-        <!-- TABLA -->
-        <Border Grid.Column="2"
-                Background="#1A1A1A"
-                BorderBrush="#333333"
-                BorderThickness="1"
-                CornerRadius="4"
-                Padding="6">
+        <!-- PANEL DERECHO -->
+        <Grid Grid.Column="2">
 
-            <DataGrid ItemsSource="{Binding RegisteredVehicles}"
-                      SelectedItem="{Binding SelectedRegisteredVehicle}"
-                      AutoGenerateColumns="False"
-                      Background="#1A1A1A"
-                      Foreground="White"
-                      BorderThickness="0"
-                      GridLinesVisibility="Horizontal"
-                      HeadersVisibility="Column"
-                      RowBackground="#1A1A1A"
-                      AlternatingRowBackground="#202020"
-                      CanUserAddRows="False"
-                      IsReadOnly="True"
-                      ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="260"/>
+                <RowDefinition Height="10"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <DataGrid.Columns>
+            <!-- TABLA VEHICULOS -->
+            <Border Grid.Row="0"
+                    Background="#1A1A1A"
+                    BorderBrush="#333333"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="6" Margin="0,0,0,2
+                    " Grid.RowSpan="2">
 
-                    <DataGridTextColumn Header="Placa"
-                                        Binding="{Binding plate}"
-                                        Width="100"/>
+                <DataGrid ItemsSource="{Binding RegisteredVehicles}"
+                          SelectedItem="{Binding SelectedRegisteredVehicle}"
+                          AutoGenerateColumns="False"
+                          Background="#1A1A1A"
+                          Foreground="White"
+                          BorderThickness="0"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          RowBackground="#1A1A1A"
+                          AlternatingRowBackground="#202020"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}" Margin="0,0,0,3">
 
-                    <DataGridTextColumn Header="Propietario"
-                                        Binding="{Binding owner_name}"
-                                        Width="*"/>
+                    <DataGrid.Columns>
 
-                    <DataGridTextColumn Header="Teléfono"
-                                        Binding="{Binding owner_phone}"
-                                        Width="120"/>
+                        <DataGridTextColumn Header="Placa"
+                                            Binding="{Binding plate}"
+                                            Width="90"/>
 
-                    <DataGridTextColumn Header="Mensualidad"
-                                        Binding="{Binding monthly_fee, StringFormat={}{0:N2}}"
-                                        Width="110"/>
+                        <DataGridTextColumn Header="Propietario"
+                                            Binding="{Binding owner_name}"
+                                            Width="*"/>
 
-                    <DataGridTextColumn Header="Inicio"
-                                        Binding="{Binding monthly_start_date, StringFormat=dd/MM/yyyy}"
-                                        Width="90"/>
+                        <DataGridTextColumn Header="Teléfono"
+                                            Binding="{Binding owner_phone}"
+                                            Width="110"/>
 
-                    <DataGridTextColumn Header="Fin"
-                                        Binding="{Binding monthly_end_date, StringFormat=dd/MM/yyyy}"
-                                        Width="90"/>
+                        <DataGridTextColumn Header="Mensualidad"
+                                            Binding="{Binding vehicle_monthly_plan.monthly_fee}"
+                                            Width="100"/>
 
-                    <DataGridTemplateColumn Header="Activo"
-                                            Width="70">
+                        <DataGridTextColumn Header="Inicio"
+                                            Binding="{Binding vehicle_monthly_plan.start_date, StringFormat=dd/MM/yyyy}"
+                                            Width="90"/>
 
-                        <DataGridTemplateColumn.CellTemplate>
+                        <DataGridTextColumn Header="Fin"
+                                            Binding="{Binding vehicle_monthly_plan.end_date, StringFormat=dd/MM/yyyy}"
+                                            Width="90"/>
+
+                    </DataGrid.Columns>
+
+                </DataGrid>
+
+            </Border>
+
+            <!-- HORARIOS -->
+            <!-- HORARIOS -->
+            <Border Grid.Row="2"
+        Style="{StaticResource SectionStyle}" Margin="0,8,0,8">
+
+                <StackPanel>
+
+                    <TextBlock Text="HORARIOS PERMITIDOS"
+                   Foreground="White"
+                   FontSize="16"
+                   FontWeight="Bold"
+                   Margin="0,0,0,15"/>
+
+                    <!-- ENCABEZADO -->
+                    <Grid Margin="0,0,0,8">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                       Text="DÍA"
+                       Foreground="#AAAAAA"
+                       FontWeight="Bold"/>
+
+                        <TextBlock Grid.Column="1"
+                       Text="HORA INICIO"
+                       Foreground="#AAAAAA"
+                       FontWeight="Bold"/>
+
+                        <TextBlock Grid.Column="2"
+                       Text="HORA FIN"
+                       Foreground="#AAAAAA"
+                       FontWeight="Bold"/>
+
+                        <TextBlock Grid.Column="3"
+                       Text="24 HORAS"
+                       Foreground="#AAAAAA"
+                       FontWeight="Bold"/>
+
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding VehicleSchedules}">
+
+                        <ItemsControl.ItemTemplate>
 
                             <DataTemplate>
 
-                                <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           FontWeight="Bold"
-                                           Foreground="White"
-                                           Text="{Binding is_active, Converter={StaticResource BooleanToCheckConverter}}"/>
+                                <Border Background="#181818"
+                            CornerRadius="4"
+                            Padding="8"
+                            Margin="0,0,0,5">
+
+                                    <Grid>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="120"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <CheckBox Grid.Column="0"
+                                      Content="{Binding DayName}"
+                                      IsChecked="{Binding IsEnabled}"
+                                      Style="{StaticResource DayCheckStyle}"/>
+
+                                        <TextBox Grid.Column="1"
+                                     Text="{Binding StartTime}"
+                                     Style="{StaticResource HourBoxStyle}"/>
+
+                                        <TextBox Grid.Column="2"
+                                     Text="{Binding EndTime}"
+                                     Style="{StaticResource HourBoxStyle}"/>
+
+                                        <CheckBox Grid.Column="3"
+                                      IsChecked="{Binding IsFullDay}"
+                                      HorizontalAlignment="Center"/>
+
+                                    </Grid>
+
+                                </Border>
 
                             </DataTemplate>
 
-                        </DataGridTemplateColumn.CellTemplate>
+                        </ItemsControl.ItemTemplate>
 
-                    </DataGridTemplateColumn>
+                    </ItemsControl>
 
-                </DataGrid.Columns>
+                </StackPanel>
 
-            </DataGrid>
-
-        </Border>
+            </Border>
+        </Grid>
 
     </Grid>
 

@@ -47,6 +47,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[vehicle_monthly_plans]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[vehicle_types]",
          "ObjectType": 0
       }

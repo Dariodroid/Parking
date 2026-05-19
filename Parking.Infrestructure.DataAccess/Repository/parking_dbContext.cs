@@ -28,6 +28,8 @@ public partial class parking_dbContext : DbContext
 
     public virtual DbSet<user> users { get; set; }
 
+    public virtual DbSet<vehicle_monthly_plan> vehicle_monthly_plans { get; set; }
+
     public virtual DbSet<vehicle_type> vehicle_types { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -53,15 +55,27 @@ public partial class parking_dbContext : DbContext
         {
             entity.HasKey(e => e.id).HasName("PK__monthly___3213E83F779E6BD1");
 
+            entity.HasIndex(e => new { e.registered_vehicle_id, e.day_of_week }, "UX_monthly_vehicle_schedule_day")
+                .IsUnique()
+                .HasFilter("([is_deleted]=(0))");
+
             entity.Property(e => e.created_at)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.is_active).HasDefaultValue(true);
 
+            entity.HasOne(d => d.created_byNavigation).WithMany(p => p.monthly_vehicle_schedulecreated_byNavigations)
+                .HasForeignKey(d => d.created_by)
+                .HasConstraintName("FK_monthly_vehicle_schedules_created_by");
+
             entity.HasOne(d => d.registered_vehicle).WithMany(p => p.monthly_vehicle_schedules)
                 .HasForeignKey(d => d.registered_vehicle_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__monthly_v__regis__05D8E0BE");
+
+            entity.HasOne(d => d.updated_byNavigation).WithMany(p => p.monthly_vehicle_scheduleupdated_byNavigations)
+                .HasForeignKey(d => d.updated_by)
+                .HasConstraintName("FK_monthly_vehicle_schedules_updated_by");
         });
 
         modelBuilder.Entity<parking_session>(entity =>
@@ -108,6 +122,10 @@ public partial class parking_dbContext : DbContext
 
         modelBuilder.Entity<parking_slot>(entity =>
         {
+            entity.Property(e => e.slot_number)
+                .IsRequired()
+                .HasMaxLength(20);
+
             entity.HasOne(d => d.current_session).WithMany(p => p.parking_slots)
                 .HasForeignKey(d => d.current_session_id)
                 .HasConstraintName("FK_parking_slots_session");
@@ -117,7 +135,7 @@ public partial class parking_dbContext : DbContext
         {
             entity.HasKey(e => e.id).HasName("PK__payments__3213E83FC860615E");
 
-            entity.Property(e => e.amount_due).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.amount_paid).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.collected_at).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.payment_method)
@@ -125,7 +143,7 @@ public partial class parking_dbContext : DbContext
                 .HasMaxLength(20);
             entity.Property(e => e.payment_reference).HasMaxLength(100);
 
-            entity.HasOne(d => d.collected_byNavigation).WithMany(p => p.payments)
+            entity.HasOne(d => d.collected_byNavigation).WithMany(p => p.paymentcollected_byNavigations)
                 .HasForeignKey(d => d.collected_by)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__payments__collec__47DBAE45");
@@ -134,6 +152,10 @@ public partial class parking_dbContext : DbContext
                 .HasForeignKey(d => d.session_id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__payments__sessio__46E78A0C");
+
+            entity.HasOne(d => d.updated_byNavigation).WithMany(p => p.paymentupdated_byNavigations)
+                .HasForeignKey(d => d.updated_by)
+                .HasConstraintName("FK_payments_updated_by");
         });
 
         modelBuilder.Entity<registered_vehicle>(entity =>
@@ -144,7 +166,6 @@ public partial class parking_dbContext : DbContext
 
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.is_active).HasDefaultValue(true);
-            entity.Property(e => e.monthly_fee).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.owner_cedula).HasMaxLength(20);
             entity.Property(e => e.owner_email).HasMaxLength(120);
             entity.Property(e => e.owner_name).HasMaxLength(120);
@@ -185,6 +206,45 @@ public partial class parking_dbContext : DbContext
                 .HasMaxLength(50);
         });
 
+        modelBuilder.Entity<vehicle_monthly_plan>(entity =>
+        {
+            entity.HasKey(e => e.id).HasName("PK__vehicle___3213E83F61B09F6E");
+
+            entity.HasIndex(e => e.is_active, "IX_vehicle_monthly_plans_active");
+
+            entity.HasIndex(e => new { e.start_date, e.end_date }, "IX_vehicle_monthly_plans_dates");
+
+            entity.HasIndex(e => new { e.status, e.end_date }, "IX_vehicle_monthly_plans_status_enddate");
+
+            entity.HasIndex(e => e.registered_vehicle_id, "IX_vehicle_monthly_plans_vehicle");
+
+            entity.HasIndex(e => e.registered_vehicle_id, "UX_vehicle_monthly_plans_active_vehicle")
+                .IsUnique()
+                .HasFilter("([is_active]=(1) AND [is_deleted]=(0))");
+
+            entity.Property(e => e.created_at).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.is_active).HasDefaultValue(true);
+            entity.Property(e => e.monthly_fee).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.status)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("active")
+                .HasAnnotation("Relational:DefaultConstraintName", "DF_vehicle_monthly_plans_status");
+
+            entity.HasOne(d => d.collected_byNavigation).WithMany(p => p.vehicle_monthly_plancollected_byNavigations)
+                .HasForeignKey(d => d.collected_by)
+                .HasConstraintName("FK_vehicle_monthly_plans_collected_by");
+
+            entity.HasOne(d => d.created_byNavigation).WithMany(p => p.vehicle_monthly_plancreated_byNavigations)
+                .HasForeignKey(d => d.created_by)
+                .HasConstraintName("FK_vehicle_monthly_plans_created_by");
+
+            entity.HasOne(d => d.registered_vehicle).WithOne(p => p.vehicle_monthly_plan)
+                .HasForeignKey<vehicle_monthly_plan>(d => d.registered_vehicle_id)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_vehicle_monthly_plans_registered_vehicle");
+        });
+
         modelBuilder.Entity<vehicle_type>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__vehicle___3213E83F3F31EEA0");
@@ -203,6 +263,14 @@ public partial class parking_dbContext : DbContext
             entity.Property(e => e.name)
                 .IsRequired()
                 .HasMaxLength(60);
+
+            entity.HasOne(d => d.created_byNavigation).WithMany(p => p.vehicle_typecreated_byNavigations)
+                .HasForeignKey(d => d.created_by)
+                .HasConstraintName("FK_vehicle_types_created_by");
+
+            entity.HasOne(d => d.updated_byNavigation).WithMany(p => p.vehicle_typeupdated_byNavigations)
+                .HasForeignKey(d => d.updated_by)
+                .HasConstraintName("FK_vehicle_types_updated_by");
         });
 
         OnModelCreatingPartial(modelBuilder);

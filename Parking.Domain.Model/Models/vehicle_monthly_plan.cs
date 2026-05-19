@@ -5,17 +5,23 @@ using System.Collections.Generic;
 
 namespace Parking.Domain.Model.Models;
 
-public partial class vehicle_type
+public partial class vehicle_monthly_plan
 {
     public int id { get; set; }
 
-    public string name { get; set; }
+    public int registered_vehicle_id { get; set; }
 
-    public string icon { get; set; }
+    public decimal monthly_fee { get; set; }
 
-    public decimal hourly_rate { get; set; }
+    public DateTime start_date { get; set; }
+
+    public DateTime end_date { get; set; }
+
+    public DateTime payment_date { get; set; }
 
     public bool is_active { get; set; }
+
+    public string notes { get; set; }
 
     public DateTime created_at { get; set; }
 
@@ -31,17 +37,13 @@ public partial class vehicle_type
 
     public int? deleted_by { get; set; }
 
-    public int grace_minutes { get; set; }
+    public string status { get; set; }
 
-    public int fraction_minutes { get; set; }
+    public int? collected_by { get; set; }
 
-    public decimal fraction_rate { get; set; }
+    public virtual user collected_byNavigation { get; set; }
 
     public virtual user created_byNavigation { get; set; }
 
-    public virtual ICollection<parking_session> parking_sessions { get; set; } = new List<parking_session>();
-
-    public virtual ICollection<registered_vehicle> registered_vehicles { get; set; } = new List<registered_vehicle>();
-
-    public virtual user updated_byNavigation { get; set; }
+    public virtual registered_vehicle registered_vehicle { get; set; }
 }

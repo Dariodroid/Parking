@@ -9,7 +9,7 @@ public partial class parking_slot
 {
     public int id { get; set; }
 
-    public int slot_number { get; set; }
+    public string slot_number { get; set; }
 
     public bool is_occupied { get; set; }
 
