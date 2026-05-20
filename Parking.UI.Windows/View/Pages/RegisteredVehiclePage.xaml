@@ -143,28 +143,258 @@
         </Style>
 
         <!-- ========================= -->
-        <!-- HORARIOS -->
+        <!-- HORARIOS MODERNOS -->
         <!-- ========================= -->
 
-        <Style x:Key="HourBoxStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="Width" Value="70"/>
-            <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="5,0"/>
-            <Setter Property="FontSize" Value="11"/>
+        <Style x:Key="ModernScheduleCardStyle"
+       TargetType="Border">
+
+            <Setter Property="Background"
+            Value="#1C1C1C"/>
+
+            <Setter Property="CornerRadius"
+            Value="10"/>
+
+            <Setter Property="Padding"
+            Value="12"/>
+
+            <Setter Property="Margin"
+            Value="0,0,0,8"/>
+
+            <Setter Property="BorderBrush"
+            Value="#2B2B2B"/>
+
+            <Setter Property="BorderThickness"
+            Value="1"/>
+
         </Style>
 
-        <Style x:Key="DayCheckStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+        <Style x:Key="ModernHourBoxStyle"
+       TargetType="TextBox">
+
+            <Setter Property="Width"
+            Value="90"/>
+
+            <Setter Property="Height"
+            Value="38"/>
+
+            <Setter Property="Background"
+            Value="#101010"/>
+
+            <Setter Property="Foreground"
+            Value="White"/>
+
+            <Setter Property="BorderBrush"
+            Value="#333333"/>
+
+            <Setter Property="BorderThickness"
+            Value="1"/>
+
+            <Setter Property="FontSize"
+            Value="13"/>
+
+            <Setter Property="FontWeight"
+            Value="SemiBold"/>
+
+            <Setter Property="Padding"
+            Value="10,0"/>
+
+            <Setter Property="HorizontalContentAlignment"
+            Value="Center"/>
+
+            <Setter Property="VerticalContentAlignment"
+            Value="Center"/>
+
+            <Setter Property="CaretBrush"
+            Value="White"/>
+
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="TextBox">
+
+                        <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8">
+
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+
+                        </Border>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
         </Style>
 
+        <Style x:Key="ModernDayCheckStyle"
+       TargetType="CheckBox">
+
+            <Setter Property="Foreground"
+            Value="White"/>
+
+            <Setter Property="FontWeight"
+            Value="Bold"/>
+
+            <Setter Property="FontSize"
+            Value="13"/>
+
+            <Setter Property="VerticalAlignment"
+            Value="Center"/>
+
+        </Style>
+
+        <Style x:Key="ModernFullDayCheckStyle"
+       TargetType="CheckBox">
+
+            <Setter Property="Cursor"
+            Value="Hand"/>
+
+            <Setter Property="HorizontalAlignment"
+            Value="Center"/>
+
+            <Setter Property="VerticalAlignment"
+            Value="Center"/>
+
+        </Style>
+
+        <!-- ========================= -->
+        <!-- CHECKBOX MODERNO -->
+        <!-- ========================= -->
+
+        <Style x:Key="ModernToggleCheckStyle"
+       TargetType="CheckBox">
+
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="CheckBox">
+
+                        <Grid Cursor="Hand">
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- SWITCH -->
+                            <Border x:Name="SwitchTrack"
+                            Width="42"
+                            Height="22"
+                            Background="#444444"
+                            CornerRadius="11"
+                            VerticalAlignment="Center">
+
+                                <Ellipse x:Name="SwitchThumb"
+                                 Width="18"
+                                 Height="18"
+                                 Fill="White"
+                                 HorizontalAlignment="Left"
+                                 Margin="2,0,0,0"/>
+
+                            </Border>
+
+                            <!-- TEXTO -->
+                            <ContentPresenter Grid.Column="1"
+                                      VerticalAlignment="Center"
+                                      Margin="10,0,0,0"
+                                      TextElement.Foreground="White"
+                                      TextElement.FontWeight="SemiBold"
+                                      TextElement.FontSize="13"/>
+
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+
+                            <Trigger Property="IsChecked"
+                             Value="True">
+
+                                <Setter TargetName="SwitchTrack"
+                                Property="Background"
+                                Value="#2E7D32"/>
+
+                                <Setter TargetName="SwitchThumb"
+                                Property="HorizontalAlignment"
+                                Value="Right"/>
+
+                                <Setter TargetName="SwitchThumb"
+                                Property="Margin"
+                                Value="0,0,2,0"/>
+
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
+        </Style>
+
+        <!-- ========================= -->
+        <!-- BOTONES HORA -->
+        <!-- ========================= -->
+
+        <Style x:Key="HourButtonStyle"
+       TargetType="Button">
+
+            <Setter Property="Width"
+            Value="24"/>
+
+            <Setter Property="Height"
+            Value="18"/>
+
+            <Setter Property="Background"
+            Value="#252525"/>
+
+            <Setter Property="Foreground"
+            Value="White"/>
+
+            <Setter Property="BorderBrush"
+            Value="#333333"/>
+
+            <Setter Property="BorderThickness"
+            Value="1"/>
+
+            <Setter Property="Cursor"
+            Value="Hand"/>
+
+            <Setter Property="FontWeight"
+            Value="Bold"/>
+
+            <Setter Property="FontSize"
+            Value="10"/>
+
+            <Setter Property="Template">
+
+                <Setter.Value>
+
+                    <ControlTemplate TargetType="Button">
+
+                        <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+
+                            <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+
+                        </Border>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+
+            </Setter>
+
+        </Style>
         <!-- ========================= -->
         <!-- BOTONES -->
         <!-- ========================= -->
@@ -593,99 +823,229 @@
 
             </Border>
 
-            <!-- HORARIOS -->
-            <!-- HORARIOS -->
+            <!-- HORARIOS MODERNOS -->
+            <!-- HORARIOS MODERNOS -->
             <Border Grid.Row="2"
-        Style="{StaticResource SectionStyle}" Margin="0,8,0,8">
+        Style="{StaticResource SectionStyle}"
+        Margin="0,8,0,0">
 
-                <StackPanel>
+                <Grid>
 
-                    <TextBlock Text="HORARIOS PERMITIDOS"
-                   Foreground="White"
-                   FontSize="16"
-                   FontWeight="Bold"
-                   Margin="0,0,0,15"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                    <!-- ENCABEZADO -->
-                    <Grid Margin="0,0,0,8">
+                    <!-- TITULO -->
+                    <DockPanel Grid.Row="0"
+                   Margin="0,0,0,18">
 
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="120"/>
-                        </Grid.ColumnDefinitions>
+                        <StackPanel DockPanel.Dock="Left">
 
-                        <TextBlock Grid.Column="0"
-                       Text="DÍA"
-                       Foreground="#AAAAAA"
-                       FontWeight="Bold"/>
+                            <TextBlock Text="HORARIOS PERMITIDOS"
+                           Foreground="White"
+                           FontSize="18"
+                           FontWeight="Bold"/>
 
-                        <TextBlock Grid.Column="1"
-                       Text="HORA INICIO"
-                       Foreground="#AAAAAA"
-                       FontWeight="Bold"/>
+                            <TextBlock Text="Control de acceso semanal del vehículo"
+                           Foreground="#8A8A8A"
+                           FontSize="11"
+                           Margin="0,2,0,0"/>
 
-                        <TextBlock Grid.Column="2"
-                       Text="HORA FIN"
-                       Foreground="#AAAAAA"
-                       FontWeight="Bold"/>
+                        </StackPanel>
 
-                        <TextBlock Grid.Column="3"
-                       Text="24 HORAS"
-                       Foreground="#AAAAAA"
-                       FontWeight="Bold"/>
+                    </DockPanel>
 
-                    </Grid>
+                    <!-- CABECERA -->
+                    <Border Grid.Row="1"
+                Background="#151515"
+                CornerRadius="8"
+                Padding="12,10"
+                Margin="0,0,0,10">
 
-                    <ItemsControl ItemsSource="{Binding VehicleSchedules}">
+                        <Grid>
 
-                        <ItemsControl.ItemTemplate>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="170"/>
+                                <ColumnDefinition Width="170"/>
+                                <ColumnDefinition Width="120"/>
+                            </Grid.ColumnDefinitions>
 
-                            <DataTemplate>
+                            <TextBlock Grid.Column="0"
+                           Text="DÍA"
+                           Foreground="#8C8C8C"
+                           FontWeight="Bold"
+                           FontSize="11"/>
 
-                                <Border Background="#181818"
-                            CornerRadius="4"
-                            Padding="8"
-                            Margin="0,0,0,5">
+                            <TextBlock Grid.Column="1"
+                           Text="ENTRADA"
+                           Foreground="#8C8C8C"
+                           FontWeight="Bold"
+                           FontSize="11"
+                           HorizontalAlignment="Center"/>
 
-                                    <Grid>
+                            <TextBlock Grid.Column="2"
+                           Text="SALIDA"
+                           Foreground="#8C8C8C"
+                           FontWeight="Bold"
+                           FontSize="11"
+                           HorizontalAlignment="Center"/>
 
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="130"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="120"/>
-                                        </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="3"
+                           Text="24H"
+                           Foreground="#8C8C8C"
+                           FontWeight="Bold"
+                           FontSize="11"
+                           HorizontalAlignment="Center"/>
 
-                                        <CheckBox Grid.Column="0"
-                                      Content="{Binding DayName}"
-                                      IsChecked="{Binding IsEnabled}"
-                                      Style="{StaticResource DayCheckStyle}"/>
+                        </Grid>
 
-                                        <TextBox Grid.Column="1"
-                                     Text="{Binding StartTime}"
-                                     Style="{StaticResource HourBoxStyle}"/>
+                    </Border>
 
-                                        <TextBox Grid.Column="2"
-                                     Text="{Binding EndTime}"
-                                     Style="{StaticResource HourBoxStyle}"/>
+                    <!-- LISTA -->
+                    <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      CanContentScroll="True">
 
-                                        <CheckBox Grid.Column="3"
-                                      IsChecked="{Binding IsFullDay}"
-                                      HorizontalAlignment="Center"/>
+                        <ItemsControl ItemsSource="{Binding VehicleSchedules}">
 
-                                    </Grid>
+                            <ItemsControl.ItemsPanel>
 
-                                </Border>
+                                <ItemsPanelTemplate>
+                                    <StackPanel/>
+                                </ItemsPanelTemplate>
 
-                            </DataTemplate>
+                            </ItemsControl.ItemsPanel>
 
-                        </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemTemplate>
 
-                    </ItemsControl>
+                                <DataTemplate>
 
-                </StackPanel>
+                                    <Border Style="{StaticResource ModernScheduleCardStyle}">
+
+                                        <Grid>
+
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="220"/>
+                                                <ColumnDefinition Width="170"/>
+                                                <ColumnDefinition Width="170"/>
+                                                <ColumnDefinition Width="120"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- DIA -->
+                                            <StackPanel Grid.Column="0"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+
+                                                <Border Width="10"
+                                            Height="10"
+                                            CornerRadius="5"
+                                            Margin="0,0,10,0">
+
+                                                    <Border.Style>
+
+                                                        <Style TargetType="Border">
+
+                                                            <Setter Property="Background"
+                                                        Value="#C62828"/>
+
+                                                            <Style.Triggers>
+
+                                                                <DataTrigger Binding="{Binding IsEnabled}"
+                                                                 Value="True">
+
+                                                                    <Setter Property="Background"
+                                                                Value="#2E7D32"/>
+
+                                                                </DataTrigger>
+
+                                                            </Style.Triggers>
+
+                                                        </Style>
+
+                                                    </Border.Style>
+
+                                                </Border>
+
+                                                <CheckBox Content="{Binding DayName}"
+                                              IsChecked="{Binding IsEnabled}"
+                                              Style="{StaticResource ModernToggleCheckStyle}"/>
+
+                                            </StackPanel>
+
+                                            <!-- HORA INICIO -->
+                                            <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+
+                                                <TextBox Text="{Binding StartTime}"
+                                             Style="{StaticResource ModernHourBoxStyle}"
+                                             Width="80"
+                                             IsEnabled="{Binding IsEnabled}"/>
+
+                                                <StackPanel Margin="5,0,0,0">
+
+                                                    <Button Content="▲"
+                                                Style="{StaticResource HourButtonStyle}"
+                                                Command="{Binding IncreaseStartHourCommand}"/>
+
+                                                    <Button Content="▼"
+                                                Style="{StaticResource HourButtonStyle}"
+                                                Margin="0,2,0,0"
+                                                Command="{Binding DecreaseStartHourCommand}"/>
+
+                                                </StackPanel>
+
+                                            </StackPanel>
+
+                                            <!-- HORA FIN -->
+                                            <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Center">
+
+                                                <TextBox Text="{Binding EndTime}"
+                                             Style="{StaticResource ModernHourBoxStyle}"
+                                             Width="80"
+                                             IsEnabled="{Binding IsEnabled}"/>
+
+                                                <StackPanel Margin="5,0,0,0">
+
+                                                    <Button Content="▲"
+                                                Style="{StaticResource HourButtonStyle}"
+                                                Command="{Binding IncreaseEndHourCommand}"/>
+
+                                                    <Button Content="▼"
+                                                Style="{StaticResource HourButtonStyle}"
+                                                Margin="0,2,0,0"
+                                                Command="{Binding DecreaseEndHourCommand}"/>
+
+                                                </StackPanel>
+
+                                            </StackPanel>
+
+                                            <!-- 24 HORAS -->
+                                            <CheckBox Grid.Column="3"
+                                          IsChecked="{Binding IsFullDay}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Style="{StaticResource ModernToggleCheckStyle}"/>
+
+                                        </Grid>
+
+                                    </Border>
+
+                                </DataTemplate>
+
+                            </ItemsControl.ItemTemplate>
+
+                        </ItemsControl>
+
+                    </ScrollViewer>
+
+                </Grid>
 
             </Border>
         </Grid>

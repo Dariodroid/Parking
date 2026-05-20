@@ -65,18 +65,9 @@ public class RegisteredVehicleRepository
             .AddRangeAsync(schedules);
     }
 
-    public async Task RemoveSchedulesAsync(
-        List<monthly_vehicle_schedule> schedules)
+    public async Task UpdateSchedulesAsync(
+     List<monthly_vehicle_schedule> schedules)
     {
-        foreach (var item in schedules)
-        {
-            item.is_deleted = true;
-
-            item.deleted_at = DateTime.Now;
-
-            item.updated_at = DateTime.Now;
-        }
-
         _context.monthly_vehicle_schedules
             .UpdateRange(schedules);
 

@@ -688,61 +688,117 @@ public class RegisteredVehicleViewModel : BaseViewModel
             }
 
             // =========================
-            // ELIMINAR HORARIOS VIEJOS
+            // ACTUALIZAR HORARIOS
             // =========================
 
-            var oldSchedules =
-                entity.monthly_vehicle_schedules
-                    .Where(x => !x.is_deleted)
-                    .ToList();
-
-            await _repository
-                .RemoveSchedulesAsync(
-                    oldSchedules);
-
             // =========================
-            // CREAR NUEVOS HORARIOS
+            // ACTUALIZAR HORARIOS
             // =========================
 
-            var newSchedules =
-                VehicleSchedules
-                .Where(x => x.IsEnabled)
-                .Select(x =>
-                    new monthly_vehicle_schedule
-                    {
-                        registered_vehicle_id =
-                            entity.id,
+            var schedulesToUpdate =
+                new List<monthly_vehicle_schedule>();
 
-                        day_of_week =
-                            x.DayOfWeek,
+            var schedulesToAdd =
+                new List<monthly_vehicle_schedule>();
 
-                        start_time =
-                            TimeOnly.FromTimeSpan(
-                                x.StartTime),
+            foreach (var vmSchedule in VehicleSchedules)
+            {
+                var existingSchedule =
+                    entity.monthly_vehicle_schedules
+                        .FirstOrDefault(x =>
+                            x.day_of_week ==
+                            vmSchedule.DayOfWeek);
 
-                        end_time =
-                            TimeOnly.FromTimeSpan(
-                                x.EndTime),
+                // =========================
+                // UPDATE
+                // =========================
 
-                        is_active = true,
+                if (existingSchedule != null)
+                {
+                    existingSchedule.start_time =
+                        TimeOnly.FromTimeSpan(
+                            vmSchedule.StartTime);
 
-                        is_full_day =
-                            x.IsFullDay,
+                    existingSchedule.end_time =
+                        TimeOnly.FromTimeSpan(
+                            vmSchedule.EndTime);
 
-                        created_at =
-                            DateTime.Now,
+                    existingSchedule.is_full_day =
+                        vmSchedule.IsFullDay;
 
-                        created_by =
-                            _currentUserId,
+                    existingSchedule.is_active =
+                        vmSchedule.IsEnabled;
 
-                        is_deleted = false
-                    })
-                .ToList();
+                    existingSchedule.updated_at =
+                        DateTime.Now;
 
-            await _repository
-                .AddSchedulesAsync(
-                    newSchedules);
+                    existingSchedule.updated_by =
+                        _currentUserId;
 
+                    schedulesToUpdate
+                        .Add(existingSchedule);
+                }
+
+                // =========================
+                // INSERT
+                // =========================
+
+                else if (vmSchedule.IsEnabled)
+                {
+                    schedulesToAdd.Add(
+                        new monthly_vehicle_schedule
+                        {
+                            registered_vehicle_id =
+                                entity.id,
+
+                            day_of_week =
+                                vmSchedule.DayOfWeek,
+
+                            start_time =
+                                TimeOnly.FromTimeSpan(
+                                    vmSchedule.StartTime),
+
+                            end_time =
+                                TimeOnly.FromTimeSpan(
+                                    vmSchedule.EndTime),
+
+                            is_active = true,
+
+                            is_full_day =
+                                vmSchedule.IsFullDay,
+
+                            created_at =
+                                DateTime.Now,
+
+                            created_by =
+                                _currentUserId,
+
+                            is_deleted = false
+                        });
+                }
+            }
+
+            // =========================
+            // GUARDAR UPDATES
+            // =========================
+
+            if (schedulesToUpdate.Any())
+            {
+                await _repository
+                    .UpdateSchedulesAsync(
+                        schedulesToUpdate);
+            }
+
+            // =========================
+            // GUARDAR NUEVOS
+            // =========================
+
+            if (schedulesToAdd.Any())
+            {
+                await _repository
+                    .AddSchedulesAsync(
+                        schedulesToAdd);
+            }
             // =========================
             // GUARDAR TODO
             // =========================

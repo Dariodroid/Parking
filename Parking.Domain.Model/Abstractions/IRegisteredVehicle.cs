@@ -5,11 +5,14 @@ namespace Parking.Domain.Model.Abstractions;
 public interface IRegisteredVehicle
     : IBaseRepository<registered_vehicle>
 {
-    Task<bool> ExistsByPlateAsync(string plate);
+    Task<bool> ExistsByPlateAsync(
+        string plate);
 
-    Task<registered_vehicle?> GetCompleteByIdAsync(int id);
+    Task<registered_vehicle?>
+        GetCompleteByIdAsync(int id);
 
-    Task<List<registered_vehicle>> GetAllCompleteAsync();
+    Task<List<registered_vehicle>>
+        GetAllCompleteAsync();
 
     Task SoftDeleteAsync(
         registered_vehicle entity,
@@ -21,6 +24,6 @@ public interface IRegisteredVehicle
     Task AddSchedulesAsync(
         List<monthly_vehicle_schedule> schedules);
 
-    Task RemoveSchedulesAsync(
+    Task UpdateSchedulesAsync(
         List<monthly_vehicle_schedule> schedules);
 }

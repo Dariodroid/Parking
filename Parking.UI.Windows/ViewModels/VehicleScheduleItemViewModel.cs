@@ -1,56 +1,98 @@
 ﻿using Parking.UI.Windows.ViewModels.Base;
-using System;
+using System.Windows.Input;
 
-namespace Parking.UI.Windows.ViewModels
+namespace Parking.UI.Windows.ViewModels;
+
+public class VehicleScheduleItemViewModel : BaseViewModel
 {
-    public class VehicleScheduleItemViewModel : BaseViewModel
+    private bool _isEnabled;
+
+    public bool IsEnabled
     {
-        private int _dayOfWeek;
+        get => _isEnabled;
+        set => SetProperty(ref _isEnabled, value);
+    }
 
-        public int DayOfWeek
-        {
-            get => _dayOfWeek;
-            set => SetProperty(ref _dayOfWeek, value);
-        }
+    private bool _isFullDay;
 
-        private string _dayName = string.Empty;
+    public bool IsFullDay
+    {
+        get => _isFullDay;
+        set => SetProperty(ref _isFullDay, value);
+    }
 
-        public string DayName
-        {
-            get => _dayName;
-            set => SetProperty(ref _dayName, value);
-        }
+    private TimeSpan _startTime;
 
-        private bool _isEnabled;
+    public TimeSpan StartTime
+    {
+        get => _startTime;
+        set => SetProperty(ref _startTime, value);
+    }
 
-        public bool IsEnabled
-        {
-            get => _isEnabled;
-            set => SetProperty(ref _isEnabled, value);
-        }
+    private TimeSpan _endTime;
 
-        private TimeSpan _startTime;
+    public TimeSpan EndTime
+    {
+        get => _endTime;
+        set => SetProperty(ref _endTime, value);
+    }
 
-        public TimeSpan StartTime
-        {
-            get => _startTime;
-            set => SetProperty(ref _startTime, value);
-        }
+    public int DayOfWeek { get; set; }
 
-        private TimeSpan _endTime;
+    public string DayName { get; set; } = string.Empty;
 
-        public TimeSpan EndTime
-        {
-            get => _endTime;
-            set => SetProperty(ref _endTime, value);
-        }
+    public ICommand IncreaseStartHourCommand { get; }
 
-        private bool _isFullDay;
+    public ICommand DecreaseStartHourCommand { get; }
 
-        public bool IsFullDay
-        {
-            get => _isFullDay;
-            set => SetProperty(ref _isFullDay, value);
-        }
+    public ICommand IncreaseEndHourCommand { get; }
+
+    public ICommand DecreaseEndHourCommand { get; }
+
+    public VehicleScheduleItemViewModel()
+    {
+        IncreaseStartHourCommand =
+            new RelayCommand(_ => IncreaseStartHour());
+
+        DecreaseStartHourCommand =
+            new RelayCommand(_ => DecreaseStartHour());
+
+        IncreaseEndHourCommand =
+            new RelayCommand(_ => IncreaseEndHour());
+
+        DecreaseEndHourCommand =
+            new RelayCommand(_ => DecreaseEndHour());
+    }
+
+    private void IncreaseStartHour()
+    {
+        StartTime = StartTime.Add(TimeSpan.FromHours(1));
+
+        if (StartTime.TotalHours >= 24)
+            StartTime = TimeSpan.Zero;
+    }
+
+    private void DecreaseStartHour()
+    {
+        StartTime = StartTime.Subtract(TimeSpan.FromHours(1));
+
+        if (StartTime.TotalHours < 0)
+            StartTime = new TimeSpan(23, 0, 0);
+    }
+
+    private void IncreaseEndHour()
+    {
+        EndTime = EndTime.Add(TimeSpan.FromHours(1));
+
+        if (EndTime.TotalHours >= 24)
+            EndTime = TimeSpan.Zero;
+    }
+
+    private void DecreaseEndHour()
+    {
+        EndTime = EndTime.Subtract(TimeSpan.FromHours(1));
+
+        if (EndTime.TotalHours < 0)
+            EndTime = new TimeSpan(23, 0, 0);
     }
 }
