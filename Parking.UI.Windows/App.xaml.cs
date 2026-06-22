@@ -1,5 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Parking.Application.Dto;
+using Parking.Application.Dto.Interfaces;
 using Parking.Application.EntityService;
 using Parking.Application.UseCases;
 using Parking.Domain.Model.Abstractions;
@@ -7,6 +10,7 @@ using Parking.Domain.Model.Models;
 using Parking.Infrastructure.DataAccess;
 using Parking.Infrastructure.DataAccess.Repository;
 using Parking.Infrastructure.ExternalServices;
+using Parking.UI.Windows.Services;
 using Parking.UI.Windows.View;
 using Parking.UI.Windows.ViewModels;
 using System;
@@ -39,6 +43,10 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<IuserRepository, userRepository>();
             serviceCollection.AddScoped<IBaseRepository<vehicle_type>, BaseRepository<vehicle_type>>();
             serviceCollection.AddScoped<IRegisteredVehicle, RegisteredVehicleRepository>();
+            serviceCollection.AddScoped<IParkingSlotRepository, ParkingSlotRepository>();
+            serviceCollection.AddScoped<IParkingDashboard, ParkingDashboardRepository>();
+            serviceCollection.AddScoped<ICashRepository, CashRepository>();
+            serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
 
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
@@ -47,6 +55,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<ICameraService, OpenCvCameraService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
             serviceCollection.AddSingleton<IQrService, QrReaderService>();
+            serviceCollection.AddSingleton<ExcelExportService>();
 
             // ====================== 4. SERVICIOS DE APLICACIÓN ======================
             serviceCollection.AddSingleton<IEntryService, EntryService>();
@@ -57,6 +66,10 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<vehicle_typeViewModel>();
             serviceCollection.AddTransient<userViewModel>();
             serviceCollection.AddTransient<RegisteredVehicleViewModel>();
+            serviceCollection.AddTransient<ParkingSlotViewModel>();
+            serviceCollection.AddTransient<DashboardViewModel>();
+            serviceCollection.AddTransient<CashViewModel>();
+            serviceCollection.AddTransient<OperatorReportViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();

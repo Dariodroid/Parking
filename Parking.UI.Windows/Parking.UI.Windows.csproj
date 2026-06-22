@@ -14,11 +14,14 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
     <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.13.0.20260330" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Parking.Application.Dto\Parking.Application.Dto.csproj" />
     <ProjectReference Include="..\Parking.Application\Parking.Application.csproj" />
     <ProjectReference Include="..\Parking.Domain.Model\Parking.Domain.Model.csproj" />
     <ProjectReference Include="..\Parking.Domain.Services\Parking.Domain.Services.csproj" />

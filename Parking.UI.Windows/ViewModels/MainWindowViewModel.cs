@@ -55,7 +55,12 @@ namespace Parking.UI.Windows.ViewModels
 
                 case "Dashboard":
 
+                    var dashboardVm =
+                         _serviceProvider.GetRequiredService<DashboardViewModel>();
+
+                    CurrentView = dashboardVm;
                     PageTitle = "Dashboard";
+
 
                     break;
 
@@ -67,7 +72,11 @@ namespace Parking.UI.Windows.ViewModels
 
                 case "Config":
 
-                    PageTitle = "Configuración";
+                    var configVm =
+                        _serviceProvider.GetRequiredService<ParkingSlotViewModel>();
+
+                    CurrentView = configVm;
+                    PageTitle = "Configuraciones";
 
                     break;
 
@@ -79,6 +88,10 @@ namespace Parking.UI.Windows.ViewModels
 
                 case "Caja":
 
+                    var cashVm =
+                    _serviceProvider.GetRequiredService<CashViewModel>();
+
+                    CurrentView = cashVm;
                     PageTitle = "Caja";
 
                     break;
@@ -116,6 +129,16 @@ namespace Parking.UI.Windows.ViewModels
                     PageTitle = "Gestión de Usuarios";
 
                     await userVm.InitializeAsync();
+
+                    break;
+                case "Reporte Operadores":
+
+                    var vm = 
+                        _serviceProvider.GetRequiredService<OperatorReportViewModel>();
+
+                    CurrentView = vm;
+
+                    await vm.LoadAsync();
 
                     break;
 

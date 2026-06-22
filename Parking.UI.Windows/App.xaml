@@ -27,6 +27,26 @@
             <views:RegisteredVehiclePage/>
         </DataTemplate>
 
+        <!-- CONFIGURACIONES -->
+        <DataTemplate DataType="{x:Type vm:ParkingSlotViewModel}">
+            <views:ParkingSlotPage/>
+        </DataTemplate>
+
+        <!-- DASHOBOARD -->
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardPage/>
+        </DataTemplate>
+
+        <!-- CAJA -->
+        <DataTemplate DataType="{x:Type vm:CashViewModel}">
+            <views:CashPage/>
+        </DataTemplate>
+        
+        <!-- REPORTE OPERADORES -->
+        <DataTemplate DataType="{x:Type vm:OperatorReportViewModel}">
+            <views:OperatorReportPage/>
+        </DataTemplate>
+
     </Application.Resources>
 
 </Application>

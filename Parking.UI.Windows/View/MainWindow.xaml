@@ -91,10 +91,38 @@
                     CommandParameter="Config"
                     Style="{StaticResource MenuButtonStyle}"/>
 
-            <Button Content="📊 Reportes"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Reportes"
-                    Style="{StaticResource MenuButtonStyle}"/>
+            <Expander Header="📊 Reportes"
+          Foreground="White"
+          Background="Transparent"
+          Margin="5">
+
+                <StackPanel Margin="15,5,0,5">
+
+                    <Button Content="👨‍💼 Operadores"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="Reporte Operadores"
+                Style="{StaticResource MenuButtonStyle}"/>
+
+                    <!-- FUTUROS REPORTES -->
+
+                    <Button Content="🚗 Vehículos"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="Reporte Vehiculos"
+                Style="{StaticResource MenuButtonStyle}"/>
+
+                    <Button Content="💰 Ingresos"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="Reporte Ingresos"
+                Style="{StaticResource MenuButtonStyle}"/>
+
+                    <Button Content="📅 Ocupación"
+                Command="{Binding NavigateCommand}"
+                CommandParameter="Reporte Ocupacion"
+                Style="{StaticResource MenuButtonStyle}"/>
+
+                </StackPanel>
+
+            </Expander>
 
             <Button Content="🚘 Tipos Vehículo"
                     Command="{Binding NavigateCommand}"
