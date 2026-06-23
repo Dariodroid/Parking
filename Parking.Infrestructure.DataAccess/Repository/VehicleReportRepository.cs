@@ -17,112 +17,162 @@ public class VehicleReportRepository
     }
 
     public async Task<List<VehicleReportDto>>
-        GetReportAsync(
-            VehicleReportFilterDto filter)
+    GetReportAsync(
+        VehicleReportFilterDto filter)
     {
-        var query =
-     _context.registered_vehicles
-     .Where(x => !x.is_deleted)
-     .AsQueryable();
+        var result =
+            new List<VehicleReportDto>();
 
-        if (filter.FromDate.HasValue)
+        // =====================================
+        // VEHICULOS MENSUALES / REGISTRADOS
+        // =====================================
+
+        if (filter.IncludeMonthly)
         {
-            query =
-                query.Where(x =>
-                    x.parking_sessions.Any(s =>
-                        s.entry_time >= filter.FromDate.Value));
-        }
+            var monthlyQuery =
+                _context.registered_vehicles
+                .Where(x => !x.is_deleted)
+                .AsQueryable();
 
-        if (filter.ToDate.HasValue)
-        {
-            var endDate =
-                filter.ToDate.Value.Date.AddDays(1);
+            if (!string.IsNullOrWhiteSpace(filter.Plate))
+            {
+                monthlyQuery =
+                    monthlyQuery.Where(x =>
+                        x.plate.Contains(filter.Plate));
+            }
 
-            query =
-                query.Where(x =>
-                    x.parking_sessions.Any(s =>
-                        s.entry_time < endDate));
-        }
+            if (!string.IsNullOrWhiteSpace(filter.OwnerName))
+            {
+                monthlyQuery =
+                    monthlyQuery.Where(x =>
+                        x.owner_name.Contains(filter.OwnerName));
+            }
 
-        if (!string.IsNullOrWhiteSpace(filter.Plate))
-        {
-            query =
-                query.Where(x =>
-                    x.plate.Contains(filter.Plate));
-        }
+            var monthlyData =
+                await monthlyQuery
+                .Select(x =>
+                    new VehicleReportDto
+                    {
+                        Plate = x.plate,
 
-        if (!string.IsNullOrWhiteSpace(filter.OwnerName))
-        {
-            query =
-                query.Where(x =>
-                    x.owner_name.Contains(filter.OwnerName));
-        }
+                        OwnerName = x.owner_name,
 
-        if (filter.IncludeMonthly &&
-            !filter.IncludeOccasional)
-        {
-            query =
-                query.Where(x =>
-                    x.vehicle_monthly_plan != null);
-        }
+                        VehicleType =
+                            x.vehicle_type.name,
 
-        if (!filter.IncludeMonthly &&
-            filter.IncludeOccasional)
-        {
-            query =
-                query.Where(x =>
-                    x.vehicle_monthly_plan == null);
-        }
+                        Category = "Mensual",
 
-        return await query
-            .Select(x =>
-                new VehicleReportDto
-                {
-                    Plate = x.plate,
+                        PlanStatus =
+                            x.vehicle_monthly_plan != null
+                                ? x.vehicle_monthly_plan.status
+                                : "Sin Plan",
 
-                    OwnerName =
-                        x.owner_name,
+                        MonthlyFee =
+                            x.vehicle_monthly_plan != null
+                                ? x.vehicle_monthly_plan.monthly_fee
+                                : 0,
 
-                    VehicleType =
-                        x.vehicle_type.name,
+                        PlanStartDate =
+                            x.vehicle_monthly_plan != null
+                                ? x.vehicle_monthly_plan.start_date
+                                : null,
 
-                    Category =
-                        x.vehicle_monthly_plan != null
-                            ? "Mensual"
-                            : "Ocasional",
+                        PlanEndDate =
+                            x.vehicle_monthly_plan != null
+                                ? x.vehicle_monthly_plan.end_date
+                                : null,
 
-                    PlanStatus =
-                        x.vehicle_monthly_plan != null
-                            ? x.vehicle_monthly_plan.status
-                            : "-",
+                        TotalEntries =
+                            x.parking_sessions.Count(),
 
-                    MonthlyFee =
-                        x.vehicle_monthly_plan != null
-                            ? x.vehicle_monthly_plan.monthly_fee
-                            : 0,
-
-                    PlanStartDate =
-                        x.vehicle_monthly_plan != null
-                            ? x.vehicle_monthly_plan.start_date
-                            : null,
-
-                    PlanEndDate =
-                        x.vehicle_monthly_plan != null
-                            ? x.vehicle_monthly_plan.end_date
-                            : null,
-
-                    TotalEntries =
-                        x.parking_sessions.Count(),
-
-                    LastEntryDate =
-                        x.parking_sessions
-                            .OrderByDescending(s =>
+                        LastEntryDate =
+                            x.parking_sessions
+                             .OrderByDescending(s =>
                                 s.entry_time)
-                            .Select(s =>
+                             .Select(s =>
                                 (DateTime?)s.entry_time)
-                            .FirstOrDefault()
+                             .FirstOrDefault()
+                    })
+                .ToListAsync();
+
+            result.AddRange(monthlyData);
+        }
+
+        // =====================================
+        // VEHICULOS OCASIONALES
+        // =====================================
+
+        if (filter.IncludeOccasional)
+        {
+            var occasionalQuery =
+                _context.parking_sessions
+                .Where(x =>
+                    !x.is_deleted &&
+                    x.registered_vehicle_id == null)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.Plate))
+            {
+                occasionalQuery =
+                    occasionalQuery.Where(x =>
+                        x.plate.Contains(filter.Plate));
+            }
+
+            if (filter.FromDate.HasValue)
+            {
+                occasionalQuery =
+                    occasionalQuery.Where(x =>
+                        x.entry_time >= filter.FromDate.Value);
+            }
+
+            if (filter.ToDate.HasValue)
+            {
+                var endDate =
+                    filter.ToDate.Value.Date.AddDays(1);
+
+                occasionalQuery =
+                    occasionalQuery.Where(x =>
+                        x.entry_time < endDate);
+            }
+
+            var occasionalData =
+                await occasionalQuery
+                .GroupBy(x => new
+                {
+                    x.plate,
+                    VehicleType =
+                        x.vehicle_type.name
                 })
+                .Select(g =>
+                    new VehicleReportDto
+                    {
+                        Plate = g.Key.plate,
+
+                        OwnerName = "Ocasional",
+
+                        VehicleType =
+                            g.Key.VehicleType,
+
+                        Category = "Ocasional",
+
+                        PlanStatus = "-",
+
+                        MonthlyFee = 0,
+
+                        TotalEntries =
+                            g.Count(),
+
+                        LastEntryDate =
+                            g.Max(x =>
+                                x.entry_time)
+                    })
+                .ToListAsync();
+
+            result.AddRange(occasionalData);
+        }
+
+        return result
             .OrderBy(x => x.Plate)
-            .ToListAsync();
+            .ToList();
     }
 }
