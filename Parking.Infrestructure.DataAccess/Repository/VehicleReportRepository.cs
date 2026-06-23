@@ -21,9 +21,28 @@ public class VehicleReportRepository
             VehicleReportFilterDto filter)
     {
         var query =
-            _context.registered_vehicles
-            .Where(x => !x.is_deleted)
-            .AsQueryable();
+     _context.registered_vehicles
+     .Where(x => !x.is_deleted)
+     .AsQueryable();
+
+        if (filter.FromDate.HasValue)
+        {
+            query =
+                query.Where(x =>
+                    x.parking_sessions.Any(s =>
+                        s.entry_time >= filter.FromDate.Value));
+        }
+
+        if (filter.ToDate.HasValue)
+        {
+            var endDate =
+                filter.ToDate.Value.Date.AddDays(1);
+
+            query =
+                query.Where(x =>
+                    x.parking_sessions.Any(s =>
+                        s.entry_time < endDate));
+        }
 
         if (!string.IsNullOrWhiteSpace(filter.Plate))
         {

@@ -48,6 +48,22 @@
                           Margin="10,0"
                           Foreground="White"
                           IsChecked="{Binding Filter.IncludeOccasional}"/>
+                <TextBlock Text="Desde"
+           Foreground="White"
+           VerticalAlignment="Center"
+           Margin="20,0,0,0"/>
+
+                <DatePicker Width="140"
+            Margin="10,0"
+            SelectedDate="{Binding Filter.FromDate}" />
+
+                <TextBlock Text="Hasta"
+           Foreground="White"
+           VerticalAlignment="Center"/>
+
+                <DatePicker Width="140"
+            Margin="10,0"
+            SelectedDate="{Binding Filter.ToDate}" />
 
                 <Button Content="Buscar"
                         Width="120"
