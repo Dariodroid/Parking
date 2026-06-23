@@ -47,7 +47,8 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<IParkingDashboard, ParkingDashboardRepository>();
             serviceCollection.AddScoped<ICashRepository, CashRepository>();
             serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
-
+            serviceCollection.AddScoped<Application.Dto.Interfaces.IVehicleReportRepository,
+               VehicleReportRepository>();
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
                 new RfdetrPlateDetector(@"C:\users\Dario Castillo\source\repos\Parking\Parking.Infreastructure.ExternalServices\Model\rfdetr_alpr.onnx"));
@@ -70,6 +71,8 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<DashboardViewModel>();
             serviceCollection.AddTransient<CashViewModel>();
             serviceCollection.AddTransient<OperatorReportViewModel>();
+            serviceCollection.AddTransient<VehicleReportViewModel>();
+            serviceCollection.AddTransient<VehicleReportViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();

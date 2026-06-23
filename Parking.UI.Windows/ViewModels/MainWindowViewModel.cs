@@ -141,6 +141,17 @@ namespace Parking.UI.Windows.ViewModels
                     await vm.LoadAsync();
 
                     break;
+                case "Reporte Vehiculos":
+
+                    var vh =
+                        _serviceProvider.GetRequiredService<VehicleReportViewModel>();
+
+                    CurrentView = vh;
+                    PageTitle = "Vehículos";
+
+                    await vh.LoadData();
+
+                    break;
 
                 default:
                     break;

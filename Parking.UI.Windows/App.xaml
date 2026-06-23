@@ -47,6 +47,11 @@
             <views:OperatorReportPage/>
         </DataTemplate>
 
+        <DataTemplate
+        DataType="{x:Type vm:VehicleReportViewModel}">
+            <views:VehicleReportPage/>
+        </DataTemplate>
+
     </Application.Resources>
 
 </Application>
