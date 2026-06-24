@@ -23,8 +23,7 @@ public class VehicleReportRepository
             new List<VehicleReportDto>();
 
         // ==================================================
-        // SI NO SE SELECCIONA NINGUNA CATEGORÍA
-        // BUSCAR EN AMBAS
+        // CONTROL DE TIPOS DE BÚSQUEDA (CORREGIDO)
         // ==================================================
 
         var searchMonthly =
@@ -36,8 +35,16 @@ public class VehicleReportRepository
         if (!searchMonthly &&
             !searchOccasional)
         {
-            searchMonthly = true;
-            searchOccasional = true;
+            if (!string.IsNullOrWhiteSpace(filter.OwnerName))
+            {
+                searchMonthly = true;
+                searchOccasional = false;
+            }
+            else
+            {
+                searchMonthly = true;
+                searchOccasional = true;
+            }
         }
 
         // ==================================================
@@ -66,7 +73,7 @@ public class VehicleReportRepository
             }
 
             // -----------------------------
-            // FILTRO PROPIETARIO
+            // FILTRO PROPIETARIO (CORREGIDO)
             // -----------------------------
 
             if (!string.IsNullOrWhiteSpace(filter.OwnerName))
@@ -108,6 +115,8 @@ public class VehicleReportRepository
 
                 query =
                     query.Where(x =>
+                        !x.parking_sessions.Any()
+                        ||
                         x.parking_sessions.Any(s =>
                             s.entry_time >= fromDate &&
                             s.entry_time < toDate));
@@ -343,7 +352,7 @@ public class VehicleReportRepository
         }
 
         // ==================================================
-        // ORDENAMIENTO
+        // ORDENAMIENTO FINAL
         // ==================================================
 
         return result
