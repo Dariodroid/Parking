@@ -27,5 +27,13 @@ namespace Parking.Application.Dto
         public int TotalEntries { get; set; }
 
         public DateTime? LastEntryDate { get; set; }
+
+        public decimal TotalCollected { get; set; }
+
+        public int TotalMinutesParked { get; set; }
+
+        public DateTime? LastExitDate { get; set; }
+
+        public string CurrentStatus { get; set; } = string.Empty;
     }
 }

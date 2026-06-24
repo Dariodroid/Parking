@@ -19,5 +19,11 @@ namespace Parking.Application.Dto
         public DateTime? FromDate { get; set; }
 
         public DateTime? ToDate { get; set; }
+
+        public bool IncludeInside { get; set; } = true;
+
+        public bool IncludeOutside { get; set; } = true;
+
+        public int? VehicleTypeId { get; set; }
     }
 }

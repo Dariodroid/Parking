@@ -3,225 +3,369 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="#121212">
 
-    <Grid Margin="10">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="WindowBg" Color="#121212"/>
+        <SolidColorBrush x:Key="PanelBg" Color="#1F1F1F"/>
+        <SolidColorBrush x:Key="InputBg" Color="#141414"/>
+        <SolidColorBrush x:Key="BorderDark" Color="#333333"/>
+        <SolidColorBrush x:Key="TextNormal" Color="#C8C8C8"/>
+        <SolidColorBrush x:Key="TextHighlight" Color="#F0F0F0"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#888888"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#E46D24"/>
 
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource InputBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextHighlight}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDark}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="3"/>
+                </Style>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#555555"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#2A2A2A"/>
+            <Setter Property="Foreground" Value="{StaticResource TextHighlight}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#3F3F3F"/>
+            <Setter Property="Padding" Value="15,6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="4"/>
+                </Style>
+            </Style.Resources>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#383838"/>
+                    <Setter Property="BorderBrush" Value="#555"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#1A1A1A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="ToggleButton">
+            <Setter Property="Background" Value="#2A2A2A"/>
+            <Setter Property="BorderBrush" Value="#3F3F3F"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid>
+                            <Border x:Name="Track" 
+                                    Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="10"/>
+
+                            <Border x:Name="Thumb" 
+                                    Width="14" 
+                                    Height="14" 
+                                    CornerRadius="7" 
+                                    Background="#A0A0A0" 
+                                    HorizontalAlignment="Left" 
+                                    Margin="3,0,0,0"
+                                    VerticalAlignment="Center">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="2" Color="Black" Direction="270" Opacity="0.3" ShadowDepth="1"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentColor}"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="#FF8533"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0"/>
+                                <Setter TargetName="Thumb" Property="Background" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BtnExcel" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#175231"/>
+            <Setter Property="BorderBrush" Value="#1E6E41"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1E6E41"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BtnWord" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#1C3D7A"/>
+            <Setter Property="BorderBrush" Value="#2551A3"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2551A3"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
+    <Grid Margin="15">
         <Grid.RowDefinitions>
-            <RowDefinition Height="70"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- BARRA DE FILTROS -->
-
         <Border Grid.Row="0"
-                Background="#1E1E1E"
-                BorderBrush="#333333"
+                Background="{StaticResource PanelBg}"
+                BorderBrush="{StaticResource BorderDark}"
                 BorderThickness="1"
-                CornerRadius="4"
-                Padding="10">
+                CornerRadius="6"
+                Padding="12"
+                Margin="0,0,0,15">
 
-            <StackPanel Orientation="Horizontal">
+            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                <TextBlock Text="Placa"
-                           Foreground="White"
-                           VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
+                    <TextBlock Text="PLACA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBox Width="110" Text="{Binding Filter.Plate, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
 
-                <TextBox Width="120"
-                         Margin="10,0"
-                         Text="{Binding Filter.Plate,
-                                        UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
+                    <TextBlock Text="PROPIETARIO" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBox Width="160" Text="{Binding Filter.OwnerName, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
 
-                <TextBlock Text="Propietario"
-                           Foreground="White"
-                           VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,20,5" VerticalAlignment="Center">
+                    <TextBlock Text="MENSUALES" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <ToggleButton IsChecked="{Binding Filter.IncludeMonthly}" VerticalAlignment="Center" Margin="0,0,15,0"/>
 
-                <TextBox Width="180"
-                         Margin="10,0"
-                         Text="{Binding Filter.OwnerName,
-                                        UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="OCASIONALES" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <ToggleButton IsChecked="{Binding Filter.IncludeOccasional}" VerticalAlignment="Center"/>
+                </StackPanel>
 
-                <CheckBox Content="Mensuales"
-                          Margin="20,0"
-                          Foreground="White"
-                          IsChecked="{Binding Filter.IncludeMonthly}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
+                    <TextBlock Text="DESDE" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <DatePicker Width="120" SelectedDate="{Binding Filter.FromDate}" />
+                </StackPanel>
 
-                <CheckBox Content="Ocasionales"
-                          Margin="10,0"
-                          Foreground="White"
-                          IsChecked="{Binding Filter.IncludeOccasional}"/>
-                <TextBlock Text="Desde"
-           Foreground="White"
-           VerticalAlignment="Center"
-           Margin="20,0,0,0"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
+                    <TextBlock Text="HASTA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <DatePicker Width="120" SelectedDate="{Binding Filter.ToDate}" />
+                </StackPanel>
 
-                <DatePicker Width="140"
-            Margin="10,0"
-            SelectedDate="{Binding Filter.FromDate}" />
+                <StackPanel Orientation="Horizontal" Margin="0,5,20,5" VerticalAlignment="Center">
+                    <TextBlock Text="DENTRO" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <ToggleButton IsChecked="{Binding Filter.IncludeInside}" VerticalAlignment="Center" Margin="0,0,15,0"/>
 
-                <TextBlock Text="Hasta"
-           Foreground="White"
-           VerticalAlignment="Center"/>
+                    <TextBlock Text="FUERA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <ToggleButton IsChecked="{Binding Filter.IncludeOutside}" VerticalAlignment="Center"/>
+                </StackPanel>
 
-                <DatePicker Width="140"
-            Margin="10,0"
-            SelectedDate="{Binding Filter.ToDate}" />
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <Button Content="BUSCAR" Command="{Binding SearchCommand}" MinWidth="100"/>
+                    <Border Width="1" Background="{StaticResource BorderDark}" Margin="15,2"/>
+                    <Button Content="EXCEL" Style="{StaticResource BtnExcel}" Command="{Binding ExportExcelCommand}" MinWidth="85" Margin="0,0,8,0"/>
+                    <Button Content="WORD" Style="{StaticResource BtnWord}" Command="{Binding ExportWordCommand}" MinWidth="85"/>
+                </StackPanel>
 
-                <Button Content="Buscar"
-                        Width="120"
-                        Margin="20,0"
-                        Command="{Binding SearchCommand}"/>
-
-            </StackPanel>
-
+            </WrapPanel>
         </Border>
 
-        <!-- REPORTE -->
-
-        <ScrollViewer Grid.Row="1"
+        <ScrollViewer Grid.Row="1" 
+                      Background="#0A0A0A" 
+                      VerticalScrollBarVisibility="Auto" 
                       HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
+                      Padding="20">
 
-            <Border Width="1122"
-                    Height="1587"
-                    Background="White"
-                    HorizontalAlignment="Center"
-                    Margin="20"
-                    Padding="50">
+            <Border Width="1200" 
+                    MinHeight="850" 
+                    Background="White" 
+                    Padding="60,50" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Top">
 
-                <StackPanel>
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="25" Direction="270" ShadowDepth="8" Opacity="0.5"/>
+                </Border.Effect>
 
-                    <!-- TITULO -->
+                <Border.Resources>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="#111111"/>
+                    </Style>
 
-                    <TextBlock Text="REPORTE DE VEHÍCULOS"
-                               FontSize="28"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"/>
+                    <Style TargetType="DataGrid">
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="BorderBrush" Value="#333333"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="RowBackground" Value="White"/>
+                        <Setter Property="AlternatingRowBackground" Value="#F4F6F8"/>
+                        <Setter Property="Foreground" Value="#111111"/>
+                        <Setter Property="HorizontalGridLinesBrush" Value="#D0D0D0"/>
+                        <Setter Property="VerticalGridLinesBrush" Value="#D0D0D0"/>
+                        <Setter Property="HeadersVisibility" Value="All"/>
+                        <Setter Property="GridLinesVisibility" Value="All"/>
+                        <Setter Property="CanUserResizeRows" Value="False"/>
+                        <Setter Property="SelectionMode" Value="Single"/>
+                    </Style>
 
-                    <TextBlock Text="Sistema de Parqueadero"
-                               FontSize="14"
-                               HorizontalAlignment="Center"
-                               Margin="0,5"/>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#EAEAEA"/>
+                        <Setter Property="Foreground" Value="#111111"/>
+                        <Setter Property="Padding" Value="10,12"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="BorderBrush" Value="#333333"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    </Style>
 
-                    <Separator Margin="0,20"/>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Foreground" Value="#111111"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#DCEAF6"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
 
-                    <!-- FILTROS APLICADOS -->
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="8,5"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ContentPresenter VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Border.Resources>
 
-                    <Grid Margin="0,0,0,20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel>
-
-                            <TextBlock Text="Placa"
-                                       FontWeight="Bold"/>
-
-                            <TextBlock Text="{Binding Filter.Plate}"/>
-
+                    <Grid Grid.Row="0" Margin="0,0,0,25">
+                        <StackPanel HorizontalAlignment="Left">
+                            <TextBlock Text="SISTEMA DE GESTIÓN DE PARQUEADERO" 
+                                       FontSize="13" 
+                                       FontWeight="SemiBold" 
+                                       Foreground="#666666"/>
+                            <TextBlock Text="REPORTE DETALLADO DE VEHÍCULOS" 
+                                       FontSize="26" 
+                                       FontWeight="Black" 
+                                       Foreground="#000000" 
+                                       Margin="0,2,0,0"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding ReportDate, StringFormat='Fecha de Emisión: {0}', FallbackValue='Reporte del Sistema'}" 
+                                   HorizontalAlignment="Right" 
+                                   VerticalAlignment="Top" 
+                                   Foreground="#555555" 
+                                   FontStyle="Italic"/>
 
-                            <TextBlock Text="Propietario"
-                                       FontWeight="Bold"/>
-
-                            <TextBlock Text="{Binding Filter.OwnerName}"/>
-
-                        </StackPanel>
-
+                        <Separator VerticalAlignment="Bottom" Margin="0,15,0,0" Background="#333333" Height="2"/>
                     </Grid>
 
-                    <!-- TABLA -->
+                    <WrapPanel Grid.Row="1" Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,50,10">
+                            <TextBlock Text="Criterio de Placa:" Foreground="#666666" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                            <TextBlock Text="{Binding Filter.Plate, TargetNullValue='- Todos -', FallbackValue='- Todos -'}" 
+                                       Foreground="#000000" FontSize="14" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,50,10">
+                            <TextBlock Text="Criterio de Propietario:" Foreground="#666666" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                            <TextBlock Text="{Binding Filter.OwnerName, TargetNullValue='- Todos -', FallbackValue='- Todos -'}" 
+                                       Foreground="#000000" FontSize="14" FontWeight="Bold"/>
+                        </StackPanel>
+                    </WrapPanel>
 
-                    <DataGrid ItemsSource="{Binding Vehicles}"
+                    <DataGrid Grid.Row="2" 
+                              ItemsSource="{Binding Vehicles}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               CanUserAddRows="False"
-                              Height="1200">
-
+                              MinHeight="450">
                         <DataGrid.Columns>
-
-                            <DataGridTextColumn
-                                Header="Placa"
-                                Binding="{Binding Plate}"
-                                Width="120"/>
-
-                            <DataGridTextColumn
-                                Header="Propietario"
-                                Binding="{Binding OwnerName}"
-                                Width="220"/>
-
-                            <DataGridTextColumn
-                                Header="Tipo"
-                                Binding="{Binding VehicleType}"
-                                Width="120"/>
-
-                            <DataGridTextColumn
-                                Header="Categoría"
-                                Binding="{Binding Category}"
-                                Width="120"/>
-
-                            <DataGridTextColumn
-                                Header="Estado Plan"
-                                Binding="{Binding PlanStatus}"
-                                Width="120"/>
-
-                            <DataGridTextColumn
-                                Header="Mensualidad"
-                                Binding="{Binding MonthlyFee,
-                                                  StringFormat=C}"
-                                Width="130"/>
-
-                            <DataGridTextColumn
-                                Header="Ingresos"
-                                Binding="{Binding TotalEntries}"
-                                Width="100"/>
-
-                            <DataGridTextColumn
-                                Header="Último Ingreso"
-                                Binding="{Binding LastEntryDate,
-                                                  StringFormat=dd/MM/yyyy HH:mm}"
-                                Width="180"/>
-
+                            <DataGridTextColumn Header="PLACA" Binding="{Binding Plate}" MinWidth="90" Width="SizeToCells"/>
+                            <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding OwnerName}" MinWidth="150" Width="*"/>
+                            <DataGridTextColumn Header="TIPO" Binding="{Binding VehicleType}" MinWidth="100"/>
+                            <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Category}" MinWidth="100"/>
+                            <DataGridTextColumn Header="ESTADO PLAN" Binding="{Binding PlanStatus}" MinWidth="110"/>
+                            <DataGridTextColumn Header="MENSUALIDAD" Binding="{Binding MonthlyFee, StringFormat=C}" MinWidth="110"/>
+                            <DataGridTextColumn Header="INGRESOS" Binding="{Binding TotalEntries}" MinWidth="90"/>
+                            <DataGridTextColumn Header="ÚLTIMO INGRESO" Binding="{Binding LastEntryDate, StringFormat=dd/MM/yyyy HH:mm}" MinWidth="140"/>
+                            <DataGridTextColumn Header="ESTADO" Binding="{Binding CurrentStatus}" MinWidth="90"/>
+                            <DataGridTextColumn Header="COBRADO" Binding="{Binding TotalCollected, StringFormat=C}" MinWidth="100" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="MINUTOS" Binding="{Binding TotalMinutesParked}" MinWidth="90"/>
+                            <DataGridTextColumn Header="ÚLTIMA SALIDA" Binding="{Binding LastExitDate, StringFormat=dd/MM/yyyy HH:mm}" MinWidth="140"/>
                         </DataGrid.Columns>
-
                     </DataGrid>
 
-                    <!-- FOOTER -->
+                    <Border Grid.Row="3" 
+                            BorderBrush="#333333" 
+                            BorderThickness="0,2,0,0" 
+                            Margin="0,35,0,0" 
+                            Padding="0,20,0,0">
 
-                    <Border BorderBrush="#444"
-                            BorderThickness="1"
-                            Margin="0,20,0,0"
-                            Padding="15">
+                        <Grid>
+                            <TextBlock Text="Documento confidencial - Generado automáticamente por el sistema de Parqueadero." 
+                                       Foreground="#777777" 
+                                       FontStyle="Italic" 
+                                       VerticalAlignment="Center"/>
 
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Right">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <StackPanel HorizontalAlignment="Right" Margin="0,0,40,0">
+                                    <TextBlock Text="TOTAL VEHÍCULOS" 
+                                               Foreground="#555555" 
+                                               HorizontalAlignment="Right" 
+                                               FontSize="11" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Vehicles.Count}" 
+                                               FontSize="24" 
+                                               FontWeight="Black" 
+                                               Foreground="#111111" 
+                                               HorizontalAlignment="Right"/>
+                                </StackPanel>
 
-                            <TextBlock Text="TOTAL VEHÍCULOS:"
-                                       FontWeight="Bold"
-                                       FontSize="18"/>
-
-                            <TextBlock Text="{Binding Vehicles.Count}"
-                                       FontWeight="Bold"
-                                       FontSize="18"
-                                       Margin="15,0,0,0"/>
-
-                        </StackPanel>
-
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="TOTAL RECAUDADO" 
+                                               Foreground="#555555" 
+                                               HorizontalAlignment="Right" 
+                                               FontSize="11" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding TotalCollected, StringFormat=C}" 
+                                               FontSize="24" 
+                                               FontWeight="Black" 
+                                               Foreground="#000000" 
+                                               HorizontalAlignment="Right"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
                     </Border>
-
-                    <TextBlock Text="Generado automáticamente por el sistema"
-                               HorizontalAlignment="Center"
-                               Margin="0,40,0,0"
-                               FontStyle="Italic"/>
-
-                </StackPanel>
-
+                </Grid>
             </Border>
-
         </ScrollViewer>
-
     </Grid>
-
 </UserControl>

@@ -31,6 +31,16 @@ public class VehicleReportViewModel
         ToDate = DateTime.Today
     };
 
+    private decimal _totalCollected;
+
+    public decimal TotalCollected
+    {
+        get => _totalCollected;
+        set => SetProperty(
+            ref _totalCollected,
+            value);
+    }
+
     public ICommand SearchCommand { get; }
 
     public ICommand ExportExcelCommand { get; }
@@ -60,13 +70,17 @@ public class VehicleReportViewModel
         Vehicles.Clear();
 
         var data =
-            await _repository.GetReportAsync(
-                Filter);
+            await _repository
+            .GetReportAsync(Filter);
 
         foreach (var item in data)
         {
             Vehicles.Add(item);
         }
+
+        TotalCollected =
+            data.Sum(x =>
+                x.TotalCollected);
     }
 
     private async Task ExportExcel()
