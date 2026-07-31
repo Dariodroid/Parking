@@ -1,4 +1,5 @@
 ﻿using Parking.Application.EntityService;
+using Parking.Application.Services;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using System;
@@ -36,8 +37,9 @@ namespace Parking.Application.UseCases
                     qr_data = $"SESSION-{Guid.NewGuid():N}".ToUpper(),
                     entry_time = DateTime.UtcNow,
                     status = "active",
-                    vehicle_type_id = 1,
-                    entry_operator_id = 1,
+                    vehicle_type_id = 1,//debo colocar el tipo de vehiculo, por ahora lo dejo en 1
+                    entry_operator_id = CurrentUser.Id,
+                    created_by = CurrentUser.Id,
                     created_at = DateTime.UtcNow,
                     is_deleted = false
                 };
@@ -83,6 +85,7 @@ namespace Parking.Application.UseCases
             // 4. Cerrar sesión
             session.status = "paid";
             session.updated_at = DateTime.UtcNow;
+            session.exit_operator_id = CurrentUser.Id;
 
             await _sessionRepo.UpdateAsync(session);
             return await _sessionRepo.SaveChangesAsync();

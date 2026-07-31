@@ -42,6 +42,7 @@ public class ParkingSlotViewModel : BaseViewModel
         NewCommand =
             new RelayCommand(_ =>
                 ClearForm());
+        InitializeAsync();
     }
 
     #region PROPERTIES
@@ -99,8 +100,8 @@ public class ParkingSlotViewModel : BaseViewModel
         var items =
             await _repository.GetAllAsync();
 
-        MessageBox.Show(
-            $"Registros encontrados: {items.Count()}");
+        //MessageBox.Show(
+        //    $"Registros encontrados: {items.Count()}");
 
         foreach (var item in items)
         {

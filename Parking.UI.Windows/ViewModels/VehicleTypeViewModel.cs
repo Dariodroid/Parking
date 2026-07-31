@@ -1,11 +1,12 @@
-﻿using Parking.Domain.Model.Abstractions;
+﻿using Parking.Application.Services;
+using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
+using Parking.UI.Windows.View.Dialogs;
 using Parking.UI.Windows.ViewModels.Base;
 using System;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
-using Parking.UI.Windows.View.Dialogs;
 
 namespace Parking.UI.Windows.ViewModels;
 
@@ -13,7 +14,7 @@ public class vehicle_typeViewModel : BaseViewModel
 {
     private readonly Ivehicle_typeRepository _repository;
 
-    private readonly int _currentuserId = 1;
+    private readonly int _currentuserId = CurrentUser.Id;
 
     public ObservableCollection<vehicle_type> vehicle_types { get; } = new();
 

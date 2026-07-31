@@ -4,14 +4,17 @@ using Microsoft.Extensions.DependencyInjection;
 using Parking.Application.Dto;
 using Parking.Application.Dto.Interfaces;
 using Parking.Application.EntityService;
+using Parking.Application.Services;
 using Parking.Application.UseCases;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
+using Parking.Infrastructure.CrossCutting.Security;
 using Parking.Infrastructure.DataAccess;
 using Parking.Infrastructure.DataAccess.Repository;
 using Parking.Infrastructure.ExternalServices;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.View;
+using Parking.UI.Windows.View.Pages;
 using Parking.UI.Windows.ViewModels;
 using System;
 using System.Windows;
@@ -47,8 +50,11 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<IParkingDashboard, ParkingDashboardRepository>();
             serviceCollection.AddScoped<ICashRepository, CashRepository>();
             serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
-            serviceCollection.AddScoped<Application.Dto.Interfaces.IVehicleReportRepository,
-               VehicleReportRepository>();
+            serviceCollection.AddScoped<Application.Dto.Interfaces.IVehicleReportRepository,VehicleReportRepository>();
+            serviceCollection.AddScoped<IPasswordHasher,PasswordHasher>();
+
+            serviceCollection.AddScoped<IAuthenticationService, AuthenticationService>();
+            serviceCollection.AddScoped<IPasswordHasher, PasswordHasher>();
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
                 new RfdetrPlateDetector(@"C:\users\Dario Castillo\source\repos\Parking\Parking.Infreastructure.ExternalServices\Model\rfdetr_alpr.onnx"));
@@ -73,6 +79,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<OperatorReportViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();
+            serviceCollection.AddTransient<LoginViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();
@@ -81,9 +88,20 @@ namespace Parking.UI.Windows
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
             // Mostrar ventana principal
-            var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-            MainWindow = mainWindow;
-            mainWindow.Show();
+            //var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+            //MainWindow = mainWindow;
+            //mainWindow.Show();
+
+            var loginWindow = new LoginPage();
+
+
+
+            loginWindow.DataContext =
+                ServiceProvider.GetRequiredService<LoginViewModel>();
+
+
+
+            loginWindow.Show();
         }
 
         protected override void OnExit(ExitEventArgs e)

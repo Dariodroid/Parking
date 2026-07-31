@@ -37,5 +37,7 @@ namespace Parking.Domain.Model.Abstractions
         Task<bool> ExistsByusernameAsync(string username);
 
         Task<user?> GetByusernameAsync(string username);
+
+        Task<bool> SaveChangesAsync();
     }
 }

@@ -81,11 +81,6 @@
                     CommandParameter="Usuarios"
                     Style="{StaticResource MenuButtonStyle}"/>
 
-            <Button Content="🔐 Seguridad"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Seguridad"
-                    Style="{StaticResource MenuButtonStyle}"/>
-
             <Button Content="⚙️ Configuración"
                     Command="{Binding NavigateCommand}"
                     CommandParameter="Config"
@@ -110,15 +105,6 @@
                 CommandParameter="Reporte Vehiculos"
                 Style="{StaticResource MenuButtonStyle}"/>
 
-                    <Button Content="💰 Ingresos"
-                Command="{Binding NavigateCommand}"
-                CommandParameter="Reporte Ingresos"
-                Style="{StaticResource MenuButtonStyle}"/>
-
-                    <Button Content="📅 Ocupación"
-                Command="{Binding NavigateCommand}"
-                CommandParameter="Reporte Ocupacion"
-                Style="{StaticResource MenuButtonStyle}"/>
 
                 </StackPanel>
 

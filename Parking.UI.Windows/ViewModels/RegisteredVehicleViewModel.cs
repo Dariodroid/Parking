@@ -1,4 +1,5 @@
-﻿using Parking.Domain.Model.Abstractions;
+﻿using Parking.Application.Services;
+using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
 using Parking.UI.Windows.ViewModels.Base;
@@ -14,7 +15,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
     private readonly IBaseRepository<vehicle_type> _vehicleTypeRepository;
 
-    private readonly int _currentUserId = 1;
+    private readonly int _currentUserId = CurrentUser.Id;
 
     public ObservableCollection<registered_vehicle> RegisteredVehicles { get; } = new();
 

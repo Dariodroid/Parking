@@ -161,4 +161,13 @@ public class userRepository : IBaseRepository<user>, IuserRepository
                 x.username == username &&
                 !x.is_deleted);
     }
+
+    public async Task<user?> GetByUsernameAsync(
+      string username)
+    {
+        return await _context.users
+            .FirstOrDefaultAsync(x =>
+                x.username == username &&
+                !x.is_deleted);
+    }
 }
