@@ -1,10 +1,11 @@
 ﻿using Parking.Domain.Model.Models;
+using System.Threading.Tasks;
 
 namespace Parking.Application.EntityService
 {
     public interface IEntryService
     {
-        Task<bool> RegisterEntryAsync(string plateNumber);
+        Task<string?> RegisterEntryAsync(string plateNumber, int vehicleTypeId);
         Task<bool> RegisterExitByPlateAsync(string plateNumber);
         Task<bool> RegisterExitByQrAsync(string qrCode);
         Task<parking_session?> GetActiveSessionByPlateAsync(string plateNumber);

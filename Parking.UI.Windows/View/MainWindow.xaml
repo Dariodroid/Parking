@@ -3,12 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Parking.UI.Windows.ViewModels"
         xmlns:views="clr-namespace:Parking.UI.Windows.View.Pages"
+        xmlns:local="clr-namespace:Parking.UI.Windows.Converters"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="Sistema de Parqueadero"
         Height="700"
         Width="1200"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="#121212">
 
     <Window.Resources>
+
+        <!-- CONVERTERS -->
+        <local:EqualityConverter x:Key="EqualityConverter"/>
+        <local:MenuWidthConverter x:Key="MenuWidthConverter"/>
+        <local:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter"/>
 
         <!-- VISTAS -->
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
@@ -23,17 +31,49 @@
             <views:userPage/>
         </DataTemplate>
 
-        <!-- ESTILO MENÚ -->
-        <Style x:Key="MenuButtonStyle" TargetType="Button">
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Foreground" Value="White"/>
+        <!-- ESTILO MENÚ MODERNO -->
+        <Style x:Key="ModernMenuButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="8,3"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Foreground" Value="#9E9E9E"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="15,0"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="8" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+                <!-- EFECTO AL PASAR EL MOUSE -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#252525"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+
+                <!-- EFECTO AL ESTAR SELECCIONADO (PÁGINA ACTUAL) -->
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <MultiBinding Converter="{StaticResource EqualityConverter}">
+                            <Binding Path="CurrentMenuKey" />
+                            <Binding Path="CommandParameter" RelativeSource="{RelativeSource Self}" />
+                        </MultiBinding>
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="#2B2B2B"/>
+                    <Setter Property="Foreground" Value="#4FC3F7"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
     </Window.Resources>
@@ -41,88 +81,163 @@
     <Grid>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
+            <!-- EL ANCHO DEPENDE DEL BOTÓN HAMBURGUESA Y LOS EXPANDERS -->
+            <ColumnDefinition>
+                <ColumnDefinition.Width>
+                    <MultiBinding Converter="{StaticResource MenuWidthConverter}">
+                        <Binding ElementName="MenuToggle" Path="IsChecked"/>
+                        <Binding ElementName="ExpanderReportes" Path="IsExpanded"/>
+                        <Binding ElementName="ExpanderConfig" Path="IsExpanded"/>
+                    </MultiBinding>
+                </ColumnDefinition.Width>
+            </ColumnDefinition>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
-        <StackPanel Background="#1E293B"
-                    Grid.Column="0">
+        <Grid x:Name="SidebarGrid" Background="#1A1A1A" Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-            <TextBlock Text="🚗 PARKING"
-                       Foreground="White"
-                       FontSize="20"
-                       Margin="15"
-                       FontWeight="Bold"/>
+            <!-- LOGO Y BOTÓN HAMBURGUESA A LA IZQUIERDA -->
+            <StackPanel Orientation="Horizontal" Margin="15,25,15,20">
 
-            <!-- MENÚ -->
-            <Button Content="🏠 Dashboard"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Dashboard"
-                    Style="{StaticResource MenuButtonStyle}"/>
+                <!-- BOTÓN HAMBURGUESA (SE LE AGREGÓ EL EVENTO CLICK) -->
+                <ToggleButton x:Name="MenuToggle" IsChecked="True" Click="MenuToggle_Click"
+                              Background="Transparent" BorderThickness="0" Cursor="Hand" VerticalAlignment="Center"
+                              Margin="0,0,15,0">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="Transparent" Padding="5">
+                                <ContentPresenter Content="{TemplateBinding Content}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                    <materialDesign:PackIcon Kind="Menu" Width="28" Height="28" Foreground="#9E9E9E"/>
+                </ToggleButton>
 
-            <Button Content="🚗 Operaciones"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Operaciones"
-                    Style="{StaticResource MenuButtonStyle}"/>
+                <!-- TEXTO DEL LOGO (SE OCULTA SI EL ANCHO ES 100) -->
+                <TextBlock Text="PARKING"
+                           Foreground="#4FC3F7"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"
+                           Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+            </StackPanel>
 
-            <Button Content="💰 Caja"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Caja"
-                    Style="{StaticResource MenuButtonStyle}"/>
+            <!-- MENÚ CON SCROLL SI ES NECESARIO -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,0,20">
 
-            <Button Content="👥 Clientes"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Clientes"
-                    Style="{StaticResource MenuButtonStyle}"/>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource ModernMenuButtonStyle}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="ViewDashboard" Width="24" Height="24" VerticalAlignment="Center"/>
+                            <TextBlock Text="Dashboard" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                       Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </Button>
 
-            <Button Content="👤 Usuarios"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Usuarios"
-                    Style="{StaticResource MenuButtonStyle}"/>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="Operaciones" Style="{StaticResource ModernMenuButtonStyle}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="CarOutline" Width="24" Height="24" VerticalAlignment="Center"/>
+                            <TextBlock Text="Operaciones" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                       Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </Button>
 
-            <Button Content="⚙️ Configuración"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Config"
-                    Style="{StaticResource MenuButtonStyle}"/>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="Caja" Style="{StaticResource ModernMenuButtonStyle}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="CashMultiple" Width="24" Height="24" VerticalAlignment="Center"/>
+                            <TextBlock Text="Caja" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                       Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </Button>
 
-            <Expander Header="📊 Reportes"
-          Foreground="White"
-          Background="Transparent"
-          Margin="5">
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="Clientes" Style="{StaticResource ModernMenuButtonStyle}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="AccountGroup" Width="24" Height="24" VerticalAlignment="Center"/>
+                            <TextBlock Text="Clientes" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                       Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </Button>
 
-                <StackPanel Margin="15,5,0,5">
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="Usuarios" Style="{StaticResource ModernMenuButtonStyle}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="AccountCircle" Width="24" Height="24" VerticalAlignment="Center"/>
+                            <TextBlock Text="Usuarios" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                       Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </Button>
 
-                    <Button Content="👨‍💼 Operadores"
-                Command="{Binding NavigateCommand}"
-                CommandParameter="Reporte Operadores"
-                Style="{StaticResource MenuButtonStyle}"/>
+                    <!-- EXPANDER REPORTES ESTILIZADO -->
+                    <Expander x:Name="ExpanderReportes" Foreground="#9E9E9E" Background="Transparent" Margin="8,3" Padding="15,10" FontSize="14">
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="-10,0,0,0">
+                                <materialDesign:PackIcon Kind="ChartBar" Width="24" Height="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Reportes" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                           Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                            </StackPanel>
+                        </Expander.Header>
 
-                    <!-- FUTUROS REPORTES -->
+                        <StackPanel Margin="15,5,0,5">
 
-                    <Button Content="🚗 Vehículos"
-                Command="{Binding NavigateCommand}"
-                CommandParameter="Reporte Vehiculos"
-                Style="{StaticResource MenuButtonStyle}"/>
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Reporte Operadores" Style="{StaticResource ModernMenuButtonStyle}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="AccountTie" Width="24" Height="24" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Operadores" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                               Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Button>
 
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Reporte Vehiculos" Style="{StaticResource ModernMenuButtonStyle}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="CarMultiple" Width="24" Height="24" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Vehículos" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                               Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Button>
 
+                        </StackPanel>
+                    </Expander>
+
+                    <Expander x:Name="ExpanderConfig" Foreground="#9E9E9E" Background="Transparent" Margin="8,3" Padding="15,10" FontSize="14">
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="-10,0,0,0">
+                                <materialDesign:PackIcon Kind="Cog" Width="24" Height="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Configuración" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                           Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                            </StackPanel>
+                        </Expander.Header>
+
+                        <StackPanel Margin="15,5,0,5">
+
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Config" Style="{StaticResource ModernMenuButtonStyle}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="Parking" Width="24" Height="24" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Puestos" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                               Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding NavigateCommand}" CommandParameter="Tipos Vehículo" Style="{StaticResource ModernMenuButtonStyle}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="CarInfo" Width="24" Height="24" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Tipos Vehículo" VerticalAlignment="Center" Margin="15,0,0,0" 
+                                               Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Button>
+
+                        </StackPanel>
+                    </Expander>
                 </StackPanel>
+            </ScrollViewer>
+        </Grid>
 
-            </Expander>
-
-            <Button Content="🚘 Tipos Vehículo"
-                    Command="{Binding NavigateCommand}"
-                    CommandParameter="Tipos Vehículo"
-                    Style="{StaticResource MenuButtonStyle}"/>
-
-        </StackPanel>
-
-        <!-- CONTENIDO -->
-        <Grid Grid.Column="1"
-              Background="#F1F5F9">
-
+        <!-- CONTENIDO PRINCIPAL -->
+        <Grid Grid.Column="1" Background="#121212">
             <ContentControl Content="{Binding CurrentView}"/>
-
         </Grid>
 
     </Grid>

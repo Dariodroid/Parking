@@ -1,19 +1,26 @@
 ﻿using OpenCvSharp;
 using Parking.Application.EntityService;
+using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Models;
+using Parking.Infrastructure.DataAccess.Repository;
 using Parking.Infrastructure.ExternalServices;
 using Parking.UI.Windows.ViewModels.Base;
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using System.Threading.Tasks;
 
 namespace Parking.UI.Windows.ViewModels
 {
     public class PlateReaderViewModel : BaseViewModel
     {
+        private readonly Ivehicle_typeRepository _vehicleTypeRepository;
+        private readonly IParkingSlotRepository _slotRepo; // Inyectado para las tarjetas
         private static readonly TimeSpan AutoDetectionInterval = TimeSpan.FromMilliseconds(900);
         private static readonly TimeSpan DetectionDisplayTime = TimeSpan.FromSeconds(3);
 
@@ -31,60 +38,128 @@ namespace Parking.UI.Windows.ViewModels
         private BitmapSource? _cameraPreview;
         private bool _isCameraRunning;
 
+        // Propiedades para las tarjetas superiores
+        private int _totalSlots;
+        private int _occupiedSlots;
+        private int _freeSlots;
+
+        public int TotalSlots { get => _totalSlots; set => SetProperty(ref _totalSlots, value); }
+        public int OccupiedSlots { get => _occupiedSlots; set => SetProperty(ref _occupiedSlots, value); }
+        public int FreeSlots { get => _freeSlots; set => SetProperty(ref _freeSlots, value); }
+
         private int _autoDetectionInProgress;
         private DateTime _lastAutoDetectionUtc = DateTime.MinValue;
         private PlateDetectionResult? _currentDetection;
         private DateTime _lastDetectionTime = DateTime.MinValue;
 
-        private readonly IQrService _qrService; // Faltaba asignar tu servicio
+        private readonly IQrService _qrService;
         private int _qrDetectionInProgress;
         private DateTime _lastQrDetectionUtc = DateTime.MinValue;
         private string _lastScannedQr = string.Empty;
         private DateTime _lastQrScanTime = DateTime.MinValue;
-        private static readonly TimeSpan QrDetectionInterval = TimeSpan.FromMilliseconds(1000); // 1 escaneo por segundo
+        private static readonly TimeSpan QrDetectionInterval = TimeSpan.FromMilliseconds(1000);
 
-        // Propiedades para la Vista
         public string PlateNumber { get => _plateNumber; set => SetProperty(ref _plateNumber, value); }
         public string StatusMessage { get => _statusMessage; set => SetProperty(ref _statusMessage, value); }
         public decimal AmountToCharge { get => _amountToCharge; set => SetProperty(ref _amountToCharge, value); }
         public BitmapSource? CameraPreview { get => _cameraPreview; set => SetProperty(ref _cameraPreview, value); }
         public bool IsCameraRunning { get => _isCameraRunning; set => SetProperty(ref _isCameraRunning, value); }
 
-        // Comandos
+        public ObservableCollection<vehicle_type> VehicleTypes { get; } = new ObservableCollection<vehicle_type>();
+
+        private vehicle_type? _selectedVehicleType;
+        public vehicle_type? SelectedVehicleType
+        {
+            get => _selectedVehicleType;
+            set => SetProperty(ref _selectedVehicleType, value);
+        }
+
         public ICommand StartCameraCommand { get; }
         public ICommand StopCameraCommand { get; }
         public ICommand SavePlateCommand { get; }
         public ICommand RegisterExitCommand { get; }
+        public ICommand SelectVehicleTypeCommand { get; }
 
         public PlateReaderViewModel(
             ICameraService cameraService,
             IPlateService plateService,
             IQrService qrService,
-            IEntryService entryService)
+            IEntryService entryService,
+            Ivehicle_typeRepository vehicleTypeRepository,
+            IParkingSlotRepository slotRepo) // Inyectado aquí
         {
             _cameraService = cameraService;
             _plateService = plateService;
             _entryService = entryService;
             _qrService = qrService;
+            _vehicleTypeRepository = vehicleTypeRepository;
+            _slotRepo = slotRepo;
 
             StartCameraCommand = new AsyncRelayCommand(_ => StartCameraAsync());
             StopCameraCommand = new AsyncRelayCommand(_ => StopCameraAsync());
             SavePlateCommand = new AsyncRelayCommand(_ => SaveCorrectedPlateAsync());
             RegisterExitCommand = new AsyncRelayCommand(_ => RegisterExitAsync());
+            SelectVehicleTypeCommand = new RelayCommand(param =>
+            {
+                if (param is vehicle_type selectedType) SelectedVehicleType = selectedType;
+            });
 
+            _ = LoadVehicleTypesAsync();
+            _ = LoadSlotStatsAsync(); // Cargar tarjetas al iniciar
             _ = StartCameraAsync();
+        }
+
+        private async Task LoadSlotStatsAsync()
+        {
+            var slots = await _slotRepo.GetAllAsync();
+            TotalSlots = slots.Count();
+            OccupiedSlots = slots.Count(s => s.is_occupied);
+            FreeSlots = TotalSlots - OccupiedSlots;
+        }
+
+        private async Task LoadVehicleTypesAsync()
+        {
+            VehicleTypes.Clear();
+            var items = await _vehicleTypeRepository.GetAllAsync();
+            foreach (var item in items.Where(x => x.is_active && !x.is_deleted))
+            {
+                VehicleTypes.Add(item);
+            }
+            SelectedVehicleType = VehicleTypes.FirstOrDefault();
         }
 
         private async Task SaveCorrectedPlateAsync()
         {
             if (string.IsNullOrWhiteSpace(PlateNumber)) return;
+            if (SelectedVehicleType == null)
+            {
+                StatusMessage = "Seleccione un tipo de vehículo.";
+                return;
+            }
+
             try
             {
-                AmountToCharge = 0; // Resetear visor de cobro al entrar
-                bool success = await _entryService.RegisterEntryAsync(PlateNumber.Trim().ToUpper());
-                StatusMessage = success ? $"✅ ENTRADA: {PlateNumber}" : "❌ Error al registrar entrada.";
+                AmountToCharge = 0;
+                string? assignedSlot = await _entryService.RegisterEntryAsync(PlateNumber.Trim().ToUpper(), SelectedVehicleType.id);
+
+                if (assignedSlot == "EXISTENTE")
+                {
+                    StatusMessage = $"ℹ️ El vehículo {PlateNumber} ya tiene una sesión activa.";
+                }
+                else if (!string.IsNullOrEmpty(assignedSlot))
+                {
+                    StatusMessage = $"✅ ENTRADA: {PlateNumber} asignado al puesto {assignedSlot}.";
+                    await LoadSlotStatsAsync(); // Actualizar tarjetas
+                }
+                else
+                {
+                    StatusMessage = "❌ Parqueadero lleno o error al registrar entrada.";
+                }
             }
-            catch (Exception ex) { StatusMessage = $"Error: {ex.Message}"; }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error: {ex.Message}";
+            }
         }
 
         private async Task RegisterExitAsync()
@@ -94,7 +169,6 @@ namespace Parking.UI.Windows.ViewModels
 
             try
             {
-                // 1. Obtener la sesión antes de cerrarla para calcular el monto en el ViewModel
                 var session = await _entryService.GetActiveSessionByPlateAsync(plate);
                 if (session == null)
                 {
@@ -103,24 +177,21 @@ namespace Parking.UI.Windows.ViewModels
                     return;
                 }
 
-                // 2. Registrar salida (Cálculo de hora o fracción hecho en el Service)
                 bool success = await _entryService.RegisterExitByPlateAsync(plate);
 
                 if (success)
                 {
-                    // 3. Mostrar el cobro (Lógica de hora o fracción: $1 x cada hora iniciada)
                     TimeSpan duration = DateTime.UtcNow - session.entry_time;
                     decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
                     if (hoursToCharge < 1) hoursToCharge = 1;
 
                     AmountToCharge = hoursToCharge * 1.00m;
                     StatusMessage = $"✅ SALIDA: {plate} | Total: {AmountToCharge:C2}";
+                    await LoadSlotStatsAsync(); // Actualizar tarjetas
                 }
             }
             catch (Exception ex) { StatusMessage = $"Error en salida: {ex.Message}"; }
         }
-
-        // --- MÉTODOS DE CÁMARA (Recuperados para corregir tus errores) ---
 
         private async Task StartCameraAsync()
         {
@@ -172,10 +243,7 @@ namespace Parking.UI.Windows.ViewModels
 
         private void TryQueueQrDetection(byte[] currentFrame)
         {
-            // Escanea 1 vez por segundo para no saturar el CPU junto con la detección de placas
             if (currentFrame.Length == 0 || DateTime.UtcNow - _lastQrDetectionUtc < QrDetectionInterval) return;
-
-            // Previene múltiples escaneos paralelos
             if (Interlocked.CompareExchange(ref _qrDetectionInProgress, 1, 0) != 0) return;
 
             _lastQrDetectionUtc = DateTime.UtcNow;
@@ -188,13 +256,9 @@ namespace Parking.UI.Windows.ViewModels
             try
             {
                 string qrText = await _qrService.ReadQrAsync(frame);
-
-                // Verifica si leyó algo y si tiene el formato correcto de tu base de datos
                 if (!string.IsNullOrWhiteSpace(qrText) && qrText.StartsWith("SESSION-"))
                 {
-                    // Evita cobrar múltiples veces si el cliente deja el papel frente a la cámara
-                    if (_lastScannedQr == qrText && (DateTime.UtcNow - _lastQrScanTime) < TimeSpan.FromSeconds(5))
-                        return;
+                    if (_lastScannedQr == qrText && (DateTime.UtcNow - _lastQrScanTime) < TimeSpan.FromSeconds(5)) return;
 
                     _lastScannedQr = qrText;
                     _lastQrScanTime = DateTime.UtcNow;
@@ -209,37 +273,33 @@ namespace Parking.UI.Windows.ViewModels
         {
             try
             {
-                // 1. Obtener los datos de la sesión usando el QR
                 var session = await _entryService.GetActiveSessionByQrAsync(qrCode);
                 if (session == null)
                 {
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                        StatusMessage = $"❌ QR Inválido o sesión ya cerrada.");
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = $"❌ QR Inválido o sesión ya cerrada.");
                     return;
                 }
 
-                // 2. Registrar la salida usando tu método actual
                 bool success = await _entryService.RegisterExitByQrAsync(qrCode);
 
                 if (success)
                 {
-                    // 3. Calcular el cobro para mostrarlo al operador (Misma lógica de hora o fracción)
                     TimeSpan duration = DateTime.UtcNow - session.entry_time;
                     decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
                     if (hoursToCharge < 1) hoursToCharge = 1;
 
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
                     {
                         AmountToCharge = hoursToCharge * 1.00m;
-                        PlateNumber = session.plate; // Autocompleta la placa en el textbox
+                        PlateNumber = session.plate;
                         StatusMessage = $"✅ SALIDA POR QR: {session.plate} | Total: {AmountToCharge:C2}";
+                        await LoadSlotStatsAsync(); // Actualizar tarjetas
                     });
                 }
             }
             catch (Exception ex)
             {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                    StatusMessage = $"Error en salida QR: {ex.Message}");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = $"Error en salida QR: {ex.Message}");
             }
         }
 

@@ -3,265 +3,195 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              Width="450"
-             Height="560"
+             Height="620"
              mc:Ignorable="d"
-             Background="#121212">
-
+             WindowStyle="None"
+             ResizeMode="NoResize"
+             AllowsTransparency="True"
+             WindowStartupLocation="CenterScreen"
+             Background="Transparent"
+             FontFamily="Segoe UI">
 
     <Window.Resources>
 
-
-        <Style x:Key="SectionStyle"
-               TargetType="Border">
-
-            <Setter Property="Background"
-                    Value="#1E1E1E"/>
-
-            <Setter Property="BorderBrush"
-                    Value="#333333"/>
-
-            <Setter Property="BorderThickness"
-                    Value="1"/>
-
-            <Setter Property="CornerRadius"
-                    Value="4"/>
-
-            <Setter Property="Padding"
-                    Value="20"/>
-
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
 
-
-        <Style x:Key="LabelStyle"
-               TargetType="TextBlock">
-
-            <Setter Property="Foreground"
-                    Value="#AAAAAA"/>
-
-            <Setter Property="FontSize"
-                    Value="11"/>
-
-            <Setter Property="FontWeight"
-                    Value="SemiBold"/>
-
-            <Setter Property="Margin"
-                    Value="0,0,0,4"/>
-
+        <Style x:Key="ModernInputBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="#0A0A0A"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#555555"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-
-        <Style x:Key="InputStyle"
-               TargetType="TextBox">
-
-
-            <Setter Property="Height"
-                    Value="36"/>
-
-            <Setter Property="Background"
-                    Value="#0A0A0A"/>
-
-            <Setter Property="Foreground"
-                    Value="White"/>
-
-            <Setter Property="BorderBrush"
-                    Value="#444444"/>
-
-            <Setter Property="BorderThickness"
-                    Value="1"/>
-
-            <Setter Property="Padding"
-                    Value="8,4"/>
-
-            <Setter Property="Margin"
-                    Value="0,0,0,10"/>
-
+        <Style x:Key="LoginButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Background" Value="#1565C0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#1976D2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-
-
-        <Style x:Key="PasswordStyle"
-               TargetType="PasswordBox">
-
-
-            <Setter Property="Height"
-                    Value="36"/>
-
-            <Setter Property="Background"
-                    Value="#0A0A0A"/>
-
-            <Setter Property="Foreground"
-                    Value="White"/>
-
-            <Setter Property="BorderBrush"
-                    Value="#444444"/>
-
-            <Setter Property="BorderThickness"
-                    Value="1"/>
-
-            <Setter Property="Padding"
-                    Value="8,4"/>
-
-            <Setter Property="Margin"
-                    Value="0,0,0,10"/>
-
+        <Style x:Key="ExitButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Background" Value="#C62828"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,10,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#D32F2F"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
-
-
-
-        <Style x:Key="ButtonStyle"
-               TargetType="Button">
-
-
-            <Setter Property="Height"
-                    Value="40"/>
-
-            <Setter Property="Background"
-                    Value="#1565C0"/>
-
-            <Setter Property="Foreground"
-                    Value="White"/>
-
-            <Setter Property="BorderThickness"
-                    Value="0"/>
-
-            <Setter Property="Cursor"
-                    Value="Hand"/>
-
-            <Setter Property="FontWeight"
-                    Value="SemiBold"/>
-
-            <Setter Property="FontSize"
-                    Value="13"/>
-
-        </Style>
-
 
     </Window.Resources>
 
+    <!-- BORDER PRINCIPAL CON SOMBRA -->
+    <Border Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="15" MouseLeftButtonDown="Border_MouseLeftButtonDown">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="25" ShadowDepth="0" Opacity="0.4"/>
+        </Border.Effect>
 
+        <Grid>
+            <!-- BOTÓN FLOTANTE PARA CERRAR (X) -->
+            <Button Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" 
+                    Background="Transparent" BorderThickness="0" Cursor="Hand" Click="CloseButton_Click" Margin="0,10,10,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent">
+                            <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+                <materialDesign:PackIcon Kind="Close" Width="24" Height="24" Foreground="#666666"/>
+            </Button>
 
-    <Grid>
+            <Grid Margin="35,30,35,30">
+                <StackPanel VerticalAlignment="Center">
 
+                    <!-- Logo Moderno -->
+                    <Border Width="80" Height="80" CornerRadius="16" Background="#252525" BorderBrush="#333333" BorderThickness="1" 
+                            HorizontalAlignment="Center" Margin="0,0,0,15" Padding="10">
+                        <materialDesign:PackIcon Kind="CarOutline" Width="40" Height="40" Foreground="#4FC3F7" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
 
-        <Border Width="430"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Style="{StaticResource SectionStyle}">
+                    <!-- Títulos -->
+                    <TextBlock Text="SISTEMA DE PARQUEO" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="CONTROL DE ACCESO" Foreground="#666666" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,25" FontWeight="SemiBold"/>
 
+                    <!-- Campo Usuario -->
+                    <TextBlock Text="USUARIO" Style="{StaticResource LabelStyle}"/>
+                    <Border Style="{StaticResource ModernInputBorderStyle}">
+                        <Grid>
+                            <materialDesign:PackIcon Kind="AccountOutline" Width="20" Height="20" Foreground="#666666" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                            <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                 BorderThickness="0" Background="Transparent" Foreground="White" 
+                                 VerticalContentAlignment="Center" Padding="42,0,12,0" CaretBrush="White" FontSize="14"/>
+                        </Grid>
+                    </Border>
 
-            <StackPanel>
+                    <!-- Campo Contraseña (CON OJO) -->
+                    <TextBlock Text="CONTRASEÑA" Style="{StaticResource LabelStyle}"/>
+                    <Border Style="{StaticResource ModernInputBorderStyle}">
+                        <Grid>
+                            <materialDesign:PackIcon Kind="LockOutline" Width="20" Height="20" Foreground="#666666" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0"/>
 
+                            <!-- PasswordBox Original -->
+                            <PasswordBox x:Name="PasswordBox" BorderThickness="0" Background="Transparent" Foreground="White"
+                                     VerticalContentAlignment="Center" Padding="42,0,45,0" CaretBrush="White" FontSize="14"
+                                     PasswordChanged="PasswordBox_PasswordChanged"/>
 
-                <!-- Icono -->
-                <TextBlock Text="🚗"
-                           FontSize="60"
-                           HorizontalAlignment="Center"/>
+                            <!-- TextBox Oculto para Revelar Contraseña -->
+                            <TextBox x:Name="RevealPasswordBox" BorderThickness="0" Background="Transparent" Foreground="White"
+                                     VerticalContentAlignment="Center" Padding="42,0,45,0" CaretBrush="White" FontSize="14"
+                                     Visibility="Collapsed" TextChanged="RevealPasswordBox_TextChanged"/>
 
+                            <!-- Botón Ojo -->
+                            <Button x:Name="EyeButton" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand" Click="EyeButton_Click" Margin="0,0,5,0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="Transparent">
+                                            <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <materialDesign:PackIcon x:Name="EyeIcon" Kind="EyeOutline" Width="20" Height="20" Foreground="#666666"/>
+                            </Button>
+                        </Grid>
+                    </Border>
 
+                    <!-- Mensaje de Error -->
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF5350" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
 
-                <!-- Titulo -->
-                <TextBlock Text="SISTEMA DE PARQUEO"
-                           FontSize="22"
-                           FontWeight="Bold"
-                           Foreground="White"
-                           HorizontalAlignment="Center"
-                           Margin="0,10,0,5"/>
+                    <!-- Botón Ingresar (Con Icono) -->
+                    <Button Style="{StaticResource LoginButtonStyle}" Command="{Binding LoginCommand}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Login" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="INGRESAR AL SISTEMA" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
+                    <!-- Botón Salir (Con Icono) -->
+                    <Button Style="{StaticResource ExitButtonStyle}" Click="CloseButton_Click">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Power" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="SALIR" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
+                    <!-- Separador -->
+                    <Border Height="1" Background="#333333" Margin="0,25,0,15"/>
 
-                <TextBlock Text="CONTROL DE ACCESO"
-                           Foreground="#999999"
-                           FontSize="12"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,30"/>
+                    <!-- Footer -->
+                    <TextBlock Text="Sistema de Gestión de Parqueo" Foreground="#777777" FontSize="11" HorizontalAlignment="Center" FontWeight="SemiBold"/>
 
-
-
-                <!-- Usuario -->
-
-                <TextBlock Text="USUARIO"
-                           Style="{StaticResource LabelStyle}"/>
-
-
-                <TextBox
-                    Text="{Binding Username,
-                           UpdateSourceTrigger=PropertyChanged}"
-                    Style="{StaticResource InputStyle}"/>
-
-
-
-                <!-- Contraseña -->
-
-                <TextBlock Text="CONTRASEÑA"
-                           Style="{StaticResource LabelStyle}"/>
-
-
-                <PasswordBox
-                    x:Name="PasswordBox"
-                    Style="{StaticResource PasswordStyle}"
-                    PasswordChanged="PasswordBox_PasswordChanged"/>
-
-
-
-                <!-- Error -->
-
-                <TextBlock Text="{Binding ErrorMessage}"
-                           Foreground="#EF5350"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           HorizontalAlignment="Center"
-                           Margin="0,5,0,10"/>
-
-
-
-                <!-- Recordar -->
-
-                <CheckBox Content="Mantener sesión iniciada"
-                          Foreground="#BBBBBB"
-                          FontSize="12"
-                          Margin="0,0,0,15"
-                          IsChecked="{Binding RememberMe}"/>
-
-
-
-                <!-- Login -->
-
-                <Button Content="INGRESAR AL SISTEMA"
-                        Style="{StaticResource ButtonStyle}"
-                        Command="{Binding LoginCommand}"/>
-
-
-
-                <!-- Separador -->
-
-                <Border Height="1"
-                        Background="#333333"
-                        Margin="0,25,0,15"/>
-
-
-
-                <TextBlock Text="Sistema de Gestión de Parqueo"
-                           Foreground="#777777"
-                           FontSize="11"
-                           HorizontalAlignment="Center"/>
-
-
-
-                <TextBlock Text="GAD Municipal del Cantón Palanda"
-                           Foreground="#555555"
-                           FontSize="10"
-                           HorizontalAlignment="Center"
-                           Margin="0,3,0,0"/>
-
-
-            </StackPanel>
-
-
-        </Border>
-
-
-    </Grid>
-
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
 
 </Window>

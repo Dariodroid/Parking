@@ -23,5 +23,15 @@ namespace Parking.UI.Windows.View
             InitializeComponent();
             DataContext = viewModel;
         }
+        private void MenuToggle_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            // Si hay algún desplegable abierto, lo cerramos y forzamos el menú a 100
+            if (ExpanderReportes.IsExpanded || ExpanderConfig.IsExpanded)
+            {
+                ExpanderReportes.IsExpanded = false;
+                ExpanderConfig.IsExpanded = false;
+                MenuToggle.IsChecked = false;
+            }
+        }
     }
 }

@@ -138,15 +138,17 @@
                     <!-- TARJETAS -->
 
                     <ScrollViewer Grid.Row="1"
-                                  VerticalScrollBarVisibility="Auto">
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
 
-                        <ItemsControl ItemsSource="{Binding Slots}">
+                        <ItemsControl ItemsSource="{Binding Slots}"
+                                      HorizontalAlignment="Center">
 
                             <ItemsControl.ItemsPanel>
 
                                 <ItemsPanelTemplate>
 
-                                    <WrapPanel Margin="10"/>
+                                    <WrapPanel Margin="20"/>
 
                                 </ItemsPanelTemplate>
 
@@ -156,18 +158,25 @@
 
                                 <DataTemplate>
 
-                                    <Button Command="{Binding DataContext.SelectSlotCommand,
-                                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            Margin="5"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Cursor="Hand">
+                                    <Button Width="160"
+                                            Height="100"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Padding="0"
+                                            Margin="10"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.SelectSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
 
-                                        <Border Width="130"
-                                                Height="95"
-                                                CornerRadius="10"
-                                                BorderThickness="1">
+                                        <!-- PLANTILLA LIMPIA PARA EL BOTÓN (SIN BORDES POR DEFECTO) -->
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <ContentPresenter Content="{TemplateBinding Content}"/>
+                                            </ControlTemplate>
+                                        </Button.Template>
+
+                                        <Border CornerRadius="12"
+                                                BorderThickness="2">
 
                                             <Border.Style>
 
@@ -198,18 +207,20 @@
 
                                             </Border.Style>
 
-                                            <StackPanel VerticalAlignment="Center">
+                                            <StackPanel VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center">
 
                                                 <TextBlock Text="{Binding SlotNumber}"
-                                                           HorizontalAlignment="Center"
                                                            Foreground="White"
-                                                           FontSize="24"
-                                                           FontWeight="Bold"/>
+                                                           FontSize="28"
+                                                           FontWeight="Bold"
+                                                           HorizontalAlignment="Center"/>
 
-                                                <TextBlock HorizontalAlignment="Center"
-                                                           Margin="0,5,0,0"
-                                                           Foreground="White"
-                                                           FontWeight="SemiBold">
+                                                <TextBlock Foreground="White"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0">
 
                                                     <TextBlock.Style>
 
@@ -249,7 +260,6 @@
                         </ItemsControl>
 
                     </ScrollViewer>
-
                 </Grid>
 
             </Border>

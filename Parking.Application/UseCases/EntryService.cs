@@ -3,6 +3,7 @@ using Parking.Application.Services;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Parking.Application.UseCases
@@ -10,10 +11,14 @@ namespace Parking.Application.UseCases
     public class EntryService : IEntryService
     {
         private readonly Iparking_sessionRepository _sessionRepo;
+        private readonly IParkingSlotRepository _slotRepo;
 
-        public EntryService(Iparking_sessionRepository sessionRepo)
+        public EntryService(
+            Iparking_sessionRepository sessionRepo,
+            IParkingSlotRepository slotRepo)
         {
             _sessionRepo = sessionRepo;
+            _slotRepo = slotRepo;
         }
 
         public async Task<parking_session?> GetActiveSessionByPlateAsync(string plateNumber)
@@ -21,15 +26,27 @@ namespace Parking.Application.UseCases
             return await _sessionRepo.GetActiveSessionByPlateAsync(plateNumber.Trim().ToUpperInvariant());
         }
 
-        public async Task<bool> RegisterEntryAsync(string plateNumber)
+        public async Task<string?> RegisterEntryAsync(string plateNumber, int vehicleTypeId)
         {
-            if (string.IsNullOrWhiteSpace(plateNumber)) return false;
+            if (string.IsNullOrWhiteSpace(plateNumber))
+                return null;
+
             try
             {
                 string normalized = plateNumber.Trim().ToUpperInvariant();
-                var activeSession = await _sessionRepo.GetActiveSessionByPlateAsync(normalized);
-                if (activeSession != null) return true;
 
+                var activeSession = await _sessionRepo.GetActiveSessionByPlateAsync(normalized);
+                if (activeSession != null)
+                    return "EXISTENTE";
+
+                // 1. BUSCAR PUESTO LIBRE AUTOMÁTICAMENTE
+                var slots = await _slotRepo.GetAllAsync();
+                var availableSlot = slots.FirstOrDefault(s => !s.is_occupied);
+
+                if (availableSlot == null)
+                    return null; // Parqueadero lleno
+
+                // 2. CREAR LA SESIÓN (Y ASIGNAR EL ID DEL SLOT AQUÍ)
                 var session = new parking_session
                 {
                     plate = normalized,
@@ -37,17 +54,37 @@ namespace Parking.Application.UseCases
                     qr_data = $"SESSION-{Guid.NewGuid():N}".ToUpper(),
                     entry_time = DateTime.UtcNow,
                     status = "active",
-                    vehicle_type_id = 1,//debo colocar el tipo de vehiculo, por ahora lo dejo en 1
+                    vehicle_type_id = vehicleTypeId,
                     entry_operator_id = CurrentUser.Id,
                     created_by = CurrentUser.Id,
                     created_at = DateTime.UtcNow,
-                    is_deleted = false
+                    is_deleted = false,
+
+                    // --- ASIGNACIÓN CORRECTA DEL SLOT EN LA SESIÓN ---
+                    parking_slot_id = availableSlot.id
                 };
 
                 await _sessionRepo.AddAsync(session);
-                return await _sessionRepo.SaveChangesAsync();
+
+                // 3. ACTUALIZAR EL PUESTO (Enlazar sesión y marcar como ocupado)
+                availableSlot.is_occupied = true;
+                availableSlot.current_session = session;
+                availableSlot.updated_at = DateTime.UtcNow;
+
+                await _slotRepo.UpdateAsync(availableSlot);
+
+                // 4. GUARDAR CAMBIOS
+                bool success = await _sessionRepo.SaveChangesAsync();
+
+                if (success)
+                    return availableSlot.slot_number; // Retorna el número del puesto (ej: "A1")
+
+                return null;
             }
-            catch { return false; }
+            catch
+            {
+                return null;
+            }
         }
 
         public async Task<bool> RegisterExitByPlateAsync(string plateNumber)
@@ -73,14 +110,11 @@ namespace Parking.Application.UseCases
             TimeSpan duration = session.exit_time.Value - session.entry_time;
 
             // 3. CÁLCULO ESTRICTO: Hora o Fracción
-            // Si duration.TotalHours es 5.01, Math.Ceiling devuelve 6.
             decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
-
-            // Garantizar cobro mínimo de 1 hora si el tiempo es muy corto
             if (hoursToCharge < 1) hoursToCharge = 1;
 
             session.duration_minutes = (int)duration.TotalMinutes;
-            session.amount_due = hoursToCharge * 1.00m; // Tarifa de $1 por cada hora/fracción
+            session.amount_due = hoursToCharge * 1.00m;
 
             // 4. Cerrar sesión
             session.status = "paid";
@@ -88,6 +122,18 @@ namespace Parking.Application.UseCases
             session.exit_operator_id = CurrentUser.Id;
 
             await _sessionRepo.UpdateAsync(session);
+
+            // 5. LIBERAR EL PUESTO DE ESTACIONAMIENTO
+            var slots = await _slotRepo.GetAllAsync();
+            var occupiedSlot = slots.FirstOrDefault(s => s.current_session_id == session.id);
+            if (occupiedSlot != null)
+            {
+                occupiedSlot.is_occupied = false;
+                occupiedSlot.current_session = null; // Quita la relación en el slot
+                occupiedSlot.updated_at = DateTime.UtcNow;
+                await _slotRepo.UpdateAsync(occupiedSlot);
+            }
+
             return await _sessionRepo.SaveChangesAsync();
         }
 

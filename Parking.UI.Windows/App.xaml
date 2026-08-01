@@ -3,55 +3,72 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Parking.UI.Windows"
              xmlns:vm="clr-namespace:Parking.UI.Windows.ViewModels"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:views="clr-namespace:Parking.UI.Windows.View.Pages">
 
     <Application.Resources>
 
-        <!-- PLACAS -->
-        <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
-            <views:PlateReaderPage/>
-        </DataTemplate>
+        <ResourceDictionary>
 
-        <!-- TIPOS VEHÍCULO -->
-        <DataTemplate DataType="{x:Type vm:vehicle_typeViewModel}">
-            <views:vehicle_typePage/>
-        </DataTemplate>
+            <ResourceDictionary.MergedDictionaries>
 
-        <!-- USUARIOS -->
-        <DataTemplate DataType="{x:Type vm:userViewModel}">
-            <views:userPage/>
-        </DataTemplate>
+                <materialDesign:BundledTheme
+                BaseTheme="Dark"
+                PrimaryColor="Blue"
+                SecondaryColor="Green"/>
 
-        <!-- CLIENTES -->
-        <DataTemplate DataType="{x:Type vm:RegisteredVehicleViewModel}">
-            <views:RegisteredVehiclePage/>
-        </DataTemplate>
+                <ResourceDictionary
+                Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml"/>
 
-        <!-- CONFIGURACIONES -->
-        <DataTemplate DataType="{x:Type vm:ParkingSlotViewModel}">
-            <views:ParkingSlotPage/>
-        </DataTemplate>
+            </ResourceDictionary.MergedDictionaries>
 
-        <!-- DASHOBOARD -->
-        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
-            <views:DashboardPage/>
-        </DataTemplate>
 
-        <!-- CAJA -->
-        <DataTemplate DataType="{x:Type vm:CashViewModel}">
-            <views:CashPage/>
-        </DataTemplate>
-        
-        <!-- REPORTE OPERADORES -->
-        <DataTemplate DataType="{x:Type vm:OperatorReportViewModel}">
-            <views:OperatorReportPage/>
-        </DataTemplate>
+            <!-- PLACAS -->
+            <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
+                <views:PlateReaderPage/>
+            </DataTemplate>
 
-        <DataTemplate
-        DataType="{x:Type vm:VehicleReportViewModel}">
-            <views:VehicleReportPage/>
-        </DataTemplate>
+            <!-- TIPOS VEHÍCULO -->
+            <DataTemplate DataType="{x:Type vm:vehicle_typeViewModel}">
+                <views:vehicle_typePage/>
+            </DataTemplate>
+
+            <!-- USUARIOS -->
+            <DataTemplate DataType="{x:Type vm:userViewModel}">
+                <views:userPage/>
+            </DataTemplate>
+
+            <!-- CLIENTES -->
+            <DataTemplate DataType="{x:Type vm:RegisteredVehicleViewModel}">
+                <views:RegisteredVehiclePage/>
+            </DataTemplate>
+
+            <!-- CONFIGURACIONES -->
+            <DataTemplate DataType="{x:Type vm:ParkingSlotViewModel}">
+                <views:ParkingSlotPage/>
+            </DataTemplate>
+
+            <!-- DASHBOARD -->
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+                <views:DashboardPage/>
+            </DataTemplate>
+
+            <!-- CAJA -->
+            <DataTemplate DataType="{x:Type vm:CashViewModel}">
+                <views:CashPage/>
+            </DataTemplate>
+
+            <!-- REPORTE OPERADORES -->
+            <DataTemplate DataType="{x:Type vm:OperatorReportViewModel}">
+                <views:OperatorReportPage/>
+            </DataTemplate>
+
+            <!-- REPORTE VEHÍCULOS -->
+            <DataTemplate DataType="{x:Type vm:VehicleReportViewModel}">
+                <views:VehicleReportPage/>
+            </DataTemplate>
+
+        </ResourceDictionary>
 
     </Application.Resources>
-
 </Application>

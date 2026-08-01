@@ -3,160 +3,233 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:Parking.UI.Windows.Converters"
              mc:Ignorable="d" 
              Background="#121212"
              d:DesignHeight="720" d:DesignWidth="1280">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <local:EqualityConverter x:Key="EqualityConverter"/>
+        <local:VehicleNameToIconConverter x:Key="VehicleNameToIconConverter"/>
 
+        <!-- ESPACIOS REDUCIDOS PARA EVITAR SCROLL -->
         <Style x:Key="SidebarSectionStyle" TargetType="Border">
             <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="15"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
         </Style>
 
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="Padding" Value="15,10"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
             <Style.Resources>
                 <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="4"/>
+                    <Setter Property="CornerRadius" Value="6"/>
                 </Style>
             </Style.Resources>
         </Style>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Margin="10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="380"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#000000" Margin="10,10,5,10" CornerRadius="4" BorderBrush="#2A2A2A" BorderThickness="1">
-            <Grid>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Visibility="{Binding IsCameraRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverted}">
-                    <TextBlock Text="CÁMARA DESACTIVADA" Foreground="#555555" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Inicie el visor desde el panel lateral" Foreground="#333333" FontSize="14" HorizontalAlignment="Center"/>
-                </StackPanel>
+        <!-- COLUMNA IZQUIERDA: TARJETAS + CÁMARA -->
+        <Grid Grid.Column="0" Margin="0,0,10,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="90"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <Image Source="{Binding CameraPreview}" Stretch="Uniform" />
-            </Grid>
-        </Border>
+            <!-- TARJETAS INFORMATIVAS -->
+            <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,10">
 
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="5,10,10,10">
-
-                <Border Style="{StaticResource SidebarSectionStyle}">
+                <!-- TOTAL -->
+                <Border Margin="5" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="15,10">
                     <StackPanel>
-                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,10"/>
-                        <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
-                                 FontSize="32" FontWeight="Bold" Height="60"
-                                 Background="#0A0A0A" Foreground="#FFFFFF" 
-                                 BorderBrush="#444444" BorderThickness="1"
-                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                        <TextBlock Text="Edite manualmente si es necesario" Foreground="#555555" FontSize="10" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+                        <TextBlock Text="TOTAL DE PUESTOS" Foreground="#9E9E9E" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding TotalSlots}" Foreground="White" FontSize="28" FontWeight="Bold"/>
                     </StackPanel>
                 </Border>
 
+                <!-- OCUPADOS -->
+                <Border Margin="5" Background="#B71C1C" CornerRadius="8" Padding="15,10">
+                    <StackPanel>
+                        <TextBlock Text="PUESTOS OCUPADOS" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding OccupiedSlots}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- LIBRES -->
+                <Border Margin="5" Background="#1B5E20" CornerRadius="8" Padding="15,10">
+                    <StackPanel>
+                        <TextBlock Text="PUESTOS LIBRES" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding FreeSlots}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <!-- PANEL DE CÁMARA -->
+            <Border Grid.Row="1" Background="#000000" CornerRadius="8" BorderBrush="#2A2A2A" BorderThickness="1">
+                <Grid>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Visibility="{Binding IsCameraRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverted}">
+                        <TextBlock Text="CÁMARA DESACTIVADA" Foreground="#555555" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Inicie el visor desde el panel lateral" Foreground="#333333" FontSize="14" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Image Source="{Binding CameraPreview}" Stretch="Uniform" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- COLUMNA DERECHA: PANEL LATERAL -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- DETECCIÓN DE PLACA -->
+                <Border Style="{StaticResource SidebarSectionStyle}">
+                    <StackPanel>
+                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="28" FontWeight="Bold" Height="50"
+                                 Background="#0A0A0A" Foreground="#FFFFFF" 
+                                 BorderBrush="#444444" BorderThickness="1"
+                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                 CaretBrush="White"/>
+                        <TextBlock Text="Edite manualmente si es necesario" Foreground="#555555" FontSize="10" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- RESUMEN DE COBRO -->
                 <Border Style="{StaticResource SidebarSectionStyle}" Background="#151A20" BorderBrush="#2D4A63">
                     <StackPanel>
-                        <TextBlock Text="RESUMEN DE COBRO" Foreground="#4A90E2" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <Viewbox Height="60">
+                        <TextBlock Text="RESUMEN DE COBRO" Foreground="#4A90E2" FontSize="11" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <Viewbox Height="40">
                             <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}" 
                                        FontWeight="Black" Foreground="#FFFFFF" />
                         </Viewbox>
                     </StackPanel>
                 </Border>
 
+                <!-- TIPO DE VEHÍCULO Y ACCIONES -->
                 <Border Style="{StaticResource SidebarSectionStyle}">
                     <StackPanel>
-                        <Border Style="{StaticResource SidebarSectionStyle}">
-                            <StackPanel>
-                                <TextBlock Text="TIPO DE VEHÍCULO"
-                   Foreground="#888888"
-                   FontSize="11"
-                   FontWeight="Bold"
-                   Margin="0,0,0,10"/>
 
-                                <ComboBox ItemsSource="{Binding vehicle_types}"
-                  SelectedItem="{Binding Selectedvehicle_type}"
-                  Height="42"
-                  FontSize="14"
-                  Background="#0A0A0A"
-                  Foreground="White"
-                  BorderBrush="#444444"
-                  BorderThickness="1"
-                  Padding="8">
+                        <TextBlock Text="TIPO DE VEHÍCULO" Foreground="#AAAAAA" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="2">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="28"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
+                        <ItemsControl ItemsSource="{Binding VehicleTypes}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
 
-                                                <TextBlock Text="{Binding Icon}"
-                                   VerticalAlignment="Center"
-                                   FontSize="14"
-                                   Foreground="#CCCCCC"/>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="3"
+                                            Height="72"
+                                            Padding="0"
+                                            BorderThickness="0"
+                                            Background="Transparent"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.SelectVehicleTypeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
 
-                                                <TextBlock Grid.Column="1"
-                                   Text="{Binding Name}"
-                                   VerticalAlignment="Center"
-                                   FontWeight="SemiBold"
-                                   Foreground="White"
-                                   Margin="8,0,0,0"/>
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="cardBorder" CornerRadius="8" BorderThickness="2" Background="#1A1A1A" BorderBrush="#333333">
+                                                    <ContentPresenter Content="{TemplateBinding Content}"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="cardBorder" Property="BorderBrush" Value="#4FC3F7"/>
+                                                        <Setter TargetName="cardBorder" Property="Background" Value="#15293A"/>
+                                                    </Trigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Value="True">
+                                                                <Condition.Binding>
+                                                                    <MultiBinding Converter="{StaticResource EqualityConverter}">
+                                                                        <Binding />
+                                                                        <Binding Path="DataContext.SelectedVehicleType" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                                                    </MultiBinding>
+                                                                </Condition.Binding>
+                                                            </Condition>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter TargetName="cardBorder" Property="BorderBrush" Value="#00BFFF"/>
+                                                        <Setter TargetName="cardBorder" Property="Background" Value="#0F1D29"/>
+                                                    </MultiDataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
 
-                                                <TextBlock Grid.Column="2"
-                                   Text="{Binding HourlyRate, StringFormat={}{0:C2}/h}"
-                                   VerticalAlignment="Center"
-                                   Foreground="#4A90E2"
-                                   Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="{Binding name, Converter={StaticResource VehicleNameToIconConverter}}"
+                                                                     Width="26"
+                                                                     Height="26"
+                                                                     Foreground="#4FC3F7"
+                                                                     HorizontalAlignment="Center"/>
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding name}"
+                                                       FontWeight="Bold"
+                                                       FontSize="12"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Margin="0,2,0,0"
+                                                       Text="{Binding hourly_rate, StringFormat=$ {0:F2}/h}"
+                                                       FontSize="10"
+                                                       Foreground="#81C784"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                                <TextBlock Text="Seleccione el tipo antes de registrar entrada"
-                   Foreground="#555555"
-                   FontSize="10"
-                   Margin="0,5,0,0"
-                   HorizontalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
+                        <TextBlock Margin="0,10,0,12"
+                                   Text="Seleccione el tipo con un clic."
+                                   HorizontalAlignment="Center"
+                                   Foreground="#666666"
+                                   FontSize="11"/>
+
                         <Button Content="REGISTRAR ENTRADA"
                                 Command="{Binding SavePlateCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
-                                Background="#2E7D32" Foreground="White"
-                                Margin="0,0,0,10"/>
+                                Background="#2E7D32" Foreground="White"/>
 
                         <Button Content="REGISTRAR SALIDA"
                                 Command="{Binding RegisterExitCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
-                                Background="#C62828" Foreground="White"/>                        
-                    </StackPanel>                    
+                                Background="#C62828" Foreground="White" 
+                                Margin="0"/>
+                    </StackPanel>
                 </Border>
 
-                <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="100">
+                <!-- LOG DEL SISTEMA -->
+                <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="60">
                     <StackPanel>
-                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
                         <TextBlock Text="{Binding StatusMessage}"
                                    Foreground="#CCCCCC" FontSize="13" 
                                    TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>
                 </Border>
 
-                <Grid Margin="0,10,0,0">
+                <!-- CONTROL DE CÁMARA -->
+                <Grid Margin="0,2,0,5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
@@ -164,11 +237,13 @@
                     <Button Content="Iniciar Cámara" 
                             Command="{Binding StartCameraCommand}" 
                             Background="#333333" Foreground="#AAAAAA"
-                            Padding="5" Margin="0,0,5,0" FontSize="12"/>
+                            Padding="5" Margin="0,0,5,0" FontSize="12"
+                            BorderThickness="0" Cursor="Hand"/>
                     <Button Grid.Column="1" Content="Detener" 
                             Command="{Binding StopCameraCommand}" 
                             Background="#333333" Foreground="#AAAAAA"
-                            Padding="5" Margin="5,0,0,0" FontSize="12"/>
+                            Padding="5" Margin="5,0,0,0" FontSize="12"
+                            BorderThickness="0" Cursor="Hand"/>
                 </Grid>
 
             </StackPanel>
