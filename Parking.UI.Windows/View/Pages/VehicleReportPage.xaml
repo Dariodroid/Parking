@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.VehicleReportPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              Background="#121212">
 
     <UserControl.Resources>
@@ -18,12 +19,13 @@
             <Setter Property="Foreground" Value="{StaticResource TextHighlight}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderDark}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Height" Value="32"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="CaretBrush" Value="White"/>
             <Style.Resources>
                 <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="3"/>
+                    <Setter Property="CornerRadius" Value="4"/>
                 </Style>
             </Style.Resources>
             <Style.Triggers>
@@ -41,6 +43,7 @@
             <Setter Property="Padding" Value="15,6"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="32"/>
             <Style.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="4"/>
@@ -138,52 +141,92 @@
                 BorderBrush="{StaticResource BorderDark}"
                 BorderThickness="1"
                 CornerRadius="6"
-                Padding="12"
+                Padding="15"
                 Margin="0,0,0,15">
 
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
+                <!-- GRUPO 1: Filtros de Texto -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
                     <TextBlock Text="PLACA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                    <TextBox Width="110" Text="{Binding Filter.Plate, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox Width="130" Text="{Binding Filter.Plate, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
                     <TextBlock Text="PROPIETARIO" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                    <TextBox Width="160" Text="{Binding Filter.OwnerName, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox Width="170" Text="{Binding Filter.OwnerName, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,5,20,5" VerticalAlignment="Center">
+                <Border Background="#333333" Width="1" Height="25" Margin="0,0,20,5"/>
+
+                <!-- GRUPO 2: Toggles -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
                     <TextBlock Text="MENSUALES" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeMonthly}" VerticalAlignment="Center" Margin="0,0,15,0"/>
-
                     <TextBlock Text="OCASIONALES" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeOccasional}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
-                    <TextBlock Text="DESDE" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                    <DatePicker Width="120" SelectedDate="{Binding Filter.FromDate}" />
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,5,20,5">
-                    <TextBlock Text="HASTA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                    <DatePicker Width="120" SelectedDate="{Binding Filter.ToDate}" />
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,5,20,5" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
                     <TextBlock Text="DENTRO" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeInside}" VerticalAlignment="Center" Margin="0,0,15,0"/>
-
                     <TextBlock Text="FUERA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeOutside}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
-                    <Button Content="BUSCAR" Command="{Binding SearchCommand}" MinWidth="100"/>
-                    <Border Width="1" Background="{StaticResource BorderDark}" Margin="15,2"/>
-                    <Button Content="EXCEL" Style="{StaticResource BtnExcel}" Command="{Binding ExportExcelCommand}" MinWidth="85" Margin="0,0,8,0"/>
-                    <Button Content="WORD" Style="{StaticResource BtnWord}" Command="{Binding ExportWordCommand}" MinWidth="85"/>
+                <Border Background="#333333" Width="1" Height="25" Margin="0,0,20,5"/>
+
+                <!-- GRUPO 3: Fechas -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
+                    <TextBlock Text="DESDE" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <DatePicker Width="130" SelectedDate="{Binding Filter.FromDate}" Foreground="White" Background="#0A0A0A">
+                        <DatePicker.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
+                            <Style TargetType="{x:Type DatePickerTextBox}">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="#0A0A0A"/>
+                                <Setter Property="CaretBrush" Value="White"/>
+                            </Style>
+                        </DatePicker.Resources>
+                    </DatePicker>
+
+                    <TextBlock Text="HASTA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="15,0,8,0"/>
+                    <DatePicker Width="130" SelectedDate="{Binding Filter.ToDate}" Foreground="White" Background="#0A0A0A">
+                        <DatePicker.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
+                            <Style TargetType="{x:Type DatePickerTextBox}">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="#0A0A0A"/>
+                                <Setter Property="CaretBrush" Value="White"/>
+                            </Style>
+                        </DatePicker.Resources>
+                    </DatePicker>
+                </StackPanel>
+
+                <Border Background="#333333" Width="1" Height="25" Margin="0,0,20,5"/>
+
+                <!-- GRUPO 4: Acciones con Iconos -->
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5" VerticalAlignment="Center">
+                    <Button Command="{Binding SearchCommand}" MinWidth="110" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Magnify" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="BUSCAR" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource BtnExcel}" Command="{Binding ExportExcelCommand}" MinWidth="100" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="FileExcel" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="EXCEL" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource BtnWord}" Command="{Binding ExportWordCommand}" MinWidth="100">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="FileWord" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="WORD" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
             </WrapPanel>
@@ -220,7 +263,8 @@
                         <Setter Property="Foreground" Value="#111111"/>
                         <Setter Property="HorizontalGridLinesBrush" Value="#D0D0D0"/>
                         <Setter Property="VerticalGridLinesBrush" Value="#D0D0D0"/>
-                        <Setter Property="HeadersVisibility" Value="All"/>
+                        <!-- CAMBIO CLAVE AQUÍ: De "All" a "Column" para quitar la columna en blanco -->
+                        <Setter Property="HeadersVisibility" Value="Column"/>
                         <Setter Property="GridLinesVisibility" Value="All"/>
                         <Setter Property="CanUserResizeRows" Value="False"/>
                         <Setter Property="SelectionMode" Value="Single"/>
@@ -303,25 +347,29 @@
                         </StackPanel>
                     </WrapPanel>
 
+                    <!-- CAMBIO CLAVE AQUÍ: Se añadió ScrollViewer.HorizontalScrollBarVisibility="Disabled" -->
                     <DataGrid Grid.Row="2" 
                               ItemsSource="{Binding Vehicles}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               CanUserAddRows="False"
-                              MinHeight="450">
+                              MinHeight="450"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                        <!-- Se removieron los MinWidth para que las columnas se adapten al ancho disponible -->
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="PLACA" Binding="{Binding Plate}" MinWidth="90" Width="SizeToCells"/>
-                            <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding OwnerName}" MinWidth="150" Width="*"/>
-                            <DataGridTextColumn Header="TIPO" Binding="{Binding VehicleType}" MinWidth="100"/>
-                            <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Category}" MinWidth="100"/>
-                            <DataGridTextColumn Header="ESTADO PLAN" Binding="{Binding PlanStatus}" MinWidth="110"/>
-                            <DataGridTextColumn Header="MENSUALIDAD" Binding="{Binding MonthlyFee, StringFormat=C}" MinWidth="110"/>
-                            <DataGridTextColumn Header="INGRESOS" Binding="{Binding TotalEntries}" MinWidth="90"/>
-                            <DataGridTextColumn Header="ÚLTIMO INGRESO" Binding="{Binding LastEntryDate, StringFormat=dd/MM/yyyy HH:mm}" MinWidth="140"/>
-                            <DataGridTextColumn Header="ESTADO" Binding="{Binding CurrentStatus}" MinWidth="90"/>
-                            <DataGridTextColumn Header="COBRADO" Binding="{Binding TotalCollected, StringFormat=C}" MinWidth="100" FontWeight="Bold"/>
-                            <DataGridTextColumn Header="MINUTOS" Binding="{Binding TotalMinutesParked}" MinWidth="90"/>
-                            <DataGridTextColumn Header="ÚLTIMA SALIDA" Binding="{Binding LastExitDate, StringFormat=dd/MM/yyyy HH:mm}" MinWidth="140"/>
+                            <DataGridTextColumn Header="PLACA" Binding="{Binding Plate}" Width="Auto"/>
+                            <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding OwnerName}" Width="*"/>
+                            <DataGridTextColumn Header="TIPO" Binding="{Binding VehicleType}" Width="Auto"/>
+                            <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Category}" Width="Auto"/>
+                            <DataGridTextColumn Header="ESTADO PLAN" Binding="{Binding PlanStatus}" Width="Auto"/>
+                            <DataGridTextColumn Header="MENSUALIDAD" Binding="{Binding MonthlyFee, StringFormat=C}" Width="Auto"/>
+                            <DataGridTextColumn Header="INGRESOS" Binding="{Binding TotalEntries}" Width="Auto"/>
+                            <DataGridTextColumn Header="ÚLTIMO INGRESO" Binding="{Binding LastEntryDate, StringFormat=dd/MM/yyyy HH:mm}" Width="Auto"/>
+                            <DataGridTextColumn Header="ESTADO" Binding="{Binding CurrentStatus}" Width="Auto"/>
+                            <DataGridTextColumn Header="COBRADO" Binding="{Binding TotalCollected, StringFormat=C}" Width="Auto" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="MINUTOS" Binding="{Binding TotalMinutesParked}" Width="Auto"/>
+                            <DataGridTextColumn Header="ÚLTIMA SALIDA" Binding="{Binding LastExitDate, StringFormat=dd/MM/yyyy HH:mm}" Width="Auto"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

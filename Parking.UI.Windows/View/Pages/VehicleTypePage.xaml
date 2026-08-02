@@ -4,8 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:Parking.UI.Windows.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              Background="#121212"
+             FontFamily="Segoe UI"
              d:DesignHeight="720"
              d:DesignWidth="1280">
 
@@ -17,39 +19,64 @@
             <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="15"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
 
-        <Style x:Key="InputStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="34"/>
+        <!-- NUEVO ESTILO DE INPUTS (ESPACIOS REDUCIDOS) -->
+        <Style x:Key="ModernInputBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#444444"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Height" Value="34"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#555555"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
+        <!-- BOTONES PRINCIPALES (ESPACIOS REDUCIDOS) -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,5,0"/>
-            <Setter Property="MinWidth" Value="95"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
+        <!-- ESTILOS DE TABLA ORIGINALES (NO MODIFICADOS) -->
         <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="#2A2A2A"/>
             <Setter Property="Foreground" Value="White"/>
@@ -72,213 +99,160 @@
         </Grid.ColumnDefinitions>
 
         <!-- PANEL IZQUIERDO -->
-        <ScrollViewer Grid.Column="0"
-                      VerticalScrollBarVisibility="Auto">
-
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
                 <!-- FORMULARIO -->
                 <Border Style="{StaticResource SectionStyle}">
-
                     <StackPanel>
+                        <!-- TÍTULO ELIMINADO -->
 
-                        <TextBlock Text="TIPO DE VEHÍCULO"
-                                   Foreground="White"
-                                   FontSize="18"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,15"/>
-
-                        <TextBlock Text="NOMBRE"
-                                   Style="{StaticResource LabelStyle}"/>
-
-                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}"/>
-
-                        <TextBlock Text="ICONO"
-                                   Style="{StaticResource LabelStyle}"/>
-
-                        <TextBox Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}"/>
-
-                        
-
-                        <!-- PANEL CONFIGURACIÓN DE COBRO -->
-                        <Border Background="#181818"
-                                BorderBrush="#3A3A3A"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Padding="12"
-                                Margin="0,12,0,10">
-
-                            <StackPanel>
-
-                                <TextBlock Text="CONFIGURACIÓN TARIFARIA"
-                                           Foreground="#4FC3F7"
-                                           FontSize="13"
-                                           FontWeight="Bold"
-                                           Margin="0,0,0,12"/>
-                                <TextBlock Text="TARIFA POR HORA"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=LostFocus}"
-                                         Style="{StaticResource InputStyle}"/>
-
-                                <TextBlock Text="MINUTOS DE GRACIA"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding GraceMinutes, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
-
-                                <TextBlock Text="MINUTOS POR FRACCIÓN"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding FractionMinutes, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource InputStyle}"/>
-
-                                <TextBlock Text="TARIFA FRACCIÓN"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=LostFocus}"
-                                         Style="{StaticResource InputStyle}"/>
-
-                            </StackPanel>
-
+                        <TextBlock Text="NOMBRE" Style="{StaticResource LabelStyle}"/>
+                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
                         </Border>
 
-                        <TextBlock Text="ESTADO"
-                                   Style="{StaticResource LabelStyle}"
-                                   Margin="0,4,0,6"/>
+                        <TextBlock Text="ICONO" Style="{StaticResource LabelStyle}"/>
+                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                            <TextBox Text="{Binding Icon, UpdateSourceTrigger=PropertyChanged}" 
+                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                        </Border>
 
-                        <ToggleButton IsChecked="{Binding IsActive, Mode=TwoWay}"
-                                      Width="150"
-                                      Height="36"
-                                      HorizontalAlignment="Left"
-                                      Cursor="Hand"
-                                      BorderThickness="0"
-                                      Focusable="False"
-                                      Margin="0,0,0,8">
+                        <!-- PANEL CONFIGURACIÓN DE COBRO (CAMPOS EN 2 COLUMNAS) -->
+                        <Border Background="#181818" BorderBrush="#3A3A3A" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,5,0,5">
+                            <StackPanel>
+                                <TextBlock Text="CONFIGURACIÓN TARIFARIA" Foreground="#4FC3F7" FontSize="13" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                            <ToggleButton.Template>
+                                <Grid Margin="0,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <ControlTemplate TargetType="ToggleButton">
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="TARIFA POR HORA" Style="{StaticResource LabelStyle}"/>
+                                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                                            <TextBox Text="{Binding HourlyRate, UpdateSourceTrigger=LostFocus}" 
+                                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                        </Border>
+                                    </StackPanel>
 
-                                    <Border Background="Transparent">
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="MIN. DE GRACIA" Style="{StaticResource LabelStyle}"/>
+                                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                                            <TextBox Text="{Binding GraceMinutes, UpdateSourceTrigger=PropertyChanged}" 
+                                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
 
-                                        <Grid Width="150"
-                                              Height="36">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                            <Border x:Name="SwitchBackground"
-                                                    CornerRadius="18"
-                                                    Background="#2E7D32"/>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="MIN. POR FRACCIÓN" Style="{StaticResource LabelStyle}"/>
+                                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                                            <TextBox Text="{Binding FractionMinutes, UpdateSourceTrigger=PropertyChanged}" 
+                                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                        </Border>
+                                    </StackPanel>
 
-                                            <TextBlock x:Name="SwitchText"
-                                                       Text="ACTIVO"
-                                                       Foreground="White"
-                                                       FontWeight="SemiBold"
-                                                       FontSize="12"
-                                                       VerticalAlignment="Center"
-                                                       HorizontalAlignment="Center"/>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="TARIFA FRACCIÓN" Style="{StaticResource LabelStyle}"/>
+                                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                                            <TextBox Text="{Binding FractionRate, UpdateSourceTrigger=LostFocus}" 
+                                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
 
-                                            <Border x:Name="Knob"
-                                                    Width="28"
-                                                    Height="28"
-                                                    CornerRadius="14"
-                                                    Background="White"
-                                                    HorizontalAlignment="Right"
-                                                    Margin="4"/>
-
-                                        </Grid>
-
-                                    </Border>
-
-                                    <ControlTemplate.Triggers>
-
-                                        <Trigger Property="IsChecked"
-                                                 Value="False">
-
-                                            <Setter TargetName="SwitchBackground"
-                                                    Property="Background"
-                                                    Value="#666666"/>
-
-                                            <Setter TargetName="SwitchText"
-                                                    Property="Text"
-                                                    Value="INACTIVO"/>
-
-                                            <Setter TargetName="Knob"
-                                                    Property="HorizontalAlignment"
-                                                    Value="Left"/>
-
-                                        </Trigger>
-
-                                    </ControlTemplate.Triggers>
-
-                                </ControlTemplate>
-
-                            </ToggleButton.Template>
-
-                        </ToggleButton>
+                        <!-- ESTADO Y TOGGLE EN LA MISMA LÍNEA -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,0">
+                            <TextBlock Text="ESTADO" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                            <ToggleButton IsChecked="{Binding IsActive, Mode=TwoWay}" Width="140" Height="34" Cursor="Hand" BorderThickness="0" Focusable="False" VerticalAlignment="Center">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent">
+                                            <Grid Width="140" Height="34">
+                                                <Border x:Name="SwitchBackground" CornerRadius="17" Background="#2E7D32"/>
+                                                <TextBlock x:Name="SwitchText" Text="ACTIVO" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                                <Border x:Name="Knob" Width="26" Height="26" CornerRadius="13" Background="White" HorizontalAlignment="Right" Margin="4"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsChecked" Value="False">
+                                                <Setter TargetName="SwitchBackground" Property="Background" Value="#555555"/>
+                                                <Setter TargetName="SwitchText" Property="Text" Value="INACTIVO"/>
+                                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Left"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                        </StackPanel>
 
                     </StackPanel>
-
                 </Border>
 
-                <!-- BOTONES -->
+                <!-- BOTONES CON ICONOS Y UNIFORMGRID -->
                 <Border Style="{StaticResource SectionStyle}">
+                    <UniformGrid Columns="2" Margin="-5,-5,-5,-5">
+                        <Button Command="{Binding SaveCommand}" Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="GUARDAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding UpdateCommand}" Background="#1565C0" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="DatabaseRefresh" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="ACTUALIZAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="GUARDAR"
-                                Command="{Binding SaveCommand}"
-                                Background="#2E7D32"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
+                        <Button Command="{Binding NewCommand}" Background="#333333" Foreground="#DDDDDD" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="PlusBox" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="NUEVO" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="ACTUALIZAR"
-                                Command="{Binding UpdateCommand}"
-                                Background="#1565C0"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                        <Button Content="NUEVO"
-                                Command="{Binding NewCommand}"
-                                Background="#333333"
-                                Foreground="#DDDDDD"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                        <Button Content="ELIMINAR"
-                                Command="{Binding DeleteCommand}"
-                                Background="#C62828"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                    </StackPanel>
-
+                        <Button Command="{Binding DeleteCommand}" Background="#C62828" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Delete" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="ELIMINAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
                 </Border>
 
                 <!-- LOG -->
                 <Border Style="{StaticResource SectionStyle}">
-
                     <StackPanel>
-
-                        <TextBlock Text="ESTADO"
-                                   Foreground="#888888"
-                                   FontSize="11"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,8"/>
-
-                        <TextBlock Text="{Binding StatusMessage}"
-                                   Foreground="#CCCCCC"
-                                   TextWrapping="Wrap"/>
-
+                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="#CCCCCC" TextWrapping="Wrap" FontSize="13"/>
                     </StackPanel>
-
                 </Border>
 
             </StackPanel>
-
         </ScrollViewer>
 
-        <!-- TABLA -->
+        <!-- TABLA (SIN MODIFICACIONES) -->
         <Border Grid.Column="2"
                 Background="#1A1A1A"
                 BorderBrush="#333333"

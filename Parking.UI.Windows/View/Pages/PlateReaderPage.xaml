@@ -205,16 +205,26 @@
                                    Foreground="#666666"
                                    FontSize="11"/>
 
-                        <Button Content="REGISTRAR ENTRADA"
-                                Command="{Binding SavePlateCommand}"
+                        <!-- BOTÓN REGISTRAR ENTRADA CON ICONO -->
+                        <Button Command="{Binding SavePlateCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
-                                Background="#2E7D32" Foreground="White"/>
+                                Background="#2E7D32" Foreground="White">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Login" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="REGISTRAR ENTRADA" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="REGISTRAR SALIDA"
-                                Command="{Binding RegisterExitCommand}"
+                        <!-- BOTÓN REGISTRAR SALIDA CON ICONO -->
+                        <Button Command="{Binding RegisterExitCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
                                 Background="#C62828" Foreground="White" 
-                                Margin="0"/>
+                                Margin="0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Logout" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="REGISTRAR SALIDA" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
 
@@ -234,16 +244,29 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Content="Iniciar Cámara" 
-                            Command="{Binding StartCameraCommand}" 
+
+                    <!-- BOTÓN INICIAR CÁMARA CON ICONO -->
+                    <Button Command="{Binding StartCameraCommand}" 
                             Background="#333333" Foreground="#AAAAAA"
                             Padding="5" Margin="0,0,5,0" FontSize="12"
-                            BorderThickness="0" Cursor="Hand"/>
-                    <Button Grid.Column="1" Content="Detener" 
+                            BorderThickness="0" Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Video" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Iniciar Cámara" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- BOTÓN DETENER CON ICONO -->
+                    <Button Grid.Column="1"
                             Command="{Binding StopCameraCommand}" 
                             Background="#333333" Foreground="#AAAAAA"
                             Padding="5" Margin="5,0,0,0" FontSize="12"
-                            BorderThickness="0" Cursor="Hand"/>
+                            BorderThickness="0" Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="VideoOff" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Detener" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
             </StackPanel>

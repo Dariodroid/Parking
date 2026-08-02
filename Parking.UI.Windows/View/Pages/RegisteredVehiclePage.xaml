@@ -4,424 +4,245 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:Parking.UI.Windows.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              Background="#121212"
+             FontFamily="Segoe UI"
              d:DesignHeight="720"
              d:DesignWidth="1280">
 
     <UserControl.Resources>
 
-        <Style x:Key="DarkComboBoxStyle"
-       TargetType="ComboBox">
-
-            <Setter Property="Height"
-            Value="30"/>
-
-            <Setter Property="Background"
-            Value="#0A0A0A"/>
-
-            <Setter Property="Foreground"
-            Value="White"/>
-
-            <Setter Property="BorderBrush"
-            Value="#444444"/>
-
-            <Setter Property="BorderThickness"
-            Value="1"/>
-
-            <Setter Property="Padding"
-            Value="6,2"/>
-
-            <Setter Property="FontSize"
-            Value="12"/>
-
-            <Setter Property="Template">
-
+        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Background" Value="#0A0A0A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="ItemContainerStyle">
                 <Setter.Value>
-
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="Background" Value="#0A0A0A"/>
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
-
                         <Grid>
-
-                            <Border x:Name="Border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="2">
-
+                            <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
                                 <Grid>
-
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="30"/>
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBlock Margin="8,0,0,0"
-           VerticalAlignment="Center"
-           Foreground="White"
-           Text="{Binding SelectedItem.name,
-                          RelativeSource={RelativeSource TemplatedParent}}"/>
-
-                                    <ToggleButton Grid.Column="1"
-                                          Focusable="False"
-                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                          Background="#1E1E1E"
-                                          BorderThickness="0">
-
-                                        <TextBlock Text="▼"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-
+                                    <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" TextElement.Foreground="White"/>
+                                    <ToggleButton Grid.Column="1" Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent">
+                                                    <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" Foreground="#AAAAAA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
                                     </ToggleButton>
-
                                 </Grid>
-
                             </Border>
-
-                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
-                           Placement="Bottom"
-                           AllowsTransparency="True"
-                           Focusable="False"
-                           PopupAnimation="Slide">
-
-                                <Border Background="#0A0A0A"
-                                BorderBrush="#444444"
-                                BorderThickness="1">
-
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Border Background="#0A0A0A" BorderBrush="#444444" BorderThickness="1" CornerRadius="4" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
                                     <ScrollViewer>
-
                                         <StackPanel IsItemsHost="True"/>
-
                                     </ScrollViewer>
-
                                 </Border>
-
                             </Popup>
-
                         </Grid>
-
                     </ControlTemplate>
-
                 </Setter.Value>
-
             </Setter>
-
         </Style>
+
         <conv:BooleanToCheckConverter x:Key="BooleanToCheckConverter"/>
 
-        <!-- ========================= -->
-        <!-- ESTILOS GENERALES -->
-        <!-- ========================= -->
-
+        <!-- ESTILOS GENERALES (ESPACIOS REDUCIDOS) -->
         <Style x:Key="SectionStyle" TargetType="Border">
             <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="12"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,3"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
 
-        <Style x:Key="InputStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="30"/>
+        <!-- NUEVO ESTILO DE INPUTS (ESPACIOS REDUCIDOS) -->
+        <Style x:Key="ModernInputBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#444444"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,3"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#555555"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- ========================= -->
         <!-- HORARIOS MODERNOS -->
-        <!-- ========================= -->
-
-        <Style x:Key="ModernScheduleCardStyle"
-       TargetType="Border">
-
-            <Setter Property="Background"
-            Value="#1C1C1C"/>
-
-            <Setter Property="CornerRadius"
-            Value="10"/>
-
-            <Setter Property="Padding"
-            Value="12"/>
-
-            <Setter Property="Margin"
-            Value="0,0,0,8"/>
-
-            <Setter Property="BorderBrush"
-            Value="#2B2B2B"/>
-
-            <Setter Property="BorderThickness"
-            Value="1"/>
-
+        <Style x:Key="ModernScheduleCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#1C1C1C"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="BorderBrush" Value="#2B2B2B"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <Style x:Key="ModernHourBoxStyle"
-       TargetType="TextBox">
-
-            <Setter Property="Width"
-            Value="90"/>
-
-            <Setter Property="Height"
-            Value="38"/>
-
-            <Setter Property="Background"
-            Value="#101010"/>
-
-            <Setter Property="Foreground"
-            Value="White"/>
-
-            <Setter Property="BorderBrush"
-            Value="#333333"/>
-
-            <Setter Property="BorderThickness"
-            Value="1"/>
-
-            <Setter Property="FontSize"
-            Value="13"/>
-
-            <Setter Property="FontWeight"
-            Value="SemiBold"/>
-
-            <Setter Property="Padding"
-            Value="10,0"/>
-
-            <Setter Property="HorizontalContentAlignment"
-            Value="Center"/>
-
-            <Setter Property="VerticalContentAlignment"
-            Value="Center"/>
-
-            <Setter Property="CaretBrush"
-            Value="White"/>
-
+        <Style x:Key="ModernHourBoxStyle" TargetType="TextBox">
+            <Setter Property="Width" Value="90"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Background" Value="#101010"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="White"/>
             <Setter Property="Template">
-
                 <Setter.Value>
-
                     <ControlTemplate TargetType="TextBox">
-
-                        <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="8">
-
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
                             <ScrollViewer x:Name="PART_ContentHost"/>
-
                         </Border>
-
                     </ControlTemplate>
-
                 </Setter.Value>
-
             </Setter>
-
         </Style>
 
-        <Style x:Key="ModernDayCheckStyle"
-       TargetType="CheckBox">
-
-            <Setter Property="Foreground"
-            Value="White"/>
-
-            <Setter Property="FontWeight"
-            Value="Bold"/>
-
-            <Setter Property="FontSize"
-            Value="13"/>
-
-            <Setter Property="VerticalAlignment"
-            Value="Center"/>
-
+        <Style x:Key="ModernDayCheckStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <Style x:Key="ModernFullDayCheckStyle"
-       TargetType="CheckBox">
-
-            <Setter Property="Cursor"
-            Value="Hand"/>
-
-            <Setter Property="HorizontalAlignment"
-            Value="Center"/>
-
-            <Setter Property="VerticalAlignment"
-            Value="Center"/>
-
+        <Style x:Key="ModernFullDayCheckStyle" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- ========================= -->
         <!-- CHECKBOX MODERNO -->
-        <!-- ========================= -->
-
-        <Style x:Key="ModernToggleCheckStyle"
-       TargetType="CheckBox">
-
+        <Style x:Key="ModernToggleCheckStyle" TargetType="CheckBox">
             <Setter Property="Template">
-
                 <Setter.Value>
-
                     <ControlTemplate TargetType="CheckBox">
-
                         <Grid Cursor="Hand">
-
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="50"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
-                            <!-- SWITCH -->
-                            <Border x:Name="SwitchTrack"
-                            Width="42"
-                            Height="22"
-                            Background="#444444"
-                            CornerRadius="11"
-                            VerticalAlignment="Center">
-
-                                <Ellipse x:Name="SwitchThumb"
-                                 Width="18"
-                                 Height="18"
-                                 Fill="White"
-                                 HorizontalAlignment="Left"
-                                 Margin="2,0,0,0"/>
-
+                            <Border x:Name="SwitchTrack" Width="42" Height="22" Background="#444444" CornerRadius="11" VerticalAlignment="Center">
+                                <Ellipse x:Name="SwitchThumb" Width="18" Height="18" Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0"/>
                             </Border>
-
-                            <!-- TEXTO -->
-                            <ContentPresenter Grid.Column="1"
-                                      VerticalAlignment="Center"
-                                      Margin="10,0,0,0"
-                                      TextElement.Foreground="White"
-                                      TextElement.FontWeight="SemiBold"
-                                      TextElement.FontSize="13"/>
-
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" TextElement.Foreground="White" TextElement.FontWeight="SemiBold" TextElement.FontSize="13"/>
                         </Grid>
-
                         <ControlTemplate.Triggers>
-
-                            <Trigger Property="IsChecked"
-                             Value="True">
-
-                                <Setter TargetName="SwitchTrack"
-                                Property="Background"
-                                Value="#2E7D32"/>
-
-                                <Setter TargetName="SwitchThumb"
-                                Property="HorizontalAlignment"
-                                Value="Right"/>
-
-                                <Setter TargetName="SwitchThumb"
-                                Property="Margin"
-                                Value="0,0,2,0"/>
-
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="SwitchTrack" Property="Background" Value="#2E7D32"/>
+                                <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="SwitchThumb" Property="Margin" Value="0,0,2,0"/>
                             </Trigger>
-
                         </ControlTemplate.Triggers>
-
                     </ControlTemplate>
-
                 </Setter.Value>
-
             </Setter>
-
         </Style>
 
-        <!-- ========================= -->
-        <!-- BOTONES HORA -->
-        <!-- ========================= -->
-
-        <Style x:Key="HourButtonStyle"
-       TargetType="Button">
-
-            <Setter Property="Width"
-            Value="24"/>
-
-            <Setter Property="Height"
-            Value="18"/>
-
-            <Setter Property="Background"
-            Value="#252525"/>
-
-            <Setter Property="Foreground"
-            Value="White"/>
-
-            <Setter Property="BorderBrush"
-            Value="#333333"/>
-
-            <Setter Property="BorderThickness"
-            Value="1"/>
-
-            <Setter Property="Cursor"
-            Value="Hand"/>
-
-            <Setter Property="FontWeight"
-            Value="Bold"/>
-
-            <Setter Property="FontSize"
-            Value="10"/>
-
+        <!-- BOTONES HORA (CON ICONOS) -->
+        <Style x:Key="HourButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Background" Value="#252525"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
-
                 <Setter.Value>
-
                     <ControlTemplate TargetType="Button">
-
-                        <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="4">
-
-                            <ContentPresenter HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
-
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-
                     </ControlTemplate>
-
                 </Setter.Value>
-
             </Setter>
-
         </Style>
-        <!-- ========================= -->
-        <!-- BOTONES -->
-        <!-- ========================= -->
 
+        <!-- BOTONES PRINCIPALES (CON ICONOS Y DISEÑO MODERNO) -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,5,0"/>
-            <Setter Property="MinWidth" Value="85"/>
-            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <!-- ========================= -->
         <!-- DATAGRID -->
-        <!-- ========================= -->
-
         <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#2A2A2A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="#1A1A1A"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
-            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
 
@@ -429,26 +250,25 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="6"/>
+            <Setter Property="Padding" Value="8"/>
         </Style>
 
         <Style TargetType="DataGridRow">
-            <Setter Property="Background" Value="#1A1A1A"/>
+            <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="Foreground" Value="White"/>
-
             <Style.Triggers>
-
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#1565C0"/>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#252525"/>
                 </Trigger>
-
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#15293A"/>
+                </Trigger>
             </Style.Triggers>
-
         </Style>
 
     </UserControl.Resources>
 
-    <Grid Margin="8">
+    <Grid Margin="10">
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="430"/>
@@ -457,306 +277,218 @@
         </Grid.ColumnDefinitions>
 
         <!-- PANEL IZQUIERDO -->
-        <ScrollViewer Grid.Column="0"
-                      VerticalScrollBarVisibility="Auto">
-
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
                 <!-- CLIENTE -->
                 <Border Style="{StaticResource SectionStyle}">
-
                     <StackPanel>
-
-                        <TextBlock Text="CLIENTE MENSUALIZADO"
-                                   Foreground="White"
-                                   FontSize="17"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="CLIENTE MENSUALIZADO" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
 
                         <Grid>
-
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-
-                                <TextBlock Text="PLACA"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding Plate}"
-                                         Style="{StaticResource InputStyle}"/>
-
+                                <TextBlock Text="PLACA" Style="{StaticResource LabelStyle}"/>
+                                <Border Style="{StaticResource ModernInputBorderStyle}">
+                                    <TextBox Text="{Binding Plate}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                </Border>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-
-                                <TextBlock Text="TIPO VEHÍCULO"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                               
-                                <ComboBox ItemsSource="{Binding VehicleTypes}"
-          SelectedValue="{Binding VehicleTypeId}"
-          SelectedValuePath="id"
-          DisplayMemberPath="name"
-          Style="{StaticResource DarkComboBoxStyle}"/>
-
+                                <TextBlock Text="TIPO VEHÍCULO" Style="{StaticResource LabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding VehicleTypes}" SelectedValue="{Binding VehicleTypeId}" SelectedValuePath="id" DisplayMemberPath="name" Style="{StaticResource DarkComboBoxStyle}"/>
                             </StackPanel>
-
                         </Grid>
 
-                        <TextBlock Text="NOMBRE PROPIETARIO"
-                                   Style="{StaticResource LabelStyle}"/>
-
-                        <TextBox Text="{Binding OwnerName}"
-                                 Style="{StaticResource InputStyle}"/>
+                        <TextBlock Text="NOMBRE PROPIETARIO" Style="{StaticResource LabelStyle}"/>
+                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                            <TextBox Text="{Binding OwnerName}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                        </Border>
 
                         <Grid>
-
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-
-                                <TextBlock Text="TELÉFONO"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding OwnerPhone}"
-                                         Style="{StaticResource InputStyle}"/>
-
+                                <TextBlock Text="TELÉFONO" Style="{StaticResource LabelStyle}"/>
+                                <Border Style="{StaticResource ModernInputBorderStyle}">
+                                    <TextBox Text="{Binding OwnerPhone}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                </Border>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-
-                                <TextBlock Text="CÉDULA"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding OwnerCedula}"
-                                         Style="{StaticResource InputStyle}"/>
-
+                                <TextBlock Text="CÉDULA" Style="{StaticResource LabelStyle}"/>
+                                <Border Style="{StaticResource ModernInputBorderStyle}">
+                                    <TextBox Text="{Binding OwnerCedula}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                </Border>
                             </StackPanel>
-
                         </Grid>
 
-                        <TextBlock Text="EMAIL"
-                                   Style="{StaticResource LabelStyle}"/>
-
-                        <TextBox Text="{Binding OwnerEmail}"
-                                 Style="{StaticResource InputStyle}"/>
+                        <TextBlock Text="EMAIL" Style="{StaticResource LabelStyle}"/>
+                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                            <TextBox Text="{Binding OwnerEmail}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                        </Border>
 
                     </StackPanel>
-
                 </Border>
 
                 <!-- CONFIG -->
                 <Border Style="{StaticResource SectionStyle}">
-
                     <StackPanel>
-
-                        <TextBlock Text="CONFIGURACIÓN MENSUALIDAD"
-                                   Foreground="White"
-                                   FontSize="14"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="CONFIGURACIÓN MENSUALIDAD" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
                         <Grid>
-
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-
-                                <TextBlock Text="VALOR MENSUAL"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <TextBox Text="{Binding MonthlyFee}"
-                                         Style="{StaticResource InputStyle}"/>
-
+                                <TextBlock Text="VALOR MENSUAL" Style="{StaticResource LabelStyle}"/>
+                                <Border Style="{StaticResource ModernInputBorderStyle}">
+                                    <TextBox Text="{Binding MonthlyFee}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                </Border>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-
-                                <TextBlock Text="ESTADO"
-                                           Style="{StaticResource LabelStyle}"/>
-
-                                <ToggleButton IsChecked="{Binding IsActive}"
-              Width="70"
-              Height="30"
-              Cursor="Hand"
-              BorderThickness="0">
-
+                                <TextBlock Text="ESTADO" Style="{StaticResource LabelStyle}"/>
+                                <ToggleButton IsChecked="{Binding IsActive}" Width="70" Height="34" Cursor="Hand" BorderThickness="0" VerticalAlignment="Top" Margin="0,2,0,0">
                                     <ToggleButton.Style>
-
                                         <Style TargetType="ToggleButton">
-
                                             <Setter Property="Background" Value="#C62828"/>
-
                                             <Setter Property="Template">
-
                                                 <Setter.Value>
-
                                                     <ControlTemplate TargetType="ToggleButton">
-
-                                                        <Border Width="70"
-                                Height="30"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="15">
-
+                                                        <Border Width="70" Height="34" Background="{TemplateBinding Background}" CornerRadius="17">
                                                             <Grid>
-
-                                                                <Ellipse x:Name="SwitchThumb"
-                                         Width="24"
-                                         Height="24"
-                                         Fill="White"
-                                         HorizontalAlignment="Left"
-                                         Margin="3,0,0,0"/>
-
-                                                                <TextBlock x:Name="SwitchText"
-                                           Text="OFF"
-                                           Foreground="White"
-                                           FontWeight="Bold"
-                                           FontSize="10"
-                                           VerticalAlignment="Center"
-                                           HorizontalAlignment="Right"
-                                           Margin="0,0,10,0"/>
-
+                                                                <Ellipse x:Name="SwitchThumb" Width="24" Height="24" Fill="White" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+                                                                <TextBlock x:Name="SwitchText" Text="OFF" Foreground="White" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0"/>
                                                             </Grid>
-
                                                         </Border>
-
                                                         <ControlTemplate.Triggers>
-
-                                                            <Trigger Property="IsChecked"
-                                     Value="True">
-
-                                                                <Setter Property="Background"
-                                        Value="#2E7D32"/>
-
-                                                                <Setter TargetName="SwitchThumb"
-                                        Property="HorizontalAlignment"
-                                        Value="Right"/>
-
-                                                                <Setter TargetName="SwitchThumb"
-                                        Property="Margin"
-                                        Value="0,0,3,0"/>
-
-                                                                <Setter TargetName="SwitchText"
-                                        Property="Text"
-                                        Value="ON"/>
-
-                                                                <Setter TargetName="SwitchText"
-                                        Property="HorizontalAlignment"
-                                        Value="Left"/>
-
-                                                                <Setter TargetName="SwitchText"
-                                        Property="Margin"
-                                        Value="10,0,0,0"/>
-
+                                                            <Trigger Property="IsChecked" Value="True">
+                                                                <Setter Property="Background" Value="#2E7D32"/>
+                                                                <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
+                                                                <Setter TargetName="SwitchThumb" Property="Margin" Value="0,0,5,0"/>
+                                                                <Setter TargetName="SwitchText" Property="Text" Value="ON"/>
+                                                                <Setter TargetName="SwitchText" Property="HorizontalAlignment" Value="Left"/>
+                                                                <Setter TargetName="SwitchText" Property="Margin" Value="12,0,0,0"/>
                                                             </Trigger>
-
                                                         </ControlTemplate.Triggers>
-
                                                     </ControlTemplate>
-
                                                 </Setter.Value>
-
                                             </Setter>
-
                                         </Style>
-
                                     </ToggleButton.Style>
-
                                 </ToggleButton>
-
                             </StackPanel>
-
                         </Grid>
 
                         <Grid>
-
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="10"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
+                                <TextBlock Text="FECHA INICIO" Style="{StaticResource LabelStyle}"/>
+                                <DatePicker SelectedDate="{Binding MonthlyStartDate}"
+                                    Foreground="White"
+                                    Background="#0A0A0A"
+                                    Margin="0,0,0,10">
 
-                                <TextBlock Text="FECHA INICIO"
-                                           Style="{StaticResource LabelStyle}"/>
+                                    <DatePicker.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
+                                            Color="White"/>
 
-                                <DatePicker SelectedDate="{Binding MonthlyStartDate}"/>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"
+                                            Color="White"/>
 
+                                        <Style TargetType="{x:Type DatePickerTextBox}">
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#0A0A0A"/>
+                                            <Setter Property="CaretBrush" Value="White"/>
+                                        </Style>
+                                    </DatePicker.Resources>
+                                </DatePicker>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
+                                <TextBlock Text="FECHA FIN" Style="{StaticResource LabelStyle}"/>
+                                <DatePicker SelectedDate="{Binding MonthlyEndDate}"
+                                    Foreground="White"
+                                    Background="#0A0A0A"
+                                    Margin="0,0,0,10">
 
-                                <TextBlock Text="FECHA FIN"
-                                           Style="{StaticResource LabelStyle}"/>
+                                    <DatePicker.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
+                                            Color="White"/>
 
-                                <DatePicker SelectedDate="{Binding MonthlyEndDate}"/>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"
+                                            Color="White"/>
 
+                                        <Style TargetType="{x:Type DatePickerTextBox}">
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#0A0A0A"/>
+                                            <Setter Property="CaretBrush" Value="White"/>
+                                        </Style>
+                                    </DatePicker.Resources>
+                                </DatePicker>
                             </StackPanel>
-
                         </Grid>
 
-                        <TextBlock Text="OBSERVACIONES"
-                                   Style="{StaticResource LabelStyle}"/>
-
-                        <TextBox Text="{Binding Notes}"
-                                 Height="60"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 VerticalScrollBarVisibility="Auto"
-                                 Style="{StaticResource InputStyle}"/>
+                        <TextBlock Text="OBSERVACIONES" Style="{StaticResource LabelStyle}"/>
+                        <Border Style="{StaticResource ModernInputBorderStyle}" Height="50">
+                            <TextBox Text="{Binding Notes}" Height="50" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                        </Border>
 
                     </StackPanel>
-
                 </Border>
 
-                <!-- BOTONES -->
+                <!-- BOTONES CON ICONOS Y UNIFORMGRID -->
                 <Border Style="{StaticResource SectionStyle}">
+                    <UniformGrid Columns="2" Margin="-5,-5,-5,-5">
+                        <Button Command="{Binding SaveCommand}" Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="GUARDAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                    <WrapPanel>
+                        <Button Command="{Binding UpdateCommand}" Background="#1565C0" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="DatabaseRefresh" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="ACTUALIZAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="GUARDAR"
-                                Command="{Binding SaveCommand}"
-                                Background="#2E7D32"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
+                        <Button Command="{Binding NewCommand}" Background="#333333" Foreground="#DDDDDD" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="AccountPlus" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="NUEVO" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="ACTUALIZAR"
-                                Command="{Binding UpdateCommand}"
-                                Background="#1565C0"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                        <Button Content="NUEVO"
-                                Command="{Binding NewCommand}"
-                                Background="#333333"
-                                Foreground="#DDDDDD"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                        <Button Content="ELIMINAR"
-                                Command="{Binding DeleteCommand}"
-                                Background="#C62828"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                    </WrapPanel>
-
+                        <Button Command="{Binding DeleteCommand}" Background="#C62828" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Delete" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="ELIMINAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
                 </Border>
 
             </StackPanel>
-
         </ScrollViewer>
 
         <!-- PANEL DERECHO -->
@@ -769,68 +501,22 @@
             </Grid.RowDefinitions>
 
             <!-- TABLA VEHICULOS -->
-            <Border Grid.Row="0"
-                    Background="#1A1A1A"
-                    BorderBrush="#333333"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    Padding="6" Margin="0,0,0,2
-                    " Grid.RowSpan="2">
-
-                <DataGrid ItemsSource="{Binding RegisteredVehicles}"
-                          SelectedItem="{Binding SelectedRegisteredVehicle}"
-                          AutoGenerateColumns="False"
-                          Background="#1A1A1A"
-                          Foreground="White"
-                          BorderThickness="0"
-                          GridLinesVisibility="Horizontal"
-                          HeadersVisibility="Column"
-                          RowBackground="#1A1A1A"
-                          AlternatingRowBackground="#202020"
-                          CanUserAddRows="False"
-                          IsReadOnly="True"
-                          ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}" Margin="0,0,0,3">
-
+            <Border Grid.Row="0" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10" Grid.RowSpan="2">
+                <DataGrid ItemsSource="{Binding RegisteredVehicles}" SelectedItem="{Binding SelectedRegisteredVehicle}" AutoGenerateColumns="False" Background="Transparent" Foreground="White" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowBackground="Transparent" AlternatingRowBackground="#252525" CanUserAddRows="False" IsReadOnly="True" ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
                     <DataGrid.Columns>
-
-                        <DataGridTextColumn Header="Placa"
-                                            Binding="{Binding plate}"
-                                            Width="90"/>
-
-                        <DataGridTextColumn Header="Propietario"
-                                            Binding="{Binding owner_name}"
-                                            Width="*"/>
-
-                        <DataGridTextColumn Header="Teléfono"
-                                            Binding="{Binding owner_phone}"
-                                            Width="110"/>
-
-                        <DataGridTextColumn Header="Mensualidad"
-                                            Binding="{Binding vehicle_monthly_plan.monthly_fee}"
-                                            Width="100"/>
-
-                        <DataGridTextColumn Header="Inicio"
-                                            Binding="{Binding vehicle_monthly_plan.start_date, StringFormat=dd/MM/yyyy}"
-                                            Width="90"/>
-
-                        <DataGridTextColumn Header="Fin"
-                                            Binding="{Binding vehicle_monthly_plan.end_date, StringFormat=dd/MM/yyyy}"
-                                            Width="90"/>
-
+                        <DataGridTextColumn Header="Placa" Binding="{Binding plate}" Width="90"/>
+                        <DataGridTextColumn Header="Propietario" Binding="{Binding owner_name}" Width="*"/>
+                        <DataGridTextColumn Header="Teléfono" Binding="{Binding owner_phone}" Width="110"/>
+                        <DataGridTextColumn Header="Mensualidad" Binding="{Binding vehicle_monthly_plan.monthly_fee}" Width="100"/>
+                        <DataGridTextColumn Header="Inicio" Binding="{Binding vehicle_monthly_plan.start_date, StringFormat=dd/MM/yyyy}" Width="90"/>
+                        <DataGridTextColumn Header="Fin" Binding="{Binding vehicle_monthly_plan.end_date, StringFormat=dd/MM/yyyy}" Width="90"/>
                     </DataGrid.Columns>
-
                 </DataGrid>
-
             </Border>
 
             <!-- HORARIOS MODERNOS -->
-            <!-- HORARIOS MODERNOS -->
-            <Border Grid.Row="2"
-        Style="{StaticResource SectionStyle}"
-        Margin="0,8,0,0">
-
+            <Border Grid.Row="2" Style="{StaticResource SectionStyle}" Margin="0,8,0,0">
                 <Grid>
-
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -838,96 +524,41 @@
                     </Grid.RowDefinitions>
 
                     <!-- TITULO -->
-                    <DockPanel Grid.Row="0"
-                   Margin="0,0,0,18">
-
+                    <DockPanel Grid.Row="0" Margin="0,0,0,18">
                         <StackPanel DockPanel.Dock="Left">
-
-                            <TextBlock Text="HORARIOS PERMITIDOS"
-                           Foreground="White"
-                           FontSize="18"
-                           FontWeight="Bold"/>
-
-                            <TextBlock Text="Control de acceso semanal del vehículo"
-                           Foreground="#8A8A8A"
-                           FontSize="11"
-                           Margin="0,2,0,0"/>
-
+                            <TextBlock Text="HORARIOS PERMITIDOS" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                            <TextBlock Text="Control de acceso semanal del vehículo" Foreground="#8A8A8A" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
-
                     </DockPanel>
 
                     <!-- CABECERA -->
-                    <Border Grid.Row="1"
-                Background="#151515"
-                CornerRadius="8"
-                Padding="12,10"
-                Margin="0,0,0,10">
-
+                    <Border Grid.Row="1" Background="#151515" CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
                         <Grid>
-
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
                                 <ColumnDefinition Width="170"/>
                                 <ColumnDefinition Width="170"/>
                                 <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0"
-                           Text="DÍA"
-                           Foreground="#8C8C8C"
-                           FontWeight="Bold"
-                           FontSize="11"/>
-
-                            <TextBlock Grid.Column="1"
-                           Text="ENTRADA"
-                           Foreground="#8C8C8C"
-                           FontWeight="Bold"
-                           FontSize="11"
-                           HorizontalAlignment="Center"/>
-
-                            <TextBlock Grid.Column="2"
-                           Text="SALIDA"
-                           Foreground="#8C8C8C"
-                           FontWeight="Bold"
-                           FontSize="11"
-                           HorizontalAlignment="Center"/>
-
-                            <TextBlock Grid.Column="3"
-                           Text="24H"
-                           Foreground="#8C8C8C"
-                           FontWeight="Bold"
-                           FontSize="11"
-                           HorizontalAlignment="Center"/>
-
+                            <TextBlock Grid.Column="0" Text="DÍA" Foreground="#8C8C8C" FontWeight="Bold" FontSize="11"/>
+                            <TextBlock Grid.Column="1" Text="ENTRADA" Foreground="#8C8C8C" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="SALIDA" Foreground="#8C8C8C" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="24H" Foreground="#8C8C8C" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
                         </Grid>
-
                     </Border>
 
                     <!-- LISTA -->
-                    <ScrollViewer Grid.Row="2"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled"
-                      CanContentScroll="True">
-
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="True">
                         <ItemsControl ItemsSource="{Binding VehicleSchedules}">
-
                             <ItemsControl.ItemsPanel>
-
                                 <ItemsPanelTemplate>
                                     <StackPanel/>
                                 </ItemsPanelTemplate>
-
                             </ItemsControl.ItemsPanel>
-
                             <ItemsControl.ItemTemplate>
-
                                 <DataTemplate>
-
                                     <Border Style="{StaticResource ModernScheduleCardStyle}">
-
                                         <Grid>
-
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="220"/>
                                                 <ColumnDefinition Width="170"/>
@@ -936,117 +567,59 @@
                                             </Grid.ColumnDefinitions>
 
                                             <!-- DIA -->
-                                            <StackPanel Grid.Column="0"
-                                            Orientation="Horizontal"
-                                            VerticalAlignment="Center">
-
-                                                <Border Width="10"
-                                            Height="10"
-                                            CornerRadius="5"
-                                            Margin="0,0,10,0">
-
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="10" Height="10" CornerRadius="5" Margin="0,0,10,0">
                                                     <Border.Style>
-
                                                         <Style TargetType="Border">
-
-                                                            <Setter Property="Background"
-                                                        Value="#C62828"/>
-
+                                                            <Setter Property="Background" Value="#C62828"/>
                                                             <Style.Triggers>
-
-                                                                <DataTrigger Binding="{Binding IsEnabled}"
-                                                                 Value="True">
-
-                                                                    <Setter Property="Background"
-                                                                Value="#2E7D32"/>
-
+                                                                <DataTrigger Binding="{Binding IsEnabled}" Value="True">
+                                                                    <Setter Property="Background" Value="#2E7D32"/>
                                                                 </DataTrigger>
-
                                                             </Style.Triggers>
-
                                                         </Style>
-
                                                     </Border.Style>
-
                                                 </Border>
-
-                                                <CheckBox Content="{Binding DayName}"
-                                              IsChecked="{Binding IsEnabled}"
-                                              Style="{StaticResource ModernToggleCheckStyle}"/>
-
+                                                <CheckBox Content="{Binding DayName}" IsChecked="{Binding IsEnabled}" Style="{StaticResource ModernToggleCheckStyle}"/>
                                             </StackPanel>
 
                                             <!-- HORA INICIO -->
-                                            <StackPanel Grid.Column="1"
-                                            Orientation="Horizontal"
-                                            HorizontalAlignment="Center">
-
-                                                <TextBox Text="{Binding StartTime}"
-                                             Style="{StaticResource ModernHourBoxStyle}"
-                                             Width="80"
-                                             IsEnabled="{Binding IsEnabled}"/>
-
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBox Text="{Binding StartTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding IsEnabled}"/>
                                                 <StackPanel Margin="5,0,0,0">
-
-                                                    <Button Content="▲"
-                                                Style="{StaticResource HourButtonStyle}"
-                                                Command="{Binding IncreaseStartHourCommand}"/>
-
-                                                    <Button Content="▼"
-                                                Style="{StaticResource HourButtonStyle}"
-                                                Margin="0,2,0,0"
-                                                Command="{Binding DecreaseStartHourCommand}"/>
-
+                                                    <Button Style="{StaticResource HourButtonStyle}" Command="{Binding IncreaseStartHourCommand}">
+                                                        <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="White"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" Command="{Binding DecreaseStartHourCommand}">
+                                                        <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="White"/>
+                                                    </Button>
                                                 </StackPanel>
-
                                             </StackPanel>
 
                                             <!-- HORA FIN -->
-                                            <StackPanel Grid.Column="2"
-                                            Orientation="Horizontal"
-                                            HorizontalAlignment="Center">
-
-                                                <TextBox Text="{Binding EndTime}"
-                                             Style="{StaticResource ModernHourBoxStyle}"
-                                             Width="80"
-                                             IsEnabled="{Binding IsEnabled}"/>
-
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBox Text="{Binding EndTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding IsEnabled}"/>
                                                 <StackPanel Margin="5,0,0,0">
-
-                                                    <Button Content="▲"
-                                                Style="{StaticResource HourButtonStyle}"
-                                                Command="{Binding IncreaseEndHourCommand}"/>
-
-                                                    <Button Content="▼"
-                                                Style="{StaticResource HourButtonStyle}"
-                                                Margin="0,2,0,0"
-                                                Command="{Binding DecreaseEndHourCommand}"/>
-
+                                                    <Button Style="{StaticResource HourButtonStyle}" Command="{Binding IncreaseEndHourCommand}">
+                                                        <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="White"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" Command="{Binding DecreaseEndHourCommand}">
+                                                        <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="White"/>
+                                                    </Button>
                                                 </StackPanel>
-
                                             </StackPanel>
 
                                             <!-- 24 HORAS -->
-                                            <CheckBox Grid.Column="3"
-                                          IsChecked="{Binding IsFullDay}"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          Style="{StaticResource ModernToggleCheckStyle}"/>
+                                            <CheckBox Grid.Column="3" IsChecked="{Binding IsFullDay}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModernToggleCheckStyle}"/>
 
                                         </Grid>
-
                                     </Border>
-
                                 </DataTemplate>
-
                             </ItemsControl.ItemTemplate>
-
                         </ItemsControl>
-
                     </ScrollViewer>
 
                 </Grid>
-
             </Border>
         </Grid>
 

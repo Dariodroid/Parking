@@ -3,8 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             Background="#121212">
+             Background="#121212"
+             FontFamily="Segoe UI">
 
     <UserControl.Resources>
 
@@ -182,29 +184,76 @@
                            VerticalAlignment="Center"
                            Margin="0,0,10,0"/>
 
+                <!-- DATEPICKER DESDE CON TEXTO BLANCO -->
                 <DatePicker Width="140"
-                            SelectedDate="{Binding FromDate}"/>
+                            SelectedDate="{Binding FromDate}"
+                            Foreground="White"
+                            Background="#0A0A0A">
+
+                    <DatePicker.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
+                            Color="White"/>
+
+                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"
+                            Color="White"/>
+
+                        <Style TargetType="{x:Type DatePickerTextBox}">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Background" Value="#0A0A0A"/>
+                            <Setter Property="CaretBrush" Value="White"/>
+                        </Style>
+                    </DatePicker.Resources>
+
+                </DatePicker>
 
                 <TextBlock Text="HASTA"
                            Style="{StaticResource LabelStyle}"
                            VerticalAlignment="Center"
                            Margin="20,0,10,0"/>
 
+                <!-- DATEPICKER HASTA CON TEXTO BLANCO -->
                 <DatePicker Width="140"
-                            SelectedDate="{Binding ToDate}"/>
+                            SelectedDate="{Binding ToDate}"
+                            Foreground="White"
+                            Background="#0A0A0A">
 
-                <Button Content="ACTUALIZAR"
-                        Command="{Binding RefreshCommand}"
+                    <DatePicker.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
+                            Color="White"/>
+
+                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"
+                            Color="White"/>
+
+                        <Style TargetType="{x:Type DatePickerTextBox}">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Background" Value="#0A0A0A"/>
+                            <Setter Property="CaretBrush" Value="White"/>
+                        </Style>
+                    </DatePicker.Resources>
+
+                </DatePicker>
+
+                <Button Command="{Binding RefreshCommand}"
                         Background="#1565C0"
                         Foreground="White"
                         Style="{StaticResource ActionButtonStyle}"
-                        Margin="20,0,0,0"/>
-                <Button Content="EXPORTAR EXCEL"
-                        Command="{Binding ExportExcelCommand}"
+                        Margin="20,0,0,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="DatabaseRefresh" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="ACTUALIZAR" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding ExportExcelCommand}"
                         Background="#2E7D32"
                         Foreground="White"
                         Style="{StaticResource ActionButtonStyle}"
-                        Margin="10,0,0,0"/>
+                        Margin="10,0,0,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="FileExcel" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="EXPORTAR EXCEL" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
             </StackPanel>
 

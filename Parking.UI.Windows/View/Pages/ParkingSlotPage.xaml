@@ -4,8 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:Parking.UI.Windows.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             Background="#121212">
+             Background="#121212"
+             FontFamily="Segoe UI">
 
     <UserControl.Resources>
 
@@ -13,49 +15,92 @@
             <Setter Property="Background" Value="#1E1E1E"/>
             <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
 
-        <Style x:Key="InputStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="34"/>
+        <!-- NUEVO ESTILO DE INPUTS (BORDE REDONDEADO) -->
+        <Style x:Key="ModernInputBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#444444"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#555555"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
+        <!-- BOTONES PRINCIPALES (CON ICONOS Y DISEÑO MODERNO) -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,5,0"/>
-            <Setter Property="MinWidth" Value="95"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <Style x:Key="DarkDataGridHeaderStyle"
-               TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#2A2A2A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+        <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#1A1A1A"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="BorderBrush" Value="#333333"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
-            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#252525"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#15293A"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
     </UserControl.Resources>
@@ -63,131 +108,92 @@
     <Grid Margin="10">
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="460"/>
+            <ColumnDefinition Width="430"/>
             <ColumnDefinition Width="10"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- PANEL IZQUIERDO -->
-
-        <ScrollViewer Grid.Column="0"
-                      VerticalScrollBarVisibility="Auto">
-
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
                 <!-- FORMULARIO -->
-
                 <Border Style="{StaticResource SectionStyle}">
-
                     <StackPanel>
+                        <TextBlock Text="PUESTO DE PARQUEO" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
 
-                        <TextBlock Text="PUESTO DE PARQUEO"
-                                   Foreground="White"
-                                   FontSize="18"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,15"/>
+                        <TextBlock Text="CÓDIGO DEL PUESTO" Style="{StaticResource LabelStyle}"/>
+                        <Border Style="{StaticResource ModernInputBorderStyle}">
+                            <TextBox Text="{Binding SlotNumber, UpdateSourceTrigger=PropertyChanged}" 
+                                     BorderThickness="0" Background="Transparent" Foreground="White" 
+                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                        </Border>
 
-                        <TextBlock Text="CÓDIGO DEL PUESTO"
-                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="Ejemplos: 1, 1A, A-01, MOTO-01" Foreground="#666666" FontSize="11" Margin="0,0,0,15"/>
 
-                        <TextBox Text="{Binding SlotNumber,
-                                                UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource InputStyle}"/>
-
-                        <TextBlock Text="Ejemplos: 1, 1A, A-01, MOTO-01"
-                                   Foreground="#777777"
-                                   FontSize="11"
-                                   Margin="0,5,0,0"/>
-
-                        <TextBlock Text="ESTADO"
-                                   Style="{StaticResource LabelStyle}"
-                                   Margin="0,15,0,5"/>
-
-                        <TextBlock Text="{Binding OccupancyStatus}"
-                                   Foreground="#4FC3F7"
-                                   FontWeight="SemiBold"/>
-
+                        <TextBlock Text="ESTADO" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{Binding OccupancyStatus}" Foreground="#4FC3F7" FontWeight="SemiBold" FontSize="14"/>
                     </StackPanel>
-
                 </Border>
 
-                <!-- BOTONES -->
-
+                <!-- BOTONES CON ICONOS Y UNIFORMGRID -->
                 <Border Style="{StaticResource SectionStyle}">
+                    <UniformGrid Columns="2" Margin="-5,-5,-5,-5">
+                        <Button Command="{Binding SaveCommand}" Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="GUARDAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                    <WrapPanel>
+                        <Button Command="{Binding UpdateCommand}" Background="#1565C0" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="DatabaseRefresh" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="ACTUALIZAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="GUARDAR"
-                                Command="{Binding SaveCommand}"
-                                Background="#2E7D32"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
+                        <Button Command="{Binding NewCommand}" Background="#333333" Foreground="#DDDDDD" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="PlusBox" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="NUEVO" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                        <Button Content="ACTUALIZAR"
-                                Command="{Binding UpdateCommand}"
-                                Background="#1565C0"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                        <Button Content="NUEVO"
-                                Command="{Binding NewCommand}"
-                                Background="#333333"
-                                Foreground="#DDDDDD"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                        <Button Content="ELIMINAR"
-                                Command="{Binding DeleteCommand}"
-                                Background="#C62828"
-                                Foreground="White"
-                                Style="{StaticResource ActionButtonStyle}"/>
-
-                    </WrapPanel>
-
+                        <Button Command="{Binding DeleteCommand}" Background="#C62828" Foreground="White" Style="{StaticResource ActionButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Delete" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="ELIMINAR" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
                 </Border>
 
-                <!-- ESTADO -->
-
+                <!-- LOG DEL SISTEMA -->
                 <Border Style="{StaticResource SectionStyle}">
-
                     <StackPanel>
-
-                        <TextBlock Text="ESTADO"
-                                   Foreground="#888888"
-                                   FontSize="11"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,8"/>
-
-                        <TextBlock Text="{Binding StatusMessage}"
-                                   Foreground="#CCCCCC"
-                                   TextWrapping="Wrap"/>
-
+                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="#CCCCCC" TextWrapping="Wrap" FontSize="13"/>
                     </StackPanel>
-
                 </Border>
 
             </StackPanel>
-
         </ScrollViewer>
 
         <!-- TABLA -->
-
-        <Border Grid.Column="2"
-                Background="#1A1A1A"
-                BorderBrush="#333333"
-                BorderThickness="1"
-                CornerRadius="4"
-                Padding="6">
-
+        <Border Grid.Column="2" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
             <DataGrid ItemsSource="{Binding Slots}"
                       SelectedItem="{Binding SelectedSlot}"
                       AutoGenerateColumns="False"
-                      Background="#1A1A1A"
+                      Background="Transparent"
                       Foreground="White"
                       BorderThickness="0"
                       GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#333333"
+                      VerticalGridLinesBrush="#333333"
                       HeadersVisibility="Column"
-                      RowBackground="#1A1A1A"
-                      AlternatingRowBackground="#202020"
+                      RowBackground="Transparent"
+                      AlternatingRowBackground="#252525"
                       CanUserAddRows="False"
                       IsReadOnly="True"
                       ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
@@ -195,123 +201,58 @@
                 <DataGrid.Columns>
 
                     <DataGridTextColumn Header="PUESTO"
-                        Binding="{Binding slot_number}"
-                        Width="220"/>
+                                        Binding="{Binding slot_number}"
+                                        Width="*"/>
 
-                    <DataGridTemplateColumn Header="OCUPADO"
-                            Width="160">
-
+                    <DataGridTemplateColumn Header="OCUPADO" Width="160">
                         <DataGridTemplateColumn.CellTemplate>
-
                             <DataTemplate>
-
                                 <ToggleButton IsChecked="{Binding is_occupied}"
-                              IsEnabled="False"
-                              Width="70"
-                              Height="30"
-                              BorderThickness="0">
+                                              IsEnabled="False"
+                                              Width="70"
+                                              Height="30"
+                                              BorderThickness="0"
+                                              Margin="5,0">
 
                                     <ToggleButton.Style>
-
                                         <Style TargetType="ToggleButton">
-
-                                            <!-- LIBRE por defecto -->
-                                            <Setter Property="Background"
-            Value="#2E7D32"/>
-
+                                            <Setter Property="Background" Value="#2E7D32"/>
                                             <Setter Property="Template">
-
                                                 <Setter.Value>
-
                                                     <ControlTemplate TargetType="ToggleButton">
-
-                                                        <Border Width="70"
-                        Height="30"
-                        Background="{TemplateBinding Background}"
-                        CornerRadius="15">
-
+                                                        <Border Width="70" Height="30" Background="{TemplateBinding Background}" CornerRadius="15">
                                                             <Grid>
-
-                                                                <Ellipse x:Name="SwitchThumb"
-                                 Width="24"
-                                 Height="24"
-                                 Fill="White"
-                                 HorizontalAlignment="Left"
-                                 Margin="3,0,0,0"/>
-
-                                                                <TextBlock x:Name="SwitchText"
-                                   Text="LIBRE"
-                                   Foreground="White"
-                                   FontWeight="Bold"
-                                   FontSize="10"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Right"
-                                   Margin="0,0,8,0"/>
-
+                                                                <Ellipse x:Name="SwitchThumb" Width="24" Height="24" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0"/>
+                                                                <TextBlock x:Name="SwitchText" Text="LIBRE" Foreground="White" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0"/>
                                                             </Grid>
-
                                                         </Border>
-
                                                         <ControlTemplate.Triggers>
-
-                                                            <!-- OCUPADO -->
-                                                            <Trigger Property="IsChecked"
-                             Value="True">
-
-                                                                <Setter Property="Background"
-                                Value="#C62828"/>
-
-                                                                <Setter TargetName="SwitchThumb"
-                                Property="HorizontalAlignment"
-                                Value="Right"/>
-
-                                                                <Setter TargetName="SwitchThumb"
-                                Property="Margin"
-                                Value="0,0,3,0"/>
-
-                                                                <Setter TargetName="SwitchText"
-                                Property="Text"
-                                Value="OCUPADO"/>
-
-                                                                <Setter TargetName="SwitchText"
-                                Property="HorizontalAlignment"
-                                Value="Left"/>
-
-                                                                <Setter TargetName="SwitchText"
-                                Property="Margin"
-                                Value="8,0,0,0"/>
-
+                                                            <Trigger Property="IsChecked" Value="True">
+                                                                <Setter Property="Background" Value="#C62828"/>
+                                                                <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right"/>
+                                                                <Setter TargetName="SwitchThumb" Property="Margin" Value="0,0,3,0"/>
+                                                                <Setter TargetName="SwitchText" Property="Text" Value="OCUPADO"/>
+                                                                <Setter TargetName="SwitchText" Property="HorizontalAlignment" Value="Left"/>
+                                                                <Setter TargetName="SwitchText" Property="Margin" Value="8,0,0,0"/>
                                                             </Trigger>
-
                                                         </ControlTemplate.Triggers>
-
                                                     </ControlTemplate>
-
                                                 </Setter.Value>
-
                                             </Setter>
-
                                         </Style>
-
                                     </ToggleButton.Style>
-
                                 </ToggleButton>
-
                             </DataTemplate>
-
                         </DataGridTemplateColumn.CellTemplate>
-
                     </DataGridTemplateColumn>
 
                     <DataGridTextColumn Header="ÚLTIMA ACTUALIZACIÓN"
-                        Binding="{Binding updated_at,
-                                          StringFormat=dd/MM/yyyy HH:mm}"
-                        Width="220"/>
+                                        Binding="{Binding updated_at, StringFormat=dd/MM/yyyy HH:mm}"
+                                        Width="200"/>
 
                 </DataGrid.Columns>
 
             </DataGrid>
-
         </Border>
 
     </Grid>
