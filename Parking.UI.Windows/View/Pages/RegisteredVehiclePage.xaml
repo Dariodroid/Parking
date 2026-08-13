@@ -13,6 +13,11 @@
 
     <UserControl.Resources>
 
+        <conv:BooleanToCheckConverter x:Key="BooleanToCheckConverter"/>
+
+        <!-- ========================================================== -->
+        <!-- 🟢 COMBOBOX DEFINITIVO: IGUAL DE SIMPLE QUE EL DE userPage -->
+        <!-- ========================================================== -->
         <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Height" Value="34"/>
             <Setter Property="Background" Value="#0A0A0A"/>
@@ -45,38 +50,76 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="30"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" TextElement.Foreground="White"/>
-                                    <ToggleButton Grid.Column="1" Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
-                                        <ToggleButton.Template>
-                                            <ControlTemplate TargetType="ToggleButton">
-                                                <Border Background="Transparent">
-                                                    <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" Foreground="#AAAAAA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </ToggleButton.Template>
-                                    </ToggleButton>
-                                </Grid>
-                            </Border>
-                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                                <Border Background="#0A0A0A" BorderBrush="#444444" BorderThickness="1" CornerRadius="4" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+
+                            <!-- 1. BOTÓN QUE ABRE LA LISTA (cubre todo el control) -->
+                            <ToggleButton x:Name="ToggleButton"
+                                          Focusable="False"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="ToggleButtonBorder"
+                                                Background="#0A0A0A"
+                                                BorderBrush="#444444"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="30"/>
+                                                </Grid.ColumnDefinitions>
+                                                <materialDesign:PackIcon Grid.Column="1"
+                                                                         Kind="ChevronDown"
+                                                                         Width="20" Height="20"
+                                                                         Foreground="#AAAAAA"
+                                                                         HorizontalAlignment="Center"
+                                                                         VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ToggleButtonBorder" Property="BorderBrush" Value="#555555"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <!-- 2. LA VITRINA: muestra el elemento seleccionado -->
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Margin="10,0,30,0"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              TextElement.Foreground="White"
+                                              TextElement.FontSize="13"
+                                              TextElement.FontWeight="SemiBold"/>
+
+                            <!-- 3. POPUP OFICIAL DE WPF -->
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide"
+                                   IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border Background="#0A0A0A"
+                                        BorderBrush="#444444"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
                                     <ScrollViewer>
                                         <StackPanel IsItemsHost="True"/>
                                     </ScrollViewer>
                                 </Border>
                             </Popup>
+
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <conv:BooleanToCheckConverter x:Key="BooleanToCheckConverter"/>
 
         <!-- ESTILOS GENERALES (ESPACIOS REDUCIDOS) -->
         <Style x:Key="SectionStyle" TargetType="Border">
@@ -95,7 +138,6 @@
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
 
-        <!-- NUEVO ESTILO DE INPUTS (ESPACIOS REDUCIDOS) -->
         <Style x:Key="ModernInputBorderStyle" TargetType="Border">
             <Setter Property="Background" Value="#0A0A0A"/>
             <Setter Property="BorderBrush" Value="#444444"/>
@@ -204,7 +246,7 @@
             </Setter>
         </Style>
 
-        <!-- BOTONES PRINCIPALES (CON ICONOS Y DISEÑO MODERNO) -->
+        <!-- BOTONES PRINCIPALES -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
@@ -301,7 +343,24 @@
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="TIPO VEHÍCULO" Style="{StaticResource LabelStyle}"/>
-                                <ComboBox ItemsSource="{Binding VehicleTypes}" SelectedValue="{Binding VehicleTypeId}" SelectedValuePath="id" DisplayMemberPath="name" Style="{StaticResource DarkComboBoxStyle}"/>
+
+                                <!-- 🟢 LA CAJA OSCURA GARANTIZA EL TAMAÑO (igual que los demás inputs) -->
+                                <Border Style="{StaticResource ModernInputBorderStyle}">
+
+                                    <!-- 🟢 COMBOBOX CON PLANTILLA NATIVA: WPF hace todo el trabajo -->
+                                    <ComboBox ItemsSource="{Binding VehicleTypes}"
+                  SelectedValue="{Binding VehicleTypeId, Mode=TwoWay}"
+                  SelectedValuePath="id"
+                  DisplayMemberPath="name"
+                  Height="36"
+                  Margin="0"
+                  Padding="6,0"
+                  FontSize="14"
+                  Foreground="White"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  VerticalContentAlignment="Center"/>
+                                </Border>
                             </StackPanel>
                         </Grid>
 
@@ -406,14 +465,9 @@
                                     Foreground="White"
                                     Background="#0A0A0A"
                                     Margin="0,0,0,10">
-
                                     <DatePicker.Resources>
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
-                                            Color="White"/>
-
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"
-                                            Color="White"/>
-
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
                                         <Style TargetType="{x:Type DatePickerTextBox}">
                                             <Setter Property="Foreground" Value="White"/>
                                             <Setter Property="Background" Value="#0A0A0A"/>
@@ -429,14 +483,9 @@
                                     Foreground="White"
                                     Background="#0A0A0A"
                                     Margin="0,0,0,10">
-
                                     <DatePicker.Resources>
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
-                                            Color="White"/>
-
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"
-                                            Color="White"/>
-
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
                                         <Style TargetType="{x:Type DatePickerTextBox}">
                                             <Setter Property="Foreground" Value="White"/>
                                             <Setter Property="Background" Value="#0A0A0A"/>
@@ -455,7 +504,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- BOTONES CON ICONOS Y UNIFORMGRID -->
+                <!-- BOTONES -->
                 <Border Style="{StaticResource SectionStyle}">
                     <UniformGrid Columns="2" Margin="-5,-5,-5,-5">
                         <Button Command="{Binding SaveCommand}" Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}">

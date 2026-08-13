@@ -1,7 +1,40 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
-public class ParkingSlotDashboardItemDTO
+namespace Parking.Application.Dto;
+
+public class ParkingSlotDashboardItemDTO : INotifyPropertyChanged
 {
+    private int _positionX;
+    private int _positionY;
+
+    public int PositionX
+    {
+        get => _positionX;
+        set
+        {
+            if (_positionX != value)
+            {
+                _positionX = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public int PositionY
+    {
+        get => _positionY;
+        set
+        {
+            if (_positionY != value)
+            {
+                _positionY = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public int SlotId { get; set; }
 
     public string SlotNumber { get; set; }
@@ -20,18 +53,20 @@ public class ParkingSlotDashboardItemDTO
     {
         get
         {
-            var match =
-                Regex.Match(
-                    SlotNumber ?? "",
-                    @"^\d+");
-
+            var match = Regex.Match(SlotNumber ?? "", @"^\d+");
             if (match.Success)
             {
-                return int.Parse(
-                    match.Value);
+                return int.Parse(match.Value);
             }
-
             return int.MaxValue;
         }
+    }
+
+    // 🟢 Evento de notificación de cambios
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

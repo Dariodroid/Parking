@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.30" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Parking.Application.Dto\Parking.Application.Dto.csproj" />
     <ProjectReference Include="..\Parking.Domain.Model\Parking.Domain.Model.csproj" />
     <ProjectReference Include="..\Parking.Domain.Services\Parking.Domain.Services.csproj" />
