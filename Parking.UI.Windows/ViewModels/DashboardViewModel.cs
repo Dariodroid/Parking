@@ -91,6 +91,21 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _freeSlots, value);
     }
 
+    // 🟢 NUEVAS PROPIEDADES: Tamaño dinámico del mapa (Canvas)
+    private double _mapWidth;
+    public double MapWidth
+    {
+        get => _mapWidth;
+        set => SetProperty(ref _mapWidth, value);
+    }
+
+    private double _mapHeight;
+    public double MapHeight
+    {
+        get => _mapHeight;
+        set => SetProperty(ref _mapHeight, value);
+    }
+
     #endregion
 
     public async Task InitializeAsync()
@@ -140,6 +155,9 @@ public class DashboardViewModel : BaseViewModel
         TotalSlots = Slots.Count;
         OccupiedSlots = Slots.Count(x => x.IsOccupied);
         FreeSlots = Slots.Count(x => !x.IsOccupied);
+
+        // 🟢 NUEVO: Recalcular el tamaño del mapa al cargar
+        UpdateMapSize();
     }
 
     /// <summary>
@@ -214,11 +232,36 @@ public class DashboardViewModel : BaseViewModel
                 positions[slot.SlotId] = (slot.PositionX, slot.PositionY);
             }
 
+            // 🟢 NUEVO: Recalcular el tamaño del mapa antes de persistir
+            UpdateMapSize();
+
             await _repository.UpdateSlotPositionsAsync(positions);
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error guardando posiciones: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 🟢 Calcula el tamaño real del lienzo: hasta la última tarjeta + padding.
+    /// Se llama después de cualquier cambio de posiciones para que el scroll
+    /// aparezca solo cuando el contenido lo requiera.
+    /// </summary>
+    private void UpdateMapSize()
+    {
+        const int cardWidth = 160;
+        const int cardHeight = 100;
+        const int padding = 40; // Margen de seguridad a la derecha y abajo
+
+        if (Slots.Count == 0)
+        {
+            MapWidth = 0;
+            MapHeight = 0;
+            return;
+        }
+
+        MapWidth = Slots.Max(x => x.PositionX) + cardWidth + padding;
+        MapHeight = Slots.Max(x => x.PositionY) + cardHeight + padding;
     }
 }

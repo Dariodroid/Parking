@@ -4,9 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d"
+             d:DesignWidth="1280"
+             d:DesignHeight="800"
              Background="#121212">
 
-    <Grid Margin="15">
+    <Grid Margin="15"
+          MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}}"
+          MaxHeight="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Window}}">
         <Grid.RowDefinitions>
             <RowDefinition Height="110"/>
             <RowDefinition Height="*"/>
@@ -87,8 +91,7 @@
                                 </Button.Template>
                             </Button>
 
-                            <TextBlock Text="MAPA DEL PARQUEADERO" VerticalAlignment="Center" Foreground="White" FontWeight="Bold" FontSize="16"/>
-                            <TextBlock Text="(Diseño personalizado)" VerticalAlignment="Center" Foreground="#9E9E9E" FontSize="12" Margin="10,0,0,0" FontStyle="Italic"/>
+                            <TextBlock Text="MAPA DEL PARQUEADERO" VerticalAlignment="Center" Foreground="White" FontWeight="Bold" FontSize="16"/>                           
                         </DockPanel>
                     </Border>
 
@@ -101,7 +104,14 @@
 
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <Canvas Margin="20"
+                                    <!-- 🟢 CAMBIOS: Margin="0" ensancha el área útil.
+                                         Width/Height dinámicos = tamaño real del contenido.
+                                         MinWidth/MinHeight = llenan el panel si hay pocas tarjetas. -->
+                                    <Canvas Margin="0"
+                                            Width="{Binding MapWidth}"
+                                            Height="{Binding MapHeight}"
+                                            MinWidth="{Binding ViewportWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                            MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
                                             Background="Transparent"
                                             AllowDrop="True"
                                             Drop="Canvas_Drop"

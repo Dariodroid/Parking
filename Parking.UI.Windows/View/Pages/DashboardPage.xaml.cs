@@ -55,6 +55,9 @@ namespace Parking.UI.Windows.View.Pages
         // ==========================================
         // PASO 2: MOVER (¿Palmadita o agarre?)
         // ==========================================
+        // ==========================================
+        // PASO 2: MOVER (¿Palmadita o agarre?)
+        // ==========================================
         private void OnPreviewMouseMove(object sender, MouseEventArgs e)
         {
             if (!_isPotentialDrag || e.LeftButton != MouseButtonState.Pressed)
@@ -69,9 +72,18 @@ namespace Parking.UI.Windows.View.Pages
                 _isPotentialDrag = false;
                 _dragInProgress = true;
 
-                // Iniciamos la operación de arrastre nativa de WPF
                 DependencyObject dragSource = _dragSourceButton ?? (DependencyObject)this;
-                DragDrop.DoDragDrop(dragSource, _draggedItem, DragDropEffects.Move);
+
+                // 🟢 CORREGIDO: try/finally garantiza que _dragInProgress se resetee
+                // incluso si DoDragDrop consume el MouseUp o lanza una excepción.
+                try
+                {
+                    DragDrop.DoDragDrop(dragSource, _draggedItem, DragDropEffects.Move);
+                }
+                finally
+                {
+                    _dragInProgress = false;
+                }
             }
         }
 
