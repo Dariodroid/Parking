@@ -12,7 +12,9 @@ namespace Parking.UI.Windows.ViewModels;
 
 public class vehicle_typeViewModel : BaseViewModel
 {
+    private readonly IDialogService _dialogService;
     private readonly Ivehicle_typeRepository _repository;
+    bool dialog;
 
     private readonly int _currentuserId = CurrentUser.Id;
 
@@ -23,9 +25,10 @@ public class vehicle_typeViewModel : BaseViewModel
     public ICommand NewCommand { get; }
     public ICommand DeleteCommand { get; }
 
-    public vehicle_typeViewModel(Ivehicle_typeRepository repository)
+    public vehicle_typeViewModel(Ivehicle_typeRepository repository, IDialogService dialogService)
     {
         _repository = repository;
+        _dialogService = dialogService;
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync());
         UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
@@ -113,13 +116,6 @@ public class vehicle_typeViewModel : BaseViewModel
         set => SetProperty(ref _isActive, value);
     }
 
-    private string _statusMessage = string.Empty;
-    public string StatusMessage
-    {
-        get => _statusMessage;
-        set => SetProperty(ref _statusMessage, value);
-    }
-
     private vehicle_type? _selectedvehicle_type;
     public vehicle_type? Selectedvehicle_type
     {
@@ -179,19 +175,19 @@ public class vehicle_typeViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(Name))
         {
-            StatusMessage = "Debe ingresar el nombre.";
+            _dialogService.ShowWarning("Atención", "Debe ingresar el nombre.");
             return false;
         }
 
         if (HourlyRate <= 0)
         {
-            StatusMessage = "La tarifa por hora debe ser mayor que cero.";
+            _dialogService.ShowWarning("Atención", "La tarifa por hora debe ser mayor que cero.");
             return false;
         }
 
         if (FractionMinutes <= 0)
         {
-            StatusMessage = "Los minutos por fracción deben ser mayores a cero.";
+            _dialogService.ShowWarning("Atención", "Los minutos por fracción deben ser mayores a cero.");
             return false;
         }
 
@@ -207,7 +203,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             if (Id != 0)
             {
-                StatusMessage = "Use NUEVO antes de guardar.";
+                _dialogService.ShowWarning("Atención", "Use NUEVO antes de guardar.");
                 return;
             }
 
@@ -234,7 +230,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Tipo de vehículo registrado.";
+            _dialogService.ShowWarning("Atención", "El nombre del tipo de vehículo es obligatorio");
 
             await LoadAsync();
 
@@ -242,7 +238,7 @@ public class vehicle_typeViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            StatusMessage = ex.Message;
+            _dialogService.ShowError("Error", ex.Message);
         }
     }
 
@@ -255,7 +251,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             if (Id == 0)
             {
-                StatusMessage = "Seleccione un registro.";
+                _dialogService.ShowWarning("Alerta !", "Seleccione un registro.");
                 return;
             }
 
@@ -263,7 +259,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             if (entity == null)
             {
-                StatusMessage = "Registro no encontrado.";
+                _dialogService.ShowError("", "Registro no encontrado.");
                 return;
             }
 
@@ -285,7 +281,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Registro actualizado.";
+            _dialogService.ShowSuccess("Mensaje !","Registro actualizado correctamente.");
 
             await LoadAsync();
 
@@ -293,7 +289,7 @@ public class vehicle_typeViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            StatusMessage = ex.Message;
+            _dialogService.ShowInfo("Mensaje !", ex.Message);
         }
     }
 
@@ -303,7 +299,7 @@ public class vehicle_typeViewModel : BaseViewModel
         {
             if (Id == 0)
             {
-                StatusMessage = "Seleccione un registro.";
+                _dialogService.ShowWarning("Alerta", "Seleccione un registro.");
                 return;
             }
 
@@ -311,19 +307,14 @@ public class vehicle_typeViewModel : BaseViewModel
 
             if (entity == null)
             {
-                StatusMessage = "Registro no encontrado.";
+                _dialogService.ShowWarning("Atención", "Registro no encontrado.");
                 return;
             }
 
-            var owner = System.Windows.Application.Current.MainWindow;
-            var dialog = new ConfirmDialog(
-                owner,
-                $"¿Está seguro de eliminar el tipo de vehículo '{entity.name}'?");
-            var result = dialog.ShowDialog();
+            dialog = _dialogService.ShowConfirmation("Confirmación", $"¿Está seguro de eliminar el tipo de vehículo '{entity.name}'?");
 
-            if (result != true)
+            if (!dialog)
             {
-                StatusMessage = "Eliminación cancelada.";
                 return;
             }
 
@@ -335,7 +326,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             await _repository.SaveChangesAsync();
 
-            StatusMessage = "Registro eliminado.";
+            _dialogService.ShowInfo("Mensaje !", "Registro eliminado correctamente.");
 
             await LoadAsync();
 
@@ -343,7 +334,7 @@ public class vehicle_typeViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            StatusMessage = ex.Message;
+            _dialogService.ShowError("Error", ex.Message);
         }
     }
     private void ClearForm()

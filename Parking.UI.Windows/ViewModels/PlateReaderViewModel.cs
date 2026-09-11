@@ -1,5 +1,6 @@
 ﻿using OpenCvSharp;
 using Parking.Application.EntityService;
+using Parking.Application.Services;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.Infrastructure.DataAccess.Repository;
@@ -19,8 +20,9 @@ namespace Parking.UI.Windows.ViewModels
 {
     public class PlateReaderViewModel : BaseViewModel
     {
+        private readonly IDialogService _dialogService;
         private readonly Ivehicle_typeRepository _vehicleTypeRepository;
-        private readonly IParkingSlotRepository _slotRepo; // Inyectado para las tarjetas
+        private readonly IParkingSlotRepository _slotRepo; 
         private static readonly TimeSpan AutoDetectionInterval = TimeSpan.FromMilliseconds(900);
         private static readonly TimeSpan DetectionDisplayTime = TimeSpan.FromSeconds(3);
 
@@ -69,6 +71,7 @@ namespace Parking.UI.Windows.ViewModels
         public ObservableCollection<vehicle_type> VehicleTypes { get; } = new ObservableCollection<vehicle_type>();
 
         private vehicle_type? _selectedVehicleType;
+
         public vehicle_type? SelectedVehicleType
         {
             get => _selectedVehicleType;
@@ -88,8 +91,10 @@ namespace Parking.UI.Windows.ViewModels
             IEntryService entryService,
             Ivehicle_typeRepository vehicleTypeRepository,
             IParkingSlotRepository slotRepo,
-            IParkingStatusNotifier parkingStatusNotifier) // Inyectado aquí
+            IParkingStatusNotifier parkingStatusNotifier,
+            IDialogService dialogService) 
         {
+            _dialogService = dialogService;
             _cameraService = cameraService;
             _plateService = plateService;
             _entryService = entryService;
@@ -121,7 +126,7 @@ namespace Parking.UI.Windows.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error cargando la pantalla: {ex.Message}";
+                _dialogService.ShowError("Error", $"Error cargando la pantalla: {ex.Message}");
             }
         }
 
@@ -166,7 +171,7 @@ namespace Parking.UI.Windows.ViewModels
             if (string.IsNullOrWhiteSpace(PlateNumber)) return;
             if (SelectedVehicleType == null)
             {
-                StatusMessage = "Seleccione un tipo de vehículo.";
+                _dialogService.ShowWarning("Atención", "Seleccione un tipo de vehículo.");
                 return;
             }
 
@@ -177,21 +182,21 @@ namespace Parking.UI.Windows.ViewModels
 
                 if (assignedSlot == "EXISTENTE")
                 {
-                    StatusMessage = $"ℹ️ El vehículo {PlateNumber} ya tiene una sesión activa.";
+                    _dialogService.ShowInfo("Información", $"El vehículo {PlateNumber} ya tiene una sesión activa.");
                 }
                 else if (!string.IsNullOrEmpty(assignedSlot))
                 {
-                    StatusMessage = $"✅ ENTRADA: {PlateNumber} asignado al puesto {assignedSlot}.";
+                    _dialogService.ShowSuccess("¡Éxito!", $"ENTRADA: {PlateNumber} asignado al puesto {assignedSlot}.");
                     await LoadSlotStatsAsync(); // Actualizar tarjetas
                 }
                 else
                 {
-                    StatusMessage = "❌ Parqueadero lleno o error al registrar entrada.";
+                    _dialogService.ShowError("Error", "Parqueadero lleno o error al registrar entrada.");
                 }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error: {ex.Message}";
+                _dialogService.ShowError("Error", ex.Message);
             }
         }
 
@@ -205,7 +210,7 @@ namespace Parking.UI.Windows.ViewModels
                 var session = await _entryService.GetActiveSessionByPlateAsync(plate);
                 if (session == null)
                 {
-                    StatusMessage = $"❌ No hay sesión activa para {plate}.";
+                    _dialogService.ShowWarning("Atención", $"No hay sesión activa para {plate}.");
                     AmountToCharge = 0;
                     return;
                 }
@@ -219,19 +224,19 @@ namespace Parking.UI.Windows.ViewModels
                     if (hoursToCharge < 1) hoursToCharge = 1;
 
                     AmountToCharge = hoursToCharge * 1.00m;
-                    StatusMessage = $"✅ SALIDA: {plate} | Total: {AmountToCharge:C2}";
+                    _dialogService.ShowSuccess("¡Éxito!", $"SALIDA: {plate} | Total: {AmountToCharge:C2}");
                     await LoadSlotStatsAsync();
                     _parkingStatusNotifier.NotifyParkingStatusChanged();
                 }
             }
-            catch (Exception ex) { StatusMessage = $"Error en salida: {ex.Message}"; }
+            catch (Exception ex) { _dialogService.ShowError("Error", $"Error en salida: {ex.Message}"); }
         }
 
         private async Task StartCameraAsync()
         {
             if (IsCameraRunning) return;
             bool started = await _cameraService.StartCameraAsync();
-            if (!started) { StatusMessage = "No se pudo abrir la cámara."; return; }
+            if (!started) { _dialogService.ShowError("Error", "No se pudo abrir la cámara."); return; }
             IsCameraRunning = true;
             _previewCancellation?.Cancel();
             _previewCancellation = new CancellationTokenSource();
@@ -335,7 +340,7 @@ namespace Parking.UI.Windows.ViewModels
             }
             catch (Exception ex)
             {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = $"Error en salida QR: {ex.Message}");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => _dialogService.ShowError("Error", $"Error en salida QR: {ex.Message}"));
             }
         }
 

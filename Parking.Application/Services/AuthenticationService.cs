@@ -12,9 +12,7 @@ public class AuthenticationService : IAuthenticationService
 
     private readonly IPasswordHasher _passwordHasher;
 
-    public AuthenticationService(
-        IuserRepository userRepository,
-        IPasswordHasher passwordHasher)
+    public AuthenticationService(IuserRepository userRepository, IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
 
@@ -25,64 +23,37 @@ public class AuthenticationService : IAuthenticationService
     public async Task<LoginResult> LoginAsync(
         LoginRequest request)
     {
-
-
-        var user =
-            await _userRepository
-            .GetByusernameAsync(request.Username);
-
-
+        var user = await _userRepository.GetByusernameAsync(request.Username);
 
         if (user == null)
         {
-
             return new LoginResult
             {
                 Success = false,
                 Message = "Usuario no encontrado."
             };
-
         }
-
-
-
 
         if (!user.is_active)
         {
-
             return new LoginResult
             {
                 Success = false,
                 Message = "Usuario desactivado."
             };
-
         }
 
-
-
-
-
-        bool validPassword =
-    _passwordHasher.VerifyPassword(
-        request.Password,
-        user.password_hash);
-
-
+        bool validPassword = _passwordHasher.VerifyPassword(request.Password, user.password_hash);
 
         if (!validPassword)
         {
-
             return new LoginResult
             {
                 Success = false,
-                Message = "Contraseña incorrecta."
+                Message = "Usuario o contraseña incorrectos."
             };
 
         }
-
-
-
-
 
         UserDto dto = new()
         {
@@ -95,16 +66,7 @@ public class AuthenticationService : IAuthenticationService
             Role = user.role
         };
 
-
-
-
-
-        await _userRepository
-            .UpdateLastLoginAsync(user.id);
-
-
-
-
+        await _userRepository.UpdateLastLoginAsync(user.id);
 
         return new LoginResult
         {
@@ -114,10 +76,7 @@ public class AuthenticationService : IAuthenticationService
 
             User = dto
         };
-
-
     }
-
 
     public async Task<bool> AuthenticateAsync(
         string username,

@@ -14,7 +14,7 @@ namespace Parking.UI.Windows.ViewModels;
 
 public class LoginViewModel : BaseViewModel
 {
-
+    private readonly IDialogService _dialogService;
     private readonly IAuthenticationService _authenticationService;
 
     private readonly IServiceProvider _serviceProvider;
@@ -32,9 +32,9 @@ public class LoginViewModel : BaseViewModel
 
     public LoginViewModel(
         IAuthenticationService authenticationService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, IDialogService dialogService)
     {
-
+        _dialogService = dialogService;
         _authenticationService = authenticationService;
 
         _serviceProvider = serviceProvider
@@ -47,10 +47,6 @@ public class LoginViewModel : BaseViewModel
             CanLogin);
 
     }
-
-
-
-
 
     public string Username
     {
@@ -67,10 +63,6 @@ public class LoginViewModel : BaseViewModel
         }
     }
 
-
-
-
-
     public string Password
     {
         get => _password;
@@ -85,10 +77,6 @@ public class LoginViewModel : BaseViewModel
             OnPropertyChanged();
         }
     }
-
-
-
-
 
     public string ErrorMessage
     {
@@ -105,10 +93,6 @@ public class LoginViewModel : BaseViewModel
         }
     }
 
-
-
-
-
     public bool RememberMe
     {
         get => _rememberMe;
@@ -124,36 +108,17 @@ public class LoginViewModel : BaseViewModel
         }
     }
 
-
-
-
-
     public ICommand LoginCommand { get; }
-
-
-
 
 
     private bool CanLogin(object? parameter)
     {
-        return
-            !string.IsNullOrWhiteSpace(Username)
-            &&
-            !string.IsNullOrWhiteSpace(Password);
+        return !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password);
     }
-
-
-
-
-
-
 
     private async Task LoginAsync(object? parameter)
     {
-
         ErrorMessage = string.Empty;
-
-
 
         try
         {
@@ -164,28 +129,13 @@ public class LoginViewModel : BaseViewModel
 
                 Password = Password
             };
-
-
-
-
-            LoginResult result =
-                await _authenticationService
-                .LoginAsync(request);
-
-
-
-
+            
+            LoginResult result = await _authenticationService.LoginAsync(request);
 
             if (!result.Success)
             {
-                ErrorMessage = result.Message;
-                return;
+                _dialogService.ShowError("Error", result.Message); return;
             }
-
-
-
-
-
 
             if (result.User != null)
             {
@@ -193,62 +143,25 @@ public class LoginViewModel : BaseViewModel
             }
 
 
-
-
-
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-
-
-                var mainWindowViewModel =
-                    new MainWindowViewModel(
-                        _serviceProvider);
-
-
-
-                MainWindow mainWindow =
-                    new MainWindow(
-                        mainWindowViewModel);
-
-
-
+                var mainWindowViewModel = new MainWindowViewModel(_serviceProvider);
+                MainWindow mainWindow = new MainWindow(mainWindowViewModel);
                 mainWindow.Show();
-
-
-
-
-
-
-                foreach (Window window in
-                    System.Windows.Application.Current.Windows)
+                foreach (Window window in System.Windows.Application.Current.Windows)
                 {
-
-
                     if (window is LoginPage)
                     {
                         window.Close();
 
                         break;
                     }
-
-
                 }
-
-
             });
-
-
-
         }
         catch (Exception ex)
         {
-
-            ErrorMessage = ex.Message;
-
+            _dialogService.ShowError("Error", ex.Message);
         }
-
-
     }
-
-
 }

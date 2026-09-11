@@ -67,6 +67,8 @@ namespace Parking.UI.Windows
 
             // ====================== 4. SERVICIOS DE APLICACIÓN ======================
             serviceCollection.AddSingleton<IEntryService, EntryService>();
+            // En tu App.xaml.cs o donde configures la inyección
+            serviceCollection.AddSingleton<IDialogService, DialogService>();
 
             // ====================== 5. VIEWMODELS ======================
             serviceCollection.AddTransient<MainWindowViewModel>();
