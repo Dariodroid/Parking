@@ -62,6 +62,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<ICameraService, OpenCvCameraService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
             serviceCollection.AddSingleton<IQrService, QrReaderService>();
+            serviceCollection.AddSingleton<IParkingStatusNotifier, ParkingStatusNotifier>();
             serviceCollection.AddSingleton<ExcelExportService>();
 
             // ====================== 4. SERVICIOS DE APLICACIÓN ======================
@@ -74,7 +75,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<userViewModel>();
             serviceCollection.AddTransient<RegisteredVehicleViewModel>();
             serviceCollection.AddTransient<ParkingSlotViewModel>();
-            serviceCollection.AddTransient<DashboardViewModel>();
+            serviceCollection.AddSingleton<DashboardViewModel>();
             serviceCollection.AddTransient<CashViewModel>();
             serviceCollection.AddTransient<OperatorReportViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();

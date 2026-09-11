@@ -124,12 +124,17 @@ namespace Parking.Application.UseCases
             await _sessionRepo.UpdateAsync(session);
 
             // 5. LIBERAR EL PUESTO DE ESTACIONAMIENTO
-            var slots = await _slotRepo.GetAllAsync();
-            var occupiedSlot = slots.FirstOrDefault(s => s.current_session_id == session.id);
+            // La sesión conserva su parking_slot_id aunque current_session_id no se haya sincronizado.
+            // Usar ese id garantiza que una salida QR libere el puesto correcto.
+            var occupiedSlot = session.parking_slot_id.HasValue
+                ? await _slotRepo.GetByIdAsync(session.parking_slot_id.Value)
+                : null;
+
             if (occupiedSlot != null)
             {
                 occupiedSlot.is_occupied = false;
-                occupiedSlot.current_session = null; // Quita la relación en el slot
+                occupiedSlot.current_session_id = null;
+                occupiedSlot.current_session = null;
                 occupiedSlot.updated_at = DateTime.UtcNow;
                 await _slotRepo.UpdateAsync(occupiedSlot);
             }

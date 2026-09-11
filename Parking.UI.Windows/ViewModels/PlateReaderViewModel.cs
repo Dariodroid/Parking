@@ -4,6 +4,7 @@ using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.Infrastructure.DataAccess.Repository;
 using Parking.Infrastructure.ExternalServices;
+using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System;
 using System.Collections.ObjectModel;
@@ -11,7 +12,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -27,6 +27,7 @@ namespace Parking.UI.Windows.ViewModels
         private readonly ICameraService _cameraService;
         private readonly IPlateService _plateService;
         private readonly IEntryService _entryService;
+        private readonly IParkingStatusNotifier _parkingStatusNotifier;
         private readonly object _frameSyncRoot = new();
 
         private CancellationTokenSource? _previewCancellation;
@@ -86,7 +87,8 @@ namespace Parking.UI.Windows.ViewModels
             IQrService qrService,
             IEntryService entryService,
             Ivehicle_typeRepository vehicleTypeRepository,
-            IParkingSlotRepository slotRepo) // Inyectado aquí
+            IParkingSlotRepository slotRepo,
+            IParkingStatusNotifier parkingStatusNotifier) // Inyectado aquí
         {
             _cameraService = cameraService;
             _plateService = plateService;
@@ -94,6 +96,7 @@ namespace Parking.UI.Windows.ViewModels
             _qrService = qrService;
             _vehicleTypeRepository = vehicleTypeRepository;
             _slotRepo = slotRepo;
+            _parkingStatusNotifier = parkingStatusNotifier;
 
             StartCameraCommand = new AsyncRelayCommand(_ => StartCameraAsync());
             StopCameraCommand = new AsyncRelayCommand(_ => StopCameraAsync());
@@ -104,17 +107,47 @@ namespace Parking.UI.Windows.ViewModels
                 if (param is vehicle_type selectedType) SelectedVehicleType = selectedType;
             });
 
-            _ = LoadVehicleTypesAsync();
-            _ = LoadSlotStatsAsync(); // Cargar tarjetas al iniciar
-            _ = StartCameraAsync();
+            _ = InitializeAsync();
+        }
+
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                // Las consultas comparten el mismo DbContext; deben ejecutarse en secuencia.
+                await LoadVehicleTypesAsync();
+                await LoadSlotStatsAsync();
+                await StartCameraAsync();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error cargando la pantalla: {ex.Message}";
+            }
         }
 
         private async Task LoadSlotStatsAsync()
         {
-            var slots = await _slotRepo.GetAllAsync();
-            TotalSlots = slots.Count();
-            OccupiedSlots = slots.Count(s => s.is_occupied);
-            FreeSlots = TotalSlots - OccupiedSlots;
+            var slots = (await _slotRepo.GetAllAsync()).ToList();
+            int totalSlots = slots.Count;
+            int occupiedSlots = slots.Count(s => s.is_occupied);
+
+            void UpdateStats()
+            {
+                TotalSlots = totalSlots;
+                OccupiedSlots = occupiedSlots;
+                FreeSlots = totalSlots - occupiedSlots;
+            }
+
+            // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
+            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
+            {
+                UpdateStats();
+            }
+            else
+            {
+                // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(UpdateStats);
+            }
         }
 
         private async Task LoadVehicleTypesAsync()
@@ -187,7 +220,8 @@ namespace Parking.UI.Windows.ViewModels
 
                     AmountToCharge = hoursToCharge * 1.00m;
                     StatusMessage = $"✅ SALIDA: {plate} | Total: {AmountToCharge:C2}";
-                    await LoadSlotStatsAsync(); // Actualizar tarjetas
+                    await LoadSlotStatsAsync();
+                    _parkingStatusNotifier.NotifyParkingStatusChanged();
                 }
             }
             catch (Exception ex) { StatusMessage = $"Error en salida: {ex.Message}"; }
@@ -288,13 +322,15 @@ namespace Parking.UI.Windows.ViewModels
                     decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
                     if (hoursToCharge < 1) hoursToCharge = 1;
 
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         AmountToCharge = hoursToCharge * 1.00m;
                         PlateNumber = session.plate;
                         StatusMessage = $"✅ SALIDA POR QR: {session.plate} | Total: {AmountToCharge:C2}";
-                        await LoadSlotStatsAsync(); // Actualizar tarjetas
                     });
+
+                    await LoadSlotStatsAsync();
+                    _parkingStatusNotifier.NotifyParkingStatusChanged();
                 }
             }
             catch (Exception ex)

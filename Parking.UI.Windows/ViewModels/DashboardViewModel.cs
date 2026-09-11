@@ -1,5 +1,6 @@
 ﻿using Parking.Application.Dto;
 using Parking.Application.Dto.Interfaces;
+using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class DashboardViewModel : BaseViewModel
 {
     private readonly IParkingDashboard _repository;
+    private readonly IParkingStatusNotifier _parkingStatusNotifier;
 
     public ICommand SelectSlotCommand { get; }
 
@@ -18,9 +20,12 @@ public class DashboardViewModel : BaseViewModel
 
     public ObservableCollection<ParkingSlotDashboardItemDTO> Slots { get; } = new();
 
-    public DashboardViewModel(IParkingDashboard repository)
+    public DashboardViewModel(
+        IParkingDashboard repository,
+        IParkingStatusNotifier parkingStatusNotifier)
     {
         _repository = repository;
+        _parkingStatusNotifier = parkingStatusNotifier;
 
         SelectSlotCommand = new RelayCommand(slot =>
         {
@@ -32,7 +37,28 @@ public class DashboardViewModel : BaseViewModel
             await ResetLayoutAsync();
         });
 
-        InitializeAsync();
+        _parkingStatusNotifier.ParkingStatusChanged += OnParkingStatusChanged;
+        _ = InitializeAsync();
+    }
+
+    private async void OnParkingStatusChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
+            if (System.Windows.Application.Current.Dispatcher.CheckAccess())
+            {
+                await LoadAsync();
+                return;
+            }
+
+            // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(LoadAsync).Task.Unwrap();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error actualizando el dashboard: {ex.Message}");
+        }
     }
 
     #region PROPIEDADES
