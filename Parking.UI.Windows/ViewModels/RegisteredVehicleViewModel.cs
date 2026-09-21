@@ -2,6 +2,7 @@
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
+using Parking.UI.Windows.Helpers;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -67,7 +68,17 @@ public class RegisteredVehicleViewModel : BaseViewModel
     public string Plate
     {
         get => _plate;
-        set => SetProperty(ref _plate, value.ToUpper());
+        set
+        {
+            var formattedPlate = PlateFormatter.Format(value);
+
+            if (!SetProperty(ref _plate, formattedPlate)
+                && !string.Equals(value, formattedPlate, StringComparison.Ordinal))
+            {
+                // Restores the displayed value when an invalid or excess character is typed.
+                OnPropertyChanged();
+            }
+        }
     }
 
     private int _vehicleTypeId;

@@ -337,7 +337,7 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="PLACA" Style="{StaticResource LabelStyle}"/>
                                 <Border Style="{StaticResource ModernInputBorderStyle}">
-                                    <TextBox Text="{Binding Plate}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                    <TextBox Text="{Binding Plate, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
                                 </Border>
                             </StackPanel>
 

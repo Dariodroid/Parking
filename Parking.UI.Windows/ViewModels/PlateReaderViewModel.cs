@@ -5,6 +5,7 @@ using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.Infrastructure.DataAccess.Repository;
 using Parking.Infrastructure.ExternalServices;
+using Parking.UI.Windows.Helpers;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System;
@@ -62,7 +63,21 @@ namespace Parking.UI.Windows.ViewModels
         private DateTime _lastQrScanTime = DateTime.MinValue;
         private static readonly TimeSpan QrDetectionInterval = TimeSpan.FromMilliseconds(1000);
 
-        public string PlateNumber { get => _plateNumber; set => SetProperty(ref _plateNumber, value); }
+        public string PlateNumber
+        {
+            get => _plateNumber;
+            set
+            {
+                var formattedPlate = PlateFormatter.Format(value);
+
+                if (!SetProperty(ref _plateNumber, formattedPlate)
+                    && !string.Equals(value, formattedPlate, StringComparison.Ordinal))
+                {
+                    // Restores the displayed value when an invalid or excess character is typed.
+                    OnPropertyChanged();
+                }
+            }
+        }
         public string StatusMessage { get => _statusMessage; set => SetProperty(ref _statusMessage, value); }
         public decimal AmountToCharge { get => _amountToCharge; set => SetProperty(ref _amountToCharge, value); }
         public BitmapSource? CameraPreview { get => _cameraPreview; set => SetProperty(ref _cameraPreview, value); }

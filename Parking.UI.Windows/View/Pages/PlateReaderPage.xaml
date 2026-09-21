@@ -104,12 +104,13 @@
                     <StackPanel>
                         <TextBlock Text="DETECCIÓN DE PLACA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
                         <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 MaxLength="8"
                                  FontSize="28" FontWeight="Bold" Height="50"
                                  Background="#0A0A0A" Foreground="#FFFFFF" 
                                  BorderBrush="#444444" BorderThickness="1"
                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                  CaretBrush="White"/>
-                        <TextBlock Text="Edite manualmente si es necesario" Foreground="#555555" FontSize="10" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Escriba letras y números; el guion se agrega solo" Foreground="#555555" FontSize="10" Margin="0,4,0,0" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
