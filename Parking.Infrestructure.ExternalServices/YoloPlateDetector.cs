@@ -18,7 +18,7 @@ public class YoloPlateDetector
     // 🔥 Ahora es VIRTUAL para que override funcione
     public virtual List<OpenCvSharp.Rect> Detect(Mat image)
     {
-        var resized = image.Resize(new Size(640, 640));
+        using var resized = image.Resize(new Size(640, 640));
         var tensor = new DenseTensor<float>(new[] { 1, 3, 640, 640 });
 
         for (int y = 0; y < 640; y++)

@@ -8,4 +8,6 @@ public interface IParkingSlotRepository
     Task<IEnumerable<parking_slot>> GetAvailableSlotsAsync();
 
     Task<parking_slot?> GetFirstAvailableSlotAsync();
+
+    Task<parking_slot?> GetAvailableSlotByIdAsync(int id);
 }

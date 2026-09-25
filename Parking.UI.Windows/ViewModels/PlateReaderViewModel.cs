@@ -31,10 +31,8 @@ namespace Parking.UI.Windows.ViewModels
         private readonly IPlateService _plateService;
         private readonly IEntryService _entryService;
         private readonly IParkingStatusNotifier _parkingStatusNotifier;
-        private readonly object _frameSyncRoot = new();
 
         private CancellationTokenSource? _previewCancellation;
-        private byte[] _latestFrame = Array.Empty<byte>();
 
         private string _plateNumber = string.Empty;
         private string _statusMessage = "Listo para iniciar.";
@@ -55,6 +53,8 @@ namespace Parking.UI.Windows.ViewModels
         private DateTime _lastAutoDetectionUtc = DateTime.MinValue;
         private PlateDetectionResult? _currentDetection;
         private DateTime _lastDetectionTime = DateTime.MinValue;
+        private string _pendingPlate = string.Empty;
+        private DateTime _pendingPlateTime = DateTime.MinValue;
 
         private readonly IQrService _qrService;
         private int _qrDetectionInProgress;
@@ -84,6 +84,14 @@ namespace Parking.UI.Windows.ViewModels
         public bool IsCameraRunning { get => _isCameraRunning; set => SetProperty(ref _isCameraRunning, value); }
 
         public ObservableCollection<vehicle_type> VehicleTypes { get; } = new ObservableCollection<vehicle_type>();
+        public ObservableCollection<parking_slot> AvailableSlots { get; } = new ObservableCollection<parking_slot>();
+
+        private parking_slot? _selectedSlot;
+        public parking_slot? SelectedSlot
+        {
+            get => _selectedSlot;
+            set => SetProperty(ref _selectedSlot, value);
+        }
 
         private vehicle_type? _selectedVehicleType;
 
@@ -98,6 +106,7 @@ namespace Parking.UI.Windows.ViewModels
         public ICommand SavePlateCommand { get; }
         public ICommand RegisterExitCommand { get; }
         public ICommand SelectVehicleTypeCommand { get; }
+        public ICommand UseAutomaticSlotCommand { get; }
 
         public PlateReaderViewModel(
             ICameraService cameraService,
@@ -126,6 +135,7 @@ namespace Parking.UI.Windows.ViewModels
             {
                 if (param is vehicle_type selectedType) SelectedVehicleType = selectedType;
             });
+            UseAutomaticSlotCommand = new RelayCommand(_ => SelectedSlot = null);
 
             _ = InitializeAsync();
         }
@@ -156,6 +166,12 @@ namespace Parking.UI.Windows.ViewModels
                 TotalSlots = totalSlots;
                 OccupiedSlots = occupiedSlots;
                 FreeSlots = totalSlots - occupiedSlots;
+
+                int? selectedId = SelectedSlot?.id;
+                AvailableSlots.Clear();
+                foreach (var slot in slots.Where(s => !s.is_occupied))
+                    AvailableSlots.Add(slot);
+                SelectedSlot = AvailableSlots.FirstOrDefault(s => s.id == selectedId);
             }
 
             // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
@@ -193,7 +209,13 @@ namespace Parking.UI.Windows.ViewModels
             try
             {
                 AmountToCharge = 0;
-                string? assignedSlot = await _entryService.RegisterEntryAsync(PlateNumber.Trim().ToUpper(), SelectedVehicleType.id);
+                // La captura pertenece a la última detección visible; una corrección manual
+                // conserva esa imagen mientras siga siendo reciente.
+                byte[]? plateImage = _currentDetection?.PlateImage.Length > 0
+                    && DateTime.UtcNow - _lastDetectionTime < TimeSpan.FromSeconds(30)
+                    ? _currentDetection.PlateImage : null;
+                string? assignedSlot = await _entryService.RegisterEntryAsync(
+                    PlateNumber.Trim().ToUpper(), SelectedVehicleType.id, plateImage, SelectedSlot?.id);
 
                 if (assignedSlot == "EXISTENTE")
                 {
@@ -206,12 +228,13 @@ namespace Parking.UI.Windows.ViewModels
                 }
                 else
                 {
-                    _dialogService.ShowError("Error", "Parqueadero lleno o error al registrar entrada.");
+                    _dialogService.ShowWarning("Sin puestos", "No hay puestos libres para registrar la entrada.");
                 }
             }
             catch (Exception ex)
             {
                 _dialogService.ShowError("Error", ex.Message);
+                await LoadSlotStatsAsync();
             }
         }
 
@@ -234,11 +257,7 @@ namespace Parking.UI.Windows.ViewModels
 
                 if (success)
                 {
-                    TimeSpan duration = DateTime.UtcNow - session.entry_time;
-                    decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
-                    if (hoursToCharge < 1) hoursToCharge = 1;
-
-                    AmountToCharge = hoursToCharge * 1.00m;
+                    AmountToCharge = session.amount_due ?? 0;
                     _dialogService.ShowSuccess("¡Éxito!", $"SALIDA: {plate} | Total: {AmountToCharge:C2}");
                     await LoadSlotStatsAsync();
                     _parkingStatusNotifier.NotifyParkingStatusChanged();
@@ -276,13 +295,9 @@ namespace Parking.UI.Windows.ViewModels
                     byte[] currentFrame = await _cameraService.CaptureFrameAsync();
                     if (currentFrame.Length > 0)
                     {
-                        SaveLatestFrame(currentFrame);
-                        byte[] frameToShow = currentFrame;
-
-                        if (_currentDetection != null && (DateTime.UtcNow - _lastDetectionTime) < DetectionDisplayTime)
-                        {
-                            frameToShow = DrawDetectionOnFrame(currentFrame, _currentDetection);
-                        }
+                        var visibleDetection = DateTime.UtcNow - _lastDetectionTime < DetectionDisplayTime
+                            ? _currentDetection : null;
+                        byte[] frameToShow = DrawDetectionOnFrame(currentFrame, visibleDetection);
 
                         var preview = BuildBitmapSource(frameToShow);
                         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => CameraPreview = preview);
@@ -301,8 +316,7 @@ namespace Parking.UI.Windows.ViewModels
             if (Interlocked.CompareExchange(ref _qrDetectionInProgress, 1, 0) != 0) return;
 
             _lastQrDetectionUtc = DateTime.UtcNow;
-            byte[] frameCopy = (byte[])currentFrame.Clone();
-            _ = ProcessQrDetectionAsync(frameCopy);
+            _ = ProcessQrDetectionAsync(currentFrame);
         }
 
         private async Task ProcessQrDetectionAsync(byte[] frame)
@@ -338,13 +352,9 @@ namespace Parking.UI.Windows.ViewModels
 
                 if (success)
                 {
-                    TimeSpan duration = DateTime.UtcNow - session.entry_time;
-                    decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
-                    if (hoursToCharge < 1) hoursToCharge = 1;
-
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        AmountToCharge = hoursToCharge * 1.00m;
+                        AmountToCharge = session.amount_due ?? 0;
                         PlateNumber = session.plate;
                         StatusMessage = $"✅ SALIDA POR QR: {session.plate} | Total: {AmountToCharge:C2}";
                     });
@@ -365,8 +375,7 @@ namespace Parking.UI.Windows.ViewModels
             if (Interlocked.CompareExchange(ref _autoDetectionInProgress, 1, 0) != 0) return;
 
             _lastAutoDetectionUtc = DateTime.UtcNow;
-            byte[] frameCopy = (byte[])currentFrame.Clone();
-            _ = ProcessAutomaticDetectionAsync(frameCopy);
+            _ = ProcessAutomaticDetectionAsync(currentFrame);
         }
 
         private async Task ProcessAutomaticDetectionAsync(byte[] frame)
@@ -376,18 +385,33 @@ namespace Parking.UI.Windows.ViewModels
                 var detection = await ((PlateReaderService)_plateService).DetectPlateWithRegionsAsync(frame);
                 if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
                 {
+                    // Dos lecturas iguales en frames distintos reducen las placas falsas por reflejos.
+                    if (detection.PlateNumber != _pendingPlate || DateTime.UtcNow - _pendingPlateTime > TimeSpan.FromSeconds(12))
+                    {
+                        _pendingPlate = detection.PlateNumber;
+                        _pendingPlateTime = DateTime.UtcNow;
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(
+                            () => StatusMessage = $"Verificando placa {detection.PlateNumber}...");
+                        return;
+                    }
                     _currentDetection = detection;
                     _lastDetectionTime = DateTime.UtcNow;
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => PlateNumber = detection.PlateNumber);
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        PlateNumber = detection.PlateNumber;
+                        StatusMessage = $"Placa reconocida: {detection.PlateNumber}";
+                    });
                 }
             }
             finally { Interlocked.Exchange(ref _autoDetectionInProgress, 0); }
         }
 
-        private byte[] DrawDetectionOnFrame(byte[] frameBytes, PlateDetectionResult detection)
+        private byte[] DrawDetectionOnFrame(byte[] frameBytes, PlateDetectionResult? detection)
         {
             using var mat = Cv2.ImDecode(frameBytes, ImreadModes.Color);
-            if (detection.HasDetection)
+            var roi = PlateReaderService.GetRecognitionRegion(mat.Width, mat.Height);
+            Cv2.Rectangle(mat, roi, Scalar.Cyan, 2, LineTypes.AntiAlias);
+            if (detection?.HasDetection == true)
             {
                 foreach (var rect in detection.DetectedRegions)
                 {
@@ -396,10 +420,9 @@ namespace Parking.UI.Windows.ViewModels
                         Cv2.PutText(mat, detection.PlateNumber, new OpenCvSharp.Point(rect.X, rect.Y - 15), HersheyFonts.HersheySimplex, 1.2, Scalar.LimeGreen, 3);
                 }
             }
-            return mat.ToBytes(".png");
+            return mat.ToBytes(".jpg");
         }
 
-        private void SaveLatestFrame(byte[] frame) { lock (_frameSyncRoot) _latestFrame = (byte[])frame.Clone(); }
 
         private static BitmapSource BuildBitmapSource(byte[] frameBytes)
         {

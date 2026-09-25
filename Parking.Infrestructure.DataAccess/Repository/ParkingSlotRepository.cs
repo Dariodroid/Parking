@@ -77,7 +77,14 @@ public class ParkingSlotRepository : IParkingSlotRepository
     {
         return await _context.parking_slots
             .Where(x => !x.is_occupied)
-            .OrderBy(x => x.slot_number)
+            .OrderBy(x => x.updated_at)
+            .ThenBy(x => x.slot_number)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<parking_slot?> GetAvailableSlotByIdAsync(int id)
+    {
+        return await _context.parking_slots
+            .FirstOrDefaultAsync(x => x.id == id && !x.is_occupied);
     }
 }

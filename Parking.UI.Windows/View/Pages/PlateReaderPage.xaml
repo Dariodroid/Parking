@@ -206,6 +206,28 @@
                                    Foreground="#666666"
                                    FontSize="11"/>
 
+                        <TextBlock Text="PUESTO LIBRE (OPCIONAL)" Foreground="#AAAAAA"
+                                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,7"/>
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox ItemsSource="{Binding AvailableSlots}"
+                                      SelectedItem="{Binding SelectedSlot, Mode=TwoWay}"
+                                      DisplayMemberPath="slot_number"
+                                      Height="36" VerticalContentAlignment="Center"
+                                      Background="#0A0A0A" Foreground="White"
+                                      BorderBrush="#444444"/>
+                            <Button Grid.Column="1" Content="Automático"
+                                    Command="{Binding UseAutomaticSlotCommand}"
+                                    Margin="8,0,0,0" Padding="10,4"
+                                    Background="#263238" Foreground="White"
+                                    BorderBrush="#444444" Cursor="Hand"/>
+                        </Grid>
+                        <TextBlock Text="Sin elegir un puesto, se asigna automáticamente."
+                                   Foreground="#666666" FontSize="11" Margin="0,0,0,12"/>
+
                         <!-- BOTÓN REGISTRAR ENTRADA CON ICONO -->
                         <Button Command="{Binding SavePlateCommand}"
                                 Style="{StaticResource ActionButtonStyle}"

@@ -61,6 +61,7 @@ namespace Parking.UI.Windows
 
             serviceCollection.AddSingleton<ICameraService, OpenCvCameraService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
+            serviceCollection.AddSingleton<IEntryPhotoStore, LocalEntryPhotoStore>();
             serviceCollection.AddSingleton<IQrService, QrReaderService>();
             serviceCollection.AddSingleton<IParkingStatusNotifier, ParkingStatusNotifier>();
             serviceCollection.AddSingleton<ExcelExportService>();

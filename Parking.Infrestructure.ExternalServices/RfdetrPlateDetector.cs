@@ -3,16 +3,12 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 public class RfdetrPlateDetector : YoloPlateDetector
 {
     public RfdetrPlateDetector(string modelPath) : base(modelPath)
     {
-        Console.WriteLine("=== RF-DETR DETECTOR CREADO CORRECTAMENTE ===");
-        Console.WriteLine($"Modelo: {modelPath}");
-        Console.WriteLine($"Existe: {File.Exists(modelPath)}");
     }
 
     public override List<OpenCvSharp.Rect> Detect(Mat image)
@@ -21,7 +17,7 @@ public class RfdetrPlateDetector : YoloPlateDetector
             return new List<OpenCvSharp.Rect>();
 
         int inputSize = 576;
-        var resized = image.Resize(new Size(inputSize, inputSize));
+        using var resized = image.Resize(new Size(inputSize, inputSize));
 
         var tensor = new DenseTensor<float>(new[] { 1, 3, inputSize, inputSize });
         for (int y = 0; y < inputSize; y++)
@@ -41,58 +37,43 @@ public class RfdetrPlateDetector : YoloPlateDetector
         using var results = _session.Run(inputs);
         var outputs = results.ToList();
 
+        // Este export de RF-DETR entrega cinco pares (logits, cajas cx/cy/ancho/alto).
+        // El último par corresponde a la predicción final. Los nombres iniciales
+        // "boxes" y "scores" están invertidos respecto a su contenido real.
         if (outputs.Count < 2)
             return new List<OpenCvSharp.Rect>();
 
-        var boxesTensor = outputs[0].AsTensor<float>();
-        var scoresTensor = outputs[1].AsTensor<float>();
+        var scoresTensor = outputs[^2].AsTensor<float>();
+        var boxesTensor = outputs[^1].AsTensor<float>();
+        if (scoresTensor.Dimensions.Length != 3 || scoresTensor.Dimensions[2] != 1 ||
+            boxesTensor.Dimensions.Length != 3 || boxesTensor.Dimensions[2] != 4 ||
+            scoresTensor.Dimensions[1] != boxesTensor.Dimensions[1])
+            return new List<OpenCvSharp.Rect>();
 
-        var boxShape = boxesTensor.Dimensions.ToArray();
-        int numQueries = (boxShape.Length == 3 && boxShape[2] == 4) ? boxShape[1] : 0;
-
-        OpenCvSharp.Rect? bestRect = null;
-        float bestScore = -1f;
+        int numQueries = boxesTensor.Dimensions[1];
+        var candidates = new List<(OpenCvSharp.Rect Rect, float Score)>();
 
         for (int i = 0; i < numQueries; i++)
         {
-            float score = 0f;
-            try
-            {
-                score = scoresTensor.Dimensions.Length == 2 ? scoresTensor[0, i] : 0f;
-            }
-            catch { score = 0f; }
+            float logit = scoresTensor[0, i, 0];
+            // Los logits del modelo no son probabilidades. Cero equivale al 50%.
+            if (logit < 0f) continue;
 
-            // Umbral más equilibrado pero estricto
-            if (score < 0.99f) continue;
-
-            float x1 = boxesTensor[0, i, 0] * image.Width;
-            float y1 = boxesTensor[0, i, 1] * image.Height;
-            float x2 = boxesTensor[0, i, 2] * image.Width;
-            float y2 = boxesTensor[0, i, 3] * image.Height;
-
-            int w = (int)(x2 - x1);
-            int h = (int)(y2 - y1);
-
-            // Filtro de tamaño razonable para una placa de vehículo
-            if (w < 70 || h < 30 || w > image.Width * 0.8) continue;
-
-            var rect = new OpenCvSharp.Rect(Math.Max(0, (int)x1), Math.Max(0, (int)y1), w, h);
-
-            // Nos quedamos solo con la mejor detección
-            if (score > bestScore)
-            {
-                bestScore = score;
-                bestRect = rect;
-            }
+            float cx = boxesTensor[0, i, 0] * image.Width;
+            float cy = boxesTensor[0, i, 1] * image.Height;
+            float width = boxesTensor[0, i, 2] * image.Width;
+            float height = boxesTensor[0, i, 3] * image.Height;
+            int left = Math.Clamp((int)(cx - width / 2), 0, image.Width);
+            int top = Math.Clamp((int)(cy - height / 2), 0, image.Height);
+            int right = Math.Clamp((int)(cx + width / 2), 0, image.Width);
+            int bottom = Math.Clamp((int)(cy + height / 2), 0, image.Height);
+            if (right <= left || bottom <= top) continue;
+            var rect = new OpenCvSharp.Rect(left, top, right - left, bottom - top);
+            if (rect.Width < 40 || rect.Height < 14 || rect.Width > image.Width * .9)
+                continue;
+            candidates.Add((rect, logit));
         }
 
-        if (bestRect == null)
-        {
-            Console.WriteLine("RF-DETR → No se detectó ninguna placa confiable");
-            return new List<OpenCvSharp.Rect>();
-        }
-
-        Console.WriteLine($"✅ MEJOR PLACA DETECTADA → Score: {bestScore:F3} | Rect: {bestRect}");
-        return new List<OpenCvSharp.Rect> { bestRect.Value };
+        return candidates.OrderByDescending(c => c.Score).Take(3).Select(c => c.Rect).ToList();
     }
 }
