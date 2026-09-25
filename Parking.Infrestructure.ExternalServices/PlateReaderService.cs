@@ -84,14 +84,25 @@ namespace Parking.Infrastructure.ExternalServices
                                 rect.Width + rect.Width / 10, rect.Height + rect.Height / 4),
                             new OpenCvSharp.Rect(0, 0, src.Width, src.Height));
                         using var plate = new Mat(src, padded);
-                        var candidateImages = CreateOcrCandidates(plate);
                         var readings = new List<string>();
 
                         lock (_engine)
                         {
-                            foreach (var candidate in candidateImages)
+                            // El encabezado (por ejemplo, ECUADOR) está encima del número.
+                            // El detector y la captura conservan la placa completa, pero el
+                            // OCR comienza en la franja de caracteres para evitar esa línea.
+                            foreach (double topFraction in new[] { .22, .12, 0.0 })
                             {
-                                readings.AddRange(ReadPlateFromCandidate(_engine, candidate));
+                                int top = (int)(plate.Height * topFraction);
+                                using var characterBand = new Mat(plate,
+                                    new OpenCvSharp.Rect(0, top, plate.Width, plate.Height - top));
+                                foreach (var candidate in CreateOcrCandidates(characterBand))
+                                    readings.AddRange(ReadPlateFromCandidate(_engine, candidate));
+
+                                // Varios filtros deben coincidir antes de aceptar la lectura.
+                                // Solo ampliamos la zona si el recorte aún no es concluyente.
+                                if (readings.GroupBy(text => text).Any(group => group.Count() >= 3))
+                                    break;
                             }
                         }
 
