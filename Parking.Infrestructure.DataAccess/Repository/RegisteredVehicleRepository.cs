@@ -51,6 +51,22 @@ public class RegisteredVehicleRepository
                 !x.is_deleted);
     }
 
+    /// <summary>Recupera el cliente, su plan y sus horarios en una consulta seguida por EF.</summary>
+    /// <param name="plate">Placa ya normalizada antes de consultar la base.</param>
+    /// <returns>Vehículo no eliminado con relaciones cargadas, o nulo si no existe.</returns>
+    public Task<registered_vehicle?> GetCompleteByPlateAsync(string plate)
+    {
+        // La consulta parte de vehículos registrados para conservar su identidad
+        // incluso si la entrada termina cobrándose como ocasional.
+        return _context.registered_vehicles
+            // El plan aporta vigencia, estado, cuota y fecha del último pago.
+            .Include(x => x.vehicle_monthly_plan)
+            // Los horarios aportan el día, las horas y la marca 24H.
+            .Include(x => x.monthly_vehicle_schedules)
+            // Las placas eliminadas no vuelven a obtener beneficios mensuales.
+            .FirstOrDefaultAsync(x => x.plate == plate && !x.is_deleted);
+    }
+
     public async Task AddMonthlyPlanAsync(
         vehicle_monthly_plan plan)
     {

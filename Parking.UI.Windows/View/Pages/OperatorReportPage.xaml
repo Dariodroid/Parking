@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              Background="#121212" FontFamily="Segoe UI">
+    <!-- Estilos compartidos de las acciones y de la tabla del informe. -->
     <UserControl.Resources>
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Height" Value="40"/>
@@ -59,6 +60,7 @@
                 </Button>
             </WrapPanel>
         </Border>
+        <!-- La hoja crece con los registros; el desplazamiento pertenece al visor exterior. -->
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto" Padding="18">
             <Border Width="1000" MinHeight="650" HorizontalAlignment="Center"
@@ -75,6 +77,7 @@
                     <TextBlock Text="{Binding ReportDate, StringFormat='Emitido: {0:dd/MM/yyyy HH:mm}'}"
                                Foreground="#596B7A" Margin="0,4,0,16"/>
                     <Border Height="3" Background="#245A81" Margin="0,0,0,22"/>
+                    <!-- Resumen del último filtro aplicado, consistente con la exportación. -->
                     <Grid Margin="0,0,0,22">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/>

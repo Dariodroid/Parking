@@ -61,6 +61,7 @@ public class CashViewModel : BaseViewModel
     }
 
     private DateTime _toDate = DateTime.Today;
+    // Fechas del último resultado consultado; el Excel describe exactamente los pagos visibles.
     private DateTime _appliedFromDate = DateTime.Today;
     private DateTime _appliedToDate = DateTime.Today;
     public DateTime ToDate
@@ -91,10 +92,14 @@ public class CashViewModel : BaseViewModel
 
         _ = LoadAsync();
     }
+    /// <summary>Consulta los pagos del rango seleccionado y recalcula las tarjetas de caja.</summary>
+    /// <returns>Tarea que completa la carga de pagos y totales.</returns>
     private async Task LoadAsync()
     {
+        // Se reemplaza el listado anterior antes de presentar el nuevo resultado.
         Payments.Clear();
 
+        // El repositorio usa fin exclusivo; sumar un día incluye el último día seleccionado.
         var payments =
             await _cashRepository
                 .GetPaymentsAsync(
@@ -105,6 +110,7 @@ public class CashViewModel : BaseViewModel
         {
             Payments.Add(item);
         }
+        // Se guardan los criterios efectivos una vez cargados los datos.
         _appliedFromDate = FromDate;
         _appliedToDate = ToDate;
 
@@ -141,8 +147,10 @@ public class CashViewModel : BaseViewModel
     }
 
 
+/// <summary>Exporta los pagos actualmente mostrados con las fechas de su última consulta.</summary>
 private void ExportExcel()
 {
+    // El operador escoge la ubicación del archivo de Excel.
     SaveFileDialog dialog = new()
     {
         Filter = "Excel (*.xlsx)|*.xlsx",
@@ -153,6 +161,7 @@ private void ExportExcel()
     if (dialog.ShowDialog() != true)
         return;
 
+    // Las fechas aplicadas evitan rotular el archivo con filtros editados pero aún no consultados.
     _excelExportService.ExportPayments(
         Payments,
         dialog.FileName,

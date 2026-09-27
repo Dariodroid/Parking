@@ -1,4 +1,5 @@
 ﻿using Parking.Application.Services;
+using Parking.Application.UseCases;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
@@ -34,7 +35,21 @@ public class RegisteredVehicleViewModel : BaseViewModel
     public ICommand DeleteCommand { get; }
 
     public ICommand NewCommand { get; }
+    /// <summary>Comando que registra como pagada la cuota vencida del cliente seleccionado.</summary>
+    public ICommand MarkMonthlyFeePaidCommand { get; }
 
+    private decimal _pendingMonthlyFee;
+    /// <summary>Cuota vencida que se muestra en la ficha; cero si no hay saldo pendiente.</summary>
+    public decimal PendingMonthlyFee
+    {
+        get => _pendingMonthlyFee;
+        private set => SetProperty(ref _pendingMonthlyFee, value);
+    }
+
+    /// <summary>Prepara los comandos y los siete días editables del cliente mensualizado.</summary>
+    /// <param name="repository">Consulta y guarda vehículo, plan y horarios.</param>
+    /// <param name="dialogService">Muestra confirmaciones, avisos y errores al operador.</param>
+    /// <param name="vehicleTypeRepository">Carga los tipos de vehículo disponibles en el formulario.</param>
     public RegisteredVehicleViewModel(IRegisteredVehicle repository, IDialogService dialogService, IBaseRepository<vehicle_type> vehicleTypeRepository)
     {
         _dialogService = dialogService;
@@ -49,6 +64,8 @@ public class RegisteredVehicleViewModel : BaseViewModel
         DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
 
         NewCommand = new RelayCommand(_ => ClearForm());
+        // La acción de pago espera el guardado antes de poder ejecutarse otra vez.
+        MarkMonthlyFeePaidCommand = new AsyncRelayCommand(_ => MarkMonthlyFeePaidAsync());
 
         InitializeSchedules();
     }
@@ -310,8 +327,12 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Traslada a la ficha los datos, la deuda y los horarios del cliente elegido.</summary>
+    /// <param name="item">Vehículo seleccionado con plan y horarios cargados.</param>
     private void LoadSelected(registered_vehicle item)
     {
+        // Se recalcula la cuota con la fecha actual al seleccionar la fila.
+        PendingMonthlyFee = MonthlyAccessPolicy.Evaluate(item, DateTime.Now).PendingFee;
         Id = item.id;
 
         Plate = item.plate;
@@ -382,7 +403,9 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
                 if (dbSchedule != null)
                 {
-                    schedule.IsEnabled = true;
+                    // Una fila guardada pero desactivada debe verse desactivada;
+                    // su mera existencia no autoriza acceso ese día.
+                    schedule.IsEnabled = dbSchedule.is_active;
 
                     schedule.StartTime =
                         dbSchedule.start_time
@@ -760,6 +783,64 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Confirma y registra el pago de una cuota vencida en el plan seleccionado.
+    /// Actualiza fecha de pago y cobrador, pero no extiende la vigencia del contrato.
+    /// </summary>
+    /// <returns>Una tarea que termina al guardar el plan o mostrar un error.</returns>
+    private async Task MarkMonthlyFeePaidAsync()
+    {
+        // La acción requiere una ficha seleccionada para evitar pagos ambiguos.
+        if (Id <= 0)
+        {
+            _dialogService.ShowWarning("Mensualidad", "Seleccione un vehículo mensualizado.");
+            return;
+        }
+
+        try
+        {
+            // Se vuelve a consultar antes de pagar para usar el estado más reciente.
+            var vehicle = await _repository.GetCompleteByIdAsync(Id);
+            if (vehicle?.vehicle_monthly_plan == null)
+                throw new InvalidOperationException("No se encontró el contrato mensual.");
+
+            // La misma política usada al ingresar determina si existe cuota vencida.
+            decimal pending = MonthlyAccessPolicy.Evaluate(vehicle, DateTime.Now).PendingFee;
+            if (pending <= 0)
+            {
+                _dialogService.ShowInfo("Mensualidad", "Este contrato no tiene una cuota vencida pendiente.");
+                return;
+            }
+
+            // El operador confirma explícitamente que ya recibió el dinero indicado.
+            if (!_dialogService.ShowConfirmation("Registrar pago mensual",
+                $"¿Confirmas que se recibió la cuota vencida de {pending:C2} para {vehicle.plate}?"))
+                return;
+
+            // payment_date salda la cuota calculada; collected_by y updated_by
+            // conservan el usuario que efectuó esta actualización del plan.
+            var plan = vehicle.vehicle_monthly_plan;
+            plan.payment_date = DateTime.Now;
+            plan.collected_by = _currentUserId;
+            plan.updated_at = DateTime.Now;
+            plan.updated_by = _currentUserId;
+            // Se registra el cambio mediante el repositorio y se exige confirmación.
+            await _repository.UpdateAsync(vehicle);
+            if (!await _repository.SaveChangesAsync())
+                throw new InvalidOperationException("No se pudo registrar el pago.");
+
+            // La lista y el formulario se limpian para no mostrar deuda obsoleta.
+            PendingMonthlyFee = 0;
+            await LoadAsync();
+            ClearForm();
+            _dialogService.ShowSuccess("Mensualidad", $"Cuota de {pending:C2} registrada como pagada. El contrato conserva su fecha de fin; renuévelo por separado si corresponde.");
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowError("Mensualidad", ex.Message);
+        }
+    }
+
     private async Task DeleteAsync()
     {
         try
@@ -805,8 +886,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Restablece la ficha para crear otro cliente y elimina la deuda visible anterior.</summary>
     private void ClearForm()
     {
+        // El saldo de la selección previa no debe aparecer en un cliente nuevo.
+        PendingMonthlyFee = 0;
         Id = 0;
 
         Plate = string.Empty;

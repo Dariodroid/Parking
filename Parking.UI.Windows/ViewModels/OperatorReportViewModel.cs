@@ -9,6 +9,7 @@ using System.Windows.Input;
 
 namespace Parking.UI.Windows.ViewModels;
 
+/// <summary>Mantiene la búsqueda aplicada y la exportación del informe de operadores.</summary>
 public class OperatorReportViewModel : BaseViewModel
 {
     private readonly IOperatorReportRepository _repository;
@@ -67,6 +68,8 @@ public class OperatorReportViewModel : BaseViewModel
     public ICommand ExportExcelCommand { get; }
     public ICommand ExportWordCommand { get; }
 
+    /// <summary>Conecta la consulta y los comandos de actualización/exportación.</summary>
+    /// <param name="repository">Consulta cobros agrupados por operador.</param>
     public OperatorReportViewModel(IOperatorReportRepository repository)
     {
         _repository = repository;
@@ -75,15 +78,20 @@ public class OperatorReportViewModel : BaseViewModel
         ExportWordCommand = new RelayCommand(_ => Export(true));
     }
 
+    /// <summary>Consulta el período elegido y conserva una instantánea para exportar.</summary>
+    /// <returns>Tarea de carga de datos.</returns>
     private async Task LoadReport()
     {
+        // El período inválido no se envía al repositorio.
         if (FromDate.Date > ToDate.Date)
         {
             MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
             return;
         }
 
+        // El límite superior exclusivo incluye toda la fecha final.
         var data = await _repository.GetReportAsync(FromDate.Date, ToDate.Date.AddDays(1));
+        // Se separan fechas aplicadas y editables para exportar lo mostrado.
         ReportItems = new ObservableCollection<OperatorReportItem>(data);
         AppliedFromDate = FromDate.Date;
         AppliedToDate = ToDate.Date;
@@ -92,10 +100,15 @@ public class OperatorReportViewModel : BaseViewModel
         ReportDate = DateTime.Now;
     }
 
+    /// <summary>Carga el informe al abrir la vista.</summary>
+    /// <returns>La misma tarea de consulta usada por Actualizar.</returns>
     public Task LoadAsync() => LoadReport();
 
+    /// <summary>Exporta la instantánea visible a Word o Excel.</summary>
+    /// <param name="word">Verdadero para DOCX; falso para XLSX.</param>
     private void Export(bool word)
     {
+        // El diálogo usa extensión y filtro acordes al formato elegido.
         var dialog = new SaveFileDialog
         {
             Filter = word ? "Documento Word (*.docx)|*.docx" : "Libro Excel (*.xlsx)|*.xlsx",
@@ -104,6 +117,7 @@ public class OperatorReportViewModel : BaseViewModel
         };
         if (dialog.ShowDialog() != true) return;
 
+        // Se entregan los resultados y fechas aplicados, no filtros aún editados.
         try
         {
             if (word)

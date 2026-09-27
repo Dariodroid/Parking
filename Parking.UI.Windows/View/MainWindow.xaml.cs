@@ -8,10 +8,20 @@ namespace Parking.UI.Windows.View
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>Inicializa la ventana y evita que al maximizar tape el pie de las páginas.</summary>
+        /// <param name="viewModel">Modelo de navegación que proporciona la vista actual.</param>
         public MainWindow(MainWindowViewModel viewModel)
         {
+            // Carga los controles declarados en MainWindow.xaml.
             InitializeComponent();
+            // Las vistas internas reciben el contexto de navegación.
             DataContext = viewModel;
+
+            // WindowChrome con WindowStyle=None puede maximizar unos píxeles
+            // por debajo del área utilizable y ocultar el pie de las vistas.
+            // El ancho y la altura máximos respetan el área libre de la pantalla.
+            MaxWidth = SystemParameters.WorkArea.Width;
+            MaxHeight = SystemParameters.WorkArea.Height;
         }
 
         private void MenuToggle_Click(object sender, RoutedEventArgs e)

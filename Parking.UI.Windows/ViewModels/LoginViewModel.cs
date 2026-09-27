@@ -48,6 +48,7 @@ public class LoginViewModel : BaseViewModel
 
     }
 
+    /// <summary>Usuario introducido; al cambiarse, vuelve a evaluar si se puede iniciar sesión.</summary>
     public string Username
     {
         get => _username;
@@ -60,10 +61,12 @@ public class LoginViewModel : BaseViewModel
             _username = value;
 
             OnPropertyChanged();
+            // Activa o desactiva el botón según la validez de las credenciales actuales.
             CommandManager.InvalidateRequerySuggested();
         }
     }
 
+    /// <summary>Contraseña introducida; al cambiarse, actualiza la disponibilidad del comando.</summary>
     public string Password
     {
         get => _password;
@@ -76,6 +79,7 @@ public class LoginViewModel : BaseViewModel
             _password = value;
 
             OnPropertyChanged();
+            // La condición CanLogin se vuelve a consultar tras editar la contraseña.
             CommandManager.InvalidateRequerySuggested();
         }
     }

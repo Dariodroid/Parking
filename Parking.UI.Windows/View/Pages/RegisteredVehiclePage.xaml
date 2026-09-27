@@ -318,8 +318,16 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- PANEL IZQUIERDO -->
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+        <!-- Columna izquierda: la primera fila usa el espacio restante y
+             permite desplazar campos sin empujar las acciones fuera de pantalla. -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <!-- La segunda fila reserva la altura real de los cuatro botones. -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <!-- Solo el formulario y la información de pago se desplazan. -->
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
 
                 <!-- CLIENTE -->
@@ -504,9 +512,23 @@
                     </StackPanel>
                 </Border>
 
-                <!-- BOTONES -->
+                <!-- La cuota visible usa la misma evaluación que el ingreso;
+                     el botón registra el pago, pero no renueva las fechas. -->
                 <Border Style="{StaticResource SectionStyle}">
-                    <UniformGrid Columns="2" Margin="-5,-5,-5,-5">
+                    <StackPanel>
+                        <TextBlock Text="CUOTA MENSUAL VENCIDA" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="{Binding PendingMonthlyFee, StringFormat={}{0:C2}}" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <Button Command="{Binding MarkMonthlyFeePaidCommand}" Content="MARCAR CUOTA COMO PAGADA"
+                                Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            </ScrollViewer>
+
+                <!-- Acciones fijas: la cuadrícula 2x2 muestra completos Guardar,
+                     Actualizar, Nuevo y Eliminar incluso al desplazar el formulario. -->
+                <Border x:Name="CrudActions" Grid.Row="1" Style="{StaticResource SectionStyle}" Margin="0,8,0,0">
+                    <UniformGrid Rows="2" Columns="2">
                         <Button Command="{Binding SaveCommand}" Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -536,9 +558,7 @@
                         </Button>
                     </UniformGrid>
                 </Border>
-
-            </StackPanel>
-        </ScrollViewer>
+        </Grid>
 
         <!-- PANEL DERECHO -->
         <Grid Grid.Column="2">
@@ -576,7 +596,8 @@
                     <DockPanel Grid.Row="0" Margin="0,0,0,18">
                         <StackPanel DockPanel.Dock="Left">
                             <TextBlock Text="HORARIOS PERMITIDOS" Foreground="White" FontSize="18" FontWeight="Bold"/>
-                            <TextBlock Text="Control de acceso semanal del vehículo" Foreground="#8A8A8A" FontSize="11" Margin="0,2,0,0"/>
+                            <!-- 24H se aplica solo a los días activados en la lista. -->
+                            <TextBlock Text="24H permite ingresar a cualquier hora del día seleccionado" Foreground="#8A8A8A" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
                     </DockPanel>
 

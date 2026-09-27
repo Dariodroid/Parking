@@ -14,6 +14,7 @@
              Background="Transparent"
              FontFamily="Segoe UI"
              ContentRendered="LoginPage_ContentRendered">
+    <!-- Al mostrarse la ventana se enfoca Usuario; el botón predeterminado responde a Enter. -->
 
     <Window.Resources>
 

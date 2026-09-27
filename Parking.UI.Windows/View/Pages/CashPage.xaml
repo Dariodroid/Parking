@@ -114,6 +114,7 @@
 
                 <StackPanel>
 
+                    <!-- La tarjeta suma el rango consultado, no necesariamente el mes calendario. -->
                     <TextBlock Text="TOTAL DEL PERÍODO"
                                Foreground="#9CA3AF"/>
 

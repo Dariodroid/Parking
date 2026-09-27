@@ -9,6 +9,7 @@ using System.Windows.Input;
 
 namespace Parking.UI.Windows.ViewModels;
 
+/// <summary>Coordina filtros, filas de vista previa y exportación de vehículos.</summary>
 public class VehicleReportViewModel : BaseViewModel
 {
     private readonly IVehicleReportRepository _repository;
@@ -65,6 +66,8 @@ public class VehicleReportViewModel : BaseViewModel
     public ICommand ExportExcelCommand { get; }
     public ICommand ExportWordCommand { get; }
 
+    /// <summary>Configura búsqueda y exportaciones sobre el mismo repositorio.</summary>
+    /// <param name="repository">Consulta vehículos según los filtros elegidos.</param>
     public VehicleReportViewModel(IVehicleReportRepository repository)
     {
         _repository = repository;
@@ -73,14 +76,19 @@ public class VehicleReportViewModel : BaseViewModel
         ExportWordCommand = new AsyncRelayCommand(async _ => await Export(true));
     }
 
+    /// <summary>Aplica los filtros, carga la tabla y conserva su instantánea.</summary>
+    /// <returns>Tarea que termina al actualizar filas, resumen y fecha.</returns>
     public async Task LoadData()
     {
+        // Se rechaza un período invertido antes de consultar.
         if (Filter.FromDate > Filter.ToDate)
         {
             MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
             return;
         }
 
+        // Se copia el filtro: cambios posteriores en controles no alteran la
+        // descripción ni el contenido de la búsqueda ya cargada.
         var snapshot = new VehicleReportFilterDto
         {
             Plate = Filter.Plate,
@@ -93,6 +101,7 @@ public class VehicleReportViewModel : BaseViewModel
             ToDate = Filter.ToDate,
             VehicleTypeId = Filter.VehicleTypeId
         };
+        // Una consulta alimenta tabla, filas formateadas y total mostrado.
         var data = await _repository.GetReportAsync(snapshot);
         Vehicles = new ObservableCollection<VehicleReportDto>(data);
         ReportRows = data.Select((vehicle, index) => new VehicleReportRow(index + 1, vehicle)).ToList();
@@ -101,16 +110,22 @@ public class VehicleReportViewModel : BaseViewModel
         ReportDate = DateTime.Now;
     }
 
+    /// <summary>Exporta la búsqueda actual a Word o Excel, refrescando si cambió el filtro.</summary>
+    /// <param name="word">Verdadero para DOCX; falso para XLSX.</param>
+    /// <returns>Tarea que termina tras guardar o mostrar un error.</returns>
     private async Task Export(bool word)
     {
+        // No se exporta un intervalo de fechas inválido.
         if (Filter.FromDate > Filter.ToDate)
         {
             MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
             return;
         }
+        // Si el usuario cambió criterios, se consulta antes de generar el archivo.
         if (!FiltersMatch(Filter, AppliedFilter))
             await LoadData();
 
+        // El diálogo propone el nombre y extensión correspondientes.
         var dialog = new SaveFileDialog
         {
             Filter = word ? "Documento Word (*.docx)|*.docx" : "Libro Excel (*.xlsx)|*.xlsx",
@@ -119,6 +134,7 @@ public class VehicleReportViewModel : BaseViewModel
         };
         if (dialog.ShowDialog() != true) return;
 
+        // Word y Excel reciben exactamente Vehicles y AppliedFilter.
         try
         {
             if (word)
@@ -132,6 +148,10 @@ public class VehicleReportViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Compara los controles actuales con el filtro de las filas visibles.</summary>
+    /// <param name="current">Valores que el usuario puede estar editando.</param>
+    /// <param name="applied">Copia del filtro usado en la última consulta.</param>
+    /// <returns>Verdadero si exportar no requiere consultar de nuevo.</returns>
     private static bool FiltersMatch(VehicleReportFilterDto current, VehicleReportFilterDto applied) =>
         string.Equals(current.Plate?.Trim(), applied.Plate?.Trim(), StringComparison.OrdinalIgnoreCase) &&
         string.Equals(current.OwnerName?.Trim(), applied.OwnerName?.Trim(), StringComparison.OrdinalIgnoreCase) &&

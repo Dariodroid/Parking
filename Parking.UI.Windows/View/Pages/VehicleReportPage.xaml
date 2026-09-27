@@ -5,6 +5,7 @@
              Background="#121212">
 
     <UserControl.Resources>
+        <!-- Agrupa datos relacionados en una sola celda sin recortar el texto. -->
         <Style x:Key="ReportMultilineCell" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -237,6 +238,7 @@
             </WrapPanel>
         </Border>
 
+        <!-- Este visor desplaza la hoja completa; la tabla no mantiene un scroll vertical propio. -->
         <ScrollViewer x:Name="ReportScrollViewer" Grid.Row="1"
                       Background="#0A0A0A" 
                       VerticalScrollBarVisibility="Auto" 
@@ -349,6 +351,7 @@
                                    Foreground="#596B7A" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
                     </StackPanel>
 
+                    <!-- Una sola tabla refleja las filas filtradas que se usan también al exportar. -->
                     <StackPanel Grid.Row="2">
                         <TextBlock Text="VEHÍCULOS ENCONTRADOS" FontSize="18" FontWeight="Bold"
                                    Foreground="#245A81" Margin="0,0,0,10"/>

@@ -297,7 +297,11 @@
 
             <!-- CONTENIDO PRINCIPAL -->
             <Grid Grid.Column="1" Background="#121212">
-                <ContentControl Content="{Binding CurrentView}"/>
+                <!-- La vista ocupa la altura disponible; así su pie fijo puede
+                     reservar espacio sin quedar fuera del área visible. -->
+                <ContentControl Content="{Binding CurrentView}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"/>
             </Grid>
         </Grid>
     </Grid>

@@ -12,9 +12,13 @@ internal static class ScannerAudioFeedback
     private static readonly byte[] EntryTone = CreateTone(1050, 1450);
     private static readonly byte[] ExitTone = CreateTone(1450, 1050);
 
+    /// <summary>Reproduce la señal breve correspondiente a una entrada guardada.</summary>
     public static void PlayEntry() => Play(EntryTone);
+    /// <summary>Reproduce la señal breve correspondiente a una salida guardada.</summary>
     public static void PlayExit() => Play(ExitTone);
 
+    /// <summary>Inicia la reproducción sin bloquear la cámara ni la interfaz.</summary>
+    /// <param name="wave">Archivo WAV completo generado en memoria.</param>
     private static void Play(byte[] wave)
     {
         // SoundPlayer.PlaySync espera la reproducción completa. Se hace fuera
@@ -35,8 +39,13 @@ internal static class ScannerAudioFeedback
         });
     }
 
+    /// <summary>Compone dos pitidos PCM con una pausa intermedia en formato WAV.</summary>
+    /// <param name="firstFrequency">Frecuencia en hercios del primer pitido.</param>
+    /// <param name="secondFrequency">Frecuencia en hercios del segundo pitido.</param>
+    /// <returns>Bytes del WAV reproducible por SoundPlayer.</returns>
     private static byte[] CreateTone(int firstFrequency, int secondFrequency)
     {
+        // Las duraciones se convierten a muestras usando SampleRate.
         const int toneMilliseconds = 85;
         const int pauseMilliseconds = 25;
         int toneSamples = SampleRate * toneMilliseconds / 1000;
@@ -44,6 +53,7 @@ internal static class ScannerAudioFeedback
         int totalSamples = toneSamples * 2 + pauseSamples;
         int dataSize = totalSamples * sizeof(short);
 
+        // La cabecera RIFF/WAVE describe PCM mono de 16 bits.
         using var stream = new MemoryStream(44 + dataSize);
         using var writer = new BinaryWriter(stream);
         writer.Write("RIFF"u8);
@@ -60,17 +70,23 @@ internal static class ScannerAudioFeedback
         writer.Write("data"u8);
         writer.Write(dataSize);
 
+        // Se escriben primer tono, silencio y segundo tono en ese orden.
         WriteBeep(writer, firstFrequency, toneSamples);
         for (int i = 0; i < pauseSamples; i++) writer.Write((short)0);
         WriteBeep(writer, secondFrequency, toneSamples);
         return stream.ToArray();
     }
 
+    /// <summary>Escribe las muestras de un pitido con entrada y salida suaves.</summary>
+    /// <param name="writer">Destino binario del audio PCM.</param>
+    /// <param name="frequency">Frecuencia del tono en hercios.</param>
+    /// <param name="samples">Cantidad de muestras que debe escribir.</param>
     private static void WriteBeep(BinaryWriter writer, int frequency, int samples)
     {
         int fadeSamples = SampleRate / 200; // 5 ms de entrada y salida suaves
         for (int i = 0; i < samples; i++)
         {
+            // La envolvente evita chasquidos al comenzar y terminar el tono.
             double fade = Math.Min(1.0, Math.Min(i, samples - 1 - i) / (double)fadeSamples);
             double value = Math.Sin(2 * Math.PI * frequency * i / SampleRate) * fade;
             writer.Write((short)(value * 9000));

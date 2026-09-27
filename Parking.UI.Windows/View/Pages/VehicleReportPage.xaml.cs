@@ -25,10 +25,15 @@ namespace Parking.UI.Windows.View.Pages
             InitializeComponent();
         }
 
+        /// <summary>Desplaza la hoja completa cuando el puntero está sobre la tabla del informe.</summary>
+        /// <param name="sender">Tabla que recibió la rueda del ratón.</param>
+        /// <param name="e">Movimiento de la rueda y estado del evento.</param>
         private void ReportGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // Delta indica la dirección; el visor exterior contiene toda la página.
             ReportScrollViewer.ScrollToVerticalOffset(
                 ReportScrollViewer.VerticalOffset - e.Delta);
+            // Evita que el DataGrid cree un desplazamiento interior independiente.
             e.Handled = true;
         }
     }

@@ -3,14 +3,22 @@ using Parking.Domain.Model.Models;
 
 namespace Parking.UI.Windows.Services;
 
+/// <summary>Da formato de informe profesional a las filas de cobros de caja.</summary>
 public class ExcelExportService
 {
+    /// <summary>Guarda la lista de pagos recibida como informe XLSX de caja.</summary>
+    /// <param name="source">Pagos previamente consultados para el período.</param>
+    /// <param name="filePath">Ruta completa del archivo XLSX.</param>
+    /// <param name="from">Fecha inicial mostrada en la cabecera.</param>
+    /// <param name="to">Fecha final mostrada en la cabecera.</param>
     public void ExportPayments(IEnumerable<payment> source, string filePath, DateTime from, DateTime to)
     {
+        // Se reutiliza la misma instantánea para filas y total recaudado.
         var payments = source.ToList();
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("Caja");
         sheet.ShowGridLines = false;
+        // Encabezado institucional, período y cifras generales.
         sheet.Cell("A1").Value = "SISTEMA DE GESTIÓN DE PARQUEADERO";
         sheet.Range("A1:G1").Merge();
         sheet.Range("A1:G1").Style.Fill.BackgroundColor = XLColor.FromHtml("#17324D");
@@ -33,6 +41,7 @@ public class ExcelExportService
         sheet.Range("A5:G5").Style.Fill.BackgroundColor = XLColor.FromHtml("#EAF1F6");
         sheet.Range("A5:G5").Style.Font.Bold = true;
 
+        // Las columnas conservan placa, cobrador y datos de cada pago.
         string[] headers = ["Placa", "Operador", "Monto", "Método", "Referencia", "Fecha de cobro", "Observación"];
         for (var i = 0; i < headers.Length; i++) sheet.Cell(7, i + 1).Value = headers[i];
         sheet.Range("A7:G7").Style.Fill.BackgroundColor = XLColor.FromHtml("#245A81");
@@ -40,6 +49,7 @@ public class ExcelExportService
         sheet.Range("A7:G7").Style.Font.Bold = true;
         sheet.Row(7).Height = 30;
 
+        // Los cobros se escriben uno por fila con bandas alternadas.
         var row = 8;
         foreach (var p in payments)
         {
@@ -54,12 +64,14 @@ public class ExcelExportService
                 sheet.Range(row, 1, row, 7).Style.Fill.BackgroundColor = XLColor.FromHtml("#F1F5F8");
             row++;
         }
+        // Una consulta vacía sigue produciendo un informe legible.
         if (payments.Count == 0)
         {
             sheet.Cell("A8").Value = "Sin cobros para el período seleccionado";
             sheet.Range("A8:G8").Merge();
         }
 
+        // El total se coloca debajo de los pagos o del mensaje vacío.
         var totalRow = Math.Max(row, 9) + 1;
         sheet.Cell(totalRow, 2).Value = "TOTAL GENERAL";
         sheet.Cell(totalRow, 3).Value = payments.Sum(x => x.amount_paid);
@@ -71,6 +83,7 @@ public class ExcelExportService
         sheet.Column(2).Width = 30;
         sheet.Column(6).Width = 23;
         sheet.Column(7).Width = 42;
+        // Filtros, cabecera fija y configuración de impresión facilitan revisión.
         sheet.Range(7, 1, Math.Max(row - 1, 7), 7).SetAutoFilter();
         sheet.SheetView.FreezeRows(7);
         sheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;

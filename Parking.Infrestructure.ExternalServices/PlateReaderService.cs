@@ -15,6 +15,7 @@ namespace Parking.Infrastructure.ExternalServices
         public string PlateNumber { get; set; } = string.Empty;
         public List<OpenCvSharp.Rect> DetectedRegions { get; set; } = new List<OpenCvSharp.Rect>();
         public byte[] PlateImage { get; set; } = Array.Empty<byte>();
+        /// <summary>Indica que el detector encontró regiones, aunque el OCR no logró leer una placa.</summary>
         public bool HasPlateCandidates { get; set; }
         public bool HasDetection => DetectedRegions.Count > 0;
     }
@@ -30,6 +31,7 @@ namespace Parking.Infrastructure.ExternalServices
         public static OpenCvSharp.Rect GetRecognitionRegion(int width, int height) =>
             new((int)(width * .10), (int)(height * .30), (int)(width * .80), (int)(height * .60));
 
+        /// <summary>Prepara las rutas y difiere la carga del detector y del OCR hasta la primera lectura.</summary>
         public PlateReaderService()
         {
             _tessDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
@@ -55,6 +57,9 @@ namespace Parking.Infrastructure.ExternalServices
             return result.PlateNumber;
         }
 
+        /// <summary>Busca placas en el fotograma, lee sus caracteres y devuelve solo la región reconocida para el visor.</summary>
+        /// <param name="imageFrame">Fotograma codificado que se recibe de la cámara.</param>
+        /// <returns>Lectura de placa, recorte y datos de detección; valores vacíos si no pudo reconocerla.</returns>
         public async Task<PlateDetectionResult> DetectPlateWithRegionsAsync(byte[] imageFrame)
         {
             return await Task.Run(() =>
@@ -70,6 +75,7 @@ namespace Parking.Infrastructure.ExternalServices
 
                     var roi = GetRecognitionRegion(src.Width, src.Height);
                     using var searchArea = new Mat(src, roi);
+                    // Lazy.Value inicializa el modelo aquí, fuera del hilo de la interfaz.
                     var regions = _detector.Value.Detect(searchArea);
 
                     // 2. Si no detectó nada, fallback
@@ -81,6 +87,7 @@ namespace Parking.Infrastructure.ExternalServices
                         .Select(r => OpenCvSharp.Rect.Intersect(r, new OpenCvSharp.Rect(0, 0, src.Width, src.Height)))
                         .Where(r => r.Width >= 60 && r.Height >= 20)
                         .Take(3).ToList();
+                    // Esta marca permite distinguir un fallo temporal del OCR de la ausencia del vehículo.
                     result.HasPlateCandidates = regions.Count > 0;
                     foreach (var rect in regions)
                     {
@@ -91,6 +98,7 @@ namespace Parking.Infrastructure.ExternalServices
                         using var plate = new Mat(src, padded);
                         var readings = new List<string>();
 
+                        // Tesseract se crea al necesitarlo y se protege porque sus opciones son compartidas.
                         var engine = _engine.Value;
                         lock (engine)
                         {
@@ -154,6 +162,10 @@ namespace Parking.Infrastructure.ExternalServices
             }
             return regions.OrderByDescending(r => r.Width * r.Height).ToList();
         }
+        /// <summary>Escoge el rectángulo de placa más pequeño contenido en la región que dio una lectura válida.</summary>
+        /// <param name="regions">Regiones candidatas detectadas en el fotograma.</param>
+        /// <param name="recognizedRegion">Región cuyo recorte permitió reconocer los caracteres.</param>
+        /// <returns>La mejor región para dibujar, o la reconocida si no hay una más precisa.</returns>
         private static OpenCvSharp.Rect ChooseDisplayRegion(
             IEnumerable<OpenCvSharp.Rect> regions, OpenCvSharp.Rect recognizedRegion)
         {
@@ -252,8 +264,10 @@ namespace Parking.Infrastructure.ExternalServices
             throw new NotImplementedException();
         }
 
+        /// <summary>Libera el motor OCR únicamente si llegó a inicializarse.</summary>
         public void Dispose()
         {
+            // La apertura del visor sin lectura no crea recursos de Tesseract.
             if (_engine.IsValueCreated) _engine.Value.Dispose();
         }
     }

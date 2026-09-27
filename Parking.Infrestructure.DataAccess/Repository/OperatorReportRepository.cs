@@ -14,11 +14,16 @@ public class OperatorReportRepository
         _context = context;
     }
 
+    /// <summary>Agrupa los pagos del intervalo por operador para el informe de recaudación.</summary>
+    /// <param name="fromDate">Inicio inclusivo del periodo solicitado.</param>
+    /// <param name="toDate">Fin exclusivo, correspondiente al día siguiente del elegido.</param>
+    /// <returns>Operadores con número de pagos e importe total, ordenados por recaudación.</returns>
     public async Task<List<OperatorReportItem>>
         GetReportAsync(
             DateTime fromDate,
             DateTime toDate)
     {
+        // El límite superior exclusivo permite cubrir el día final completo.
         return await _context.payments
             .Where(x =>
                 !x.is_deleted &&

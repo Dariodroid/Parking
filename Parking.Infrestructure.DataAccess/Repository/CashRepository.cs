@@ -35,6 +35,10 @@ namespace Parking.Infrastructure.DataAccess.Repository
                 .SumAsync(x => x.amount_paid);
         }
 
+        /// <summary>Obtiene pagos no eliminados dentro de un intervalo de fechas con sus datos de sesión y operador.</summary>
+        /// <param name="fromDate">Inicio inclusivo del intervalo.</param>
+        /// <param name="toDate">Fin exclusivo del intervalo, normalmente el día posterior al seleccionado.</param>
+        /// <returns>Pagos ordenados desde el más reciente.</returns>
         public async Task<List<payment>> GetPaymentsAsync(
      DateTime fromDate,
      DateTime toDate)
@@ -47,6 +51,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
 
                 .Include(x => x.collected_byNavigation)
 
+                // El fin exclusivo incluye todas las horas del último día sin solapar el siguiente.
                 .Where(x =>
                     !x.is_deleted &&
                     x.collected_at >= fromDate &&

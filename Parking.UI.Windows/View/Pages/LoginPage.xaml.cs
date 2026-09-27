@@ -25,8 +25,12 @@ namespace Parking.UI.Windows.View.Pages
         {
             InitializeComponent();
         }
+        /// <summary>Da el foco al usuario cuando la ventana de acceso ya está visible.</summary>
+        /// <param name="sender">Ventana que terminó de dibujarse.</param>
+        /// <param name="e">Datos del evento de presentación.</param>
         private void LoginPage_ContentRendered(object? sender, EventArgs e)
         {
+            // Focus activa el control y Keyboard.Focus coloca allí el cursor de escritura.
             UsernameTextBox.Focus();
             Keyboard.Focus(UsernameTextBox);
         }

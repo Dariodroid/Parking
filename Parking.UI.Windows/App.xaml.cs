@@ -68,7 +68,9 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<ExcelExportService>();
 
             // ====================== 4. SERVICIOS DE APLICACIÓN ======================
-            serviceCollection.AddSingleton<IEntryService, EntryService>();
+            // EntryService usa repositorios DbContext scoped: comparte una sola
+            // unidad de trabajo al registrar sesión y ocupación del puesto.
+            serviceCollection.AddScoped<IEntryService, EntryService>();
             // En tu App.xaml.cs o donde configures la inyección
             serviceCollection.AddSingleton<IDialogService, DialogService>();
 
