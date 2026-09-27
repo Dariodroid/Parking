@@ -38,11 +38,13 @@ public class OperatorReportViewModel : BaseViewModel
         get => _toDate;
         set => SetProperty(ref _toDate, value);
     }
+    /// <summary>Inicio del período que produjo los resultados visibles.</summary>
     public DateTime AppliedFromDate
     {
         get => _appliedFromDate;
         private set => SetProperty(ref _appliedFromDate, value);
     }
+    /// <summary>Fin del período que produjo los resultados visibles.</summary>
     public DateTime AppliedToDate
     {
         get => _appliedToDate;

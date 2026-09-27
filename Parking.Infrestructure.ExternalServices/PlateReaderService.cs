@@ -10,16 +10,7 @@ using Tesseract;
 
 namespace Parking.Infrastructure.ExternalServices
 {
-    public class PlateDetectionResult
-    {
-        public string PlateNumber { get; set; } = string.Empty;
-        public List<OpenCvSharp.Rect> DetectedRegions { get; set; } = new List<OpenCvSharp.Rect>();
-        public byte[] PlateImage { get; set; } = Array.Empty<byte>();
-        /// <summary>Indica que el detector encontró regiones, aunque el OCR no logró leer una placa.</summary>
-        public bool HasPlateCandidates { get; set; }
-        public bool HasDetection => DetectedRegions.Count > 0;
-    }
-
+    /// <summary>Detecta regiones de placa en una imagen y reconoce sus caracteres con OCR.</summary>
     public class PlateReaderService : IPlateService, IDisposable
     {
         private static readonly Regex PlateRegex = new(@"[A-Z]{3}\d{3,4}", RegexOptions.Compiled);
@@ -27,6 +18,10 @@ namespace Parking.Infrastructure.ExternalServices
         private readonly Lazy<YoloPlateDetector> _detector;
         private readonly Lazy<TesseractEngine> _engine;
 
+        /// <summary>Obtiene la región central de búsqueda que se presenta como guía al operador.</summary>
+        /// <param name="width">Anchura total del fotograma en píxeles.</param>
+        /// <param name="height">Altura total del fotograma en píxeles.</param>
+        /// <returns>Rectángulo que ocupa el 80 % del ancho y el 60 % de la altura desde su margen.</returns>
         // Coordenadas relativas al frame. La zona se muestra en el visor para orientar la cámara.
         public static OpenCvSharp.Rect GetRecognitionRegion(int width, int height) =>
             new((int)(width * .10), (int)(height * .30), (int)(width * .80), (int)(height * .60));
@@ -48,11 +43,15 @@ namespace Parking.Infrastructure.ExternalServices
             });
         }
 
-        // IMPLEMENTACIÓN DE LA INTERFAZ
+        /// <summary>Reconoce una placa de un fotograma mediante la variante que también entrega regiones.</summary>
+        /// <param name="imageFrame">Imagen codificada de la cámara.</param>
+        /// <returns>Placa normalizada, o cadena vacía si no se pudo leer.</returns>
         public async Task<string> RecognizePlateAsync(byte[] imageFrame)
         {
+            // Un fotograma ausente no requiere detector ni OCR.
             if (imageFrame == null || imageFrame.Length == 0) return string.Empty;
 
+            // La variante detallada centraliza el procesamiento del fotograma.
             var result = await DetectPlateWithRegionsAsync(imageFrame);
             return result.PlateNumber;
         }
@@ -142,8 +141,12 @@ namespace Parking.Infrastructure.ExternalServices
                 }
             });
         }
+        /// <summary>Busca por bordes posibles placas cuando el detector principal no encuentra ninguna.</summary>
+        /// <param name="src">Zona de búsqueda del fotograma.</param>
+        /// <returns>Rectángulos candidatos ordenados por área descendente.</returns>
         private static List<OpenCvSharp.Rect> DetectPlateRegions(Mat src)
         {
+            // Se normaliza la iluminación y se resaltan bordes antes de buscar contornos.
             var regions = new List<OpenCvSharp.Rect>();
             using var gray = new Mat();
             Cv2.CvtColor(src, gray, ColorConversionCodes.BGR2GRAY);
@@ -153,6 +156,7 @@ namespace Parking.Infrastructure.ExternalServices
             using var edges = new Mat(); Cv2.Canny(blurred, edges, 100, 200);
             Cv2.FindContours(edges, out Point[][] contours, out _, RetrievalModes.Tree, ContourApproximationModes.ApproxSimple);
 
+            // La proporción y anchura descartan contornos que no parecen placas.
             foreach (var contour in contours)
             {
                 var rect = Cv2.BoundingRect(contour);
@@ -181,6 +185,9 @@ namespace Parking.Infrastructure.ExternalServices
                 .FirstOrDefault(recognizedRegion);
         }
 
+        /// <summary>Crea versiones de una placa con escalas y contrastes distintos para confirmar el OCR.</summary>
+        /// <param name="src">Franja de caracteres extraída de la placa.</param>
+        /// <returns>Imágenes PNG alternativas que se leerán con Tesseract.</returns>
         private static List<byte[]> CreateOcrCandidates(Mat src)
         {
             var candidates = new List<byte[]>();
@@ -227,13 +234,22 @@ namespace Parking.Infrastructure.ExternalServices
             return candidates;
         }
 
+        /// <summary>Agrega una variante PNG cuando la transformación produjo una imagen utilizable.</summary>
+        /// <param name="candidates">Lista de variantes para el OCR.</param>
+        /// <param name="image">Imagen transformada.</param>
         private static void AddCandidate(ICollection<byte[]> candidates, Mat image)
         {
+            // Una matriz vacía no debe enviarse al motor OCR.
             if (!image.Empty()) candidates.Add(image.ToBytes(".png"));
         }
 
+        /// <summary>Lee cada variante con dos modos de segmentación y devuelve placas con formato válido.</summary>
+        /// <param name="engine">Motor OCR compartido y protegido por el llamador.</param>
+        /// <param name="candidateImage">Imagen PNG de la variante actual.</param>
+        /// <returns>Lecturas válidas obtenidas de los modos palabra y línea.</returns>
         private static IEnumerable<string> ReadPlateFromCandidate(TesseractEngine engine, byte[] candidateImage)
         {
+            // Los dos modos pueden resolver de forma distinta caracteres difíciles.
             foreach (PageSegMode mode in new[] { PageSegMode.SingleWord, PageSegMode.SingleLine })
             {
                 engine.DefaultPageSegMode = mode;
@@ -244,8 +260,12 @@ namespace Parking.Infrastructure.ExternalServices
             }
         }
 
+        /// <summary>Normaliza la salida del OCR y extrae una placa del patrón esperado.</summary>
+        /// <param name="rawText">Texto sin procesar devuelto por Tesseract.</param>
+        /// <returns>Placa con guion tras las tres letras, o cadena vacía.</returns>
         private static string ExtractPlate(string? rawText)
         {
+            // Se eliminan separadores y símbolos antes de aplicar la expresión regular.
             if (string.IsNullOrWhiteSpace(rawText)) return string.Empty;
             string compact = Regex.Replace(rawText.ToUpperInvariant(), @"[^A-Z0-9]", string.Empty);
             var match = PlateRegex.Match(compact);
@@ -254,13 +274,20 @@ namespace Parking.Infrastructure.ExternalServices
             return plate.Insert(3, "-");
         }
 
+        /// <summary>Implementa la lectura simple de placa reutilizando el reconocedor principal.</summary>
+        /// <param name="image">Imagen codificada recibida por la interfaz.</param>
+        /// <returns>La tarea de reconocimiento de la placa.</returns>
         public Task<string> DetectPlateAsync(byte[] image)
         {
             return RecognizePlateAsync(image);
         }
 
+        /// <summary>Variante sin imagen mantenida por compatibilidad con la interfaz.</summary>
+        /// <returns>No retorna un resultado.</returns>
+        /// <exception cref="NotImplementedException">Siempre: no puede reconocerse una placa sin imagen.</exception>
         public Task<string> RecognizePlateAsync()
         {
+            // La cámara debe entregar un fotograma a la otra sobrecarga.
             throw new NotImplementedException();
         }
 

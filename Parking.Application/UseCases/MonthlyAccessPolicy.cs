@@ -2,32 +2,6 @@ using Parking.Domain.Model.Models;
 
 namespace Parking.Application.UseCases;
 
-/// <summary>Motivo por el que una entrada recibe acceso mensual o tarifa ocasional.</summary>
-public enum MonthlyAccessKind
-{
-    /// <summary>La placa no tiene un contrato mensual utilizable.</summary>
-    Occasional,
-    /// <summary>Contrato vigente y entrada dentro del horario permitido.</summary>
-    Monthly,
-    /// <summary>Contrato vigente, pero entrada fuera del horario configurado.</summary>
-    OutsideSchedule,
-    /// <summary>La fecha final del contrato ya pasó.</summary>
-    Expired,
-    /// <summary>Vehículo o plan marcado como inactivo o cancelado.</summary>
-    Inactive,
-    /// <summary>La fecha inicial del contrato todavía no llega.</summary>
-    NotStarted
-}
-
-/// <summary>Resultado de evaluar el contrato antes de abrir una sesión de estacionamiento.</summary>
-/// <param name="Kind">Clasificación que determina si se genera ticket y se cobra estancia.</param>
-/// <param name="PendingFee">Cuota mensual vencida pendiente según la fecha de pago registrada.</param>
-public sealed record MonthlyAccessDecision(MonthlyAccessKind Kind, decimal PendingFee)
-{
-    /// <summary>Indica que la sesión se abrirá como mensualizada, sin ticket ni cobro de estancia.</summary>
-    public bool IsMonthly => Kind == MonthlyAccessKind.Monthly;
-}
-
 /// <summary>Aplica las fechas, el estado y el horario semanal del plan mensual al momento de entrada.</summary>
 public static class MonthlyAccessPolicy
 {

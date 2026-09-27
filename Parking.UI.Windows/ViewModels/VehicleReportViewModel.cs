@@ -25,6 +25,7 @@ public class VehicleReportViewModel : BaseViewModel
         get => _vehicles;
         private set => SetProperty(ref _vehicles, value);
     }
+    /// <summary>Filas formateadas de la búsqueda aplicada; alimentan la única tabla visible.</summary>
     public IReadOnlyList<VehicleReportRow> ReportRows
     {
         get => _reportRows;
@@ -39,17 +40,21 @@ public class VehicleReportViewModel : BaseViewModel
         FromDate = DateTime.Today.AddMonths(-1),
         ToDate = DateTime.Today
     };
+    /// <summary>Copia del filtro con que se cargaron las filas visibles, independiente de los controles editables.</summary>
     public VehicleReportFilterDto AppliedFilter
     {
         get => _appliedFilter;
         private set
         {
             if (!SetProperty(ref _appliedFilter, value)) return;
+            // El encabezado debe regenerarse al aplicar una nueva búsqueda.
             OnPropertyChanged(nameof(AppliedPeriod));
             OnPropertyChanged(nameof(AppliedCriteria));
         }
     }
+    /// <summary>Período de la última búsqueda para el encabezado de la hoja.</summary>
     public string AppliedPeriod => ReportExportService.VehiclePeriod(AppliedFilter);
+    /// <summary>Criterios de la última búsqueda para el encabezado de la hoja.</summary>
     public string AppliedCriteria => ReportExportService.VehicleCriteria(AppliedFilter);
     public decimal TotalCollected
     {
