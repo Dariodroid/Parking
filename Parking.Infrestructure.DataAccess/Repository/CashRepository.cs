@@ -50,7 +50,7 @@ namespace Parking.Infrastructure.DataAccess.Repository
                 .Where(x =>
                     !x.is_deleted &&
                     x.collected_at >= fromDate &&
-                    x.collected_at <= toDate)
+                    x.collected_at < toDate)
 
                 .OrderByDescending(x => x.collected_at)
 

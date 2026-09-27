@@ -12,7 +12,8 @@
              AllowsTransparency="True"
              WindowStartupLocation="CenterScreen"
              Background="Transparent"
-             FontFamily="Segoe UI">
+             FontFamily="Segoe UI"
+             ContentRendered="LoginPage_ContentRendered">
 
     <Window.Resources>
 
@@ -127,7 +128,7 @@
                     <Border Style="{StaticResource ModernInputBorderStyle}">
                         <Grid>
                             <materialDesign:PackIcon Kind="AccountOutline" Width="20" Height="20" Foreground="#666666" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                            <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBox x:Name="UsernameTextBox" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                                  BorderThickness="0" Background="Transparent" Foreground="White" 
                                  VerticalContentAlignment="Center" Padding="42,0,12,0" CaretBrush="White" FontSize="14"/>
                         </Grid>
@@ -168,7 +169,7 @@
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF5350" FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
 
                     <!-- Botón Ingresar (Con Icono) -->
-                    <Button Style="{StaticResource LoginButtonStyle}" Command="{Binding LoginCommand}">
+                    <Button Style="{StaticResource LoginButtonStyle}" Command="{Binding LoginCommand}" IsDefault="True">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <materialDesign:PackIcon Kind="Login" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <TextBlock Text="INGRESAR AL SISTEMA" VerticalAlignment="Center"/>

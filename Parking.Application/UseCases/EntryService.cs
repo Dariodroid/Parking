@@ -16,15 +16,18 @@ namespace Parking.Application.UseCases
         private readonly Iparking_sessionRepository _sessionRepo;
         private readonly IParkingSlotRepository _slotRepo;
         private readonly IEntryPhotoStore _photoStore;
+        private readonly IQrTicketStore _qrTicketStore;
 
         public EntryService(
             Iparking_sessionRepository sessionRepo,
             IParkingSlotRepository slotRepo,
-            IEntryPhotoStore photoStore)
+            IEntryPhotoStore photoStore,
+            IQrTicketStore qrTicketStore)
         {
             _sessionRepo = sessionRepo;
             _slotRepo = slotRepo;
             _photoStore = photoStore;
+            _qrTicketStore = qrTicketStore;
         }
 
         public async Task<parking_session?> GetActiveSessionByPlateAsync(string plateNumber)
@@ -38,6 +41,7 @@ namespace Parking.Application.UseCases
                 return null;
 
             string? photoPath = null;
+            string? qrPath = null;
             try
             {
                 string normalized = plateNumber.Trim().ToUpperInvariant();
@@ -84,6 +88,8 @@ namespace Parking.Application.UseCases
                     session.entry_photo_path = photoPath;
                 }
 
+                qrPath = await _qrTicketStore.SaveAsync(session.qr_data, session.session_code);
+
                 await _sessionRepo.AddAsync(session);
 
                 // 3. ACTUALIZAR EL PUESTO (Enlazar sesión y marcar como ocupado)
@@ -104,6 +110,7 @@ namespace Parking.Application.UseCases
             catch
             {
                 if (photoPath != null) _photoStore.Delete(photoPath);
+                if (qrPath != null) _qrTicketStore.Delete(qrPath);
                 throw;
             }
         }

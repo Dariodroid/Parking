@@ -60,6 +60,7 @@ public class LoginViewModel : BaseViewModel
             _username = value;
 
             OnPropertyChanged();
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -75,6 +76,7 @@ public class LoginViewModel : BaseViewModel
             _password = value;
 
             OnPropertyChanged();
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 

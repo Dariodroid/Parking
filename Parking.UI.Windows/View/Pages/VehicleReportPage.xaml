@@ -5,6 +5,11 @@
              Background="#121212">
 
     <UserControl.Resources>
+        <Style x:Key="ReportMultilineCell" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,3"/>
+        </Style>
         <SolidColorBrush x:Key="WindowBg" Color="#121212"/>
         <SolidColorBrush x:Key="PanelBg" Color="#1F1F1F"/>
         <SolidColorBrush x:Key="InputBg" Color="#141414"/>
@@ -232,7 +237,7 @@
             </WrapPanel>
         </Border>
 
-        <ScrollViewer Grid.Row="1" 
+        <ScrollViewer x:Name="ReportScrollViewer" Grid.Row="1"
                       Background="#0A0A0A" 
                       VerticalScrollBarVisibility="Auto" 
                       HorizontalScrollBarVisibility="Auto"
@@ -263,20 +268,19 @@
                         <Setter Property="Foreground" Value="#111111"/>
                         <Setter Property="HorizontalGridLinesBrush" Value="#D0D0D0"/>
                         <Setter Property="VerticalGridLinesBrush" Value="#D0D0D0"/>
-                        <!-- CAMBIO CLAVE AQUÍ: De "All" a "Column" para quitar la columna en blanco -->
                         <Setter Property="HeadersVisibility" Value="Column"/>
-                        <Setter Property="GridLinesVisibility" Value="All"/>
+                        <Setter Property="GridLinesVisibility" Value="Horizontal"/>
                         <Setter Property="CanUserResizeRows" Value="False"/>
                         <Setter Property="SelectionMode" Value="Single"/>
                     </Style>
 
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#EAEAEA"/>
-                        <Setter Property="Foreground" Value="#111111"/>
+                        <Setter Property="Background" Value="#245A81"/>
+                        <Setter Property="Foreground" Value="White"/>
                         <Setter Property="Padding" Value="10,12"/>
                         <Setter Property="FontWeight" Value="Bold"/>
-                        <Setter Property="BorderBrush" Value="#333333"/>
-                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                        <Setter Property="BorderBrush" Value="#D4DFE7"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
                         <Setter Property="HorizontalContentAlignment" Value="Center"/>
                     </Style>
 
@@ -308,7 +312,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
@@ -318,73 +322,80 @@
                                        FontSize="13" 
                                        FontWeight="SemiBold" 
                                        Foreground="#666666"/>
-                            <TextBlock Text="REPORTE DETALLADO DE VEHÍCULOS" 
+                            <TextBlock Text="INFORME DETALLADO DE VEHÍCULOS"
                                        FontSize="26" 
                                        FontWeight="Black" 
-                                       Foreground="#000000" 
+                                       Foreground="#17324D"
                                        Margin="0,2,0,0"/>
                         </StackPanel>
 
-                        <TextBlock Text="{Binding ReportDate, StringFormat='Fecha de Emisión: {0}', FallbackValue='Reporte del Sistema'}" 
+                        <TextBlock Text="{Binding ReportDate, StringFormat='Emitido: {0:dd/MM/yyyy HH:mm}'}"
                                    HorizontalAlignment="Right" 
                                    VerticalAlignment="Top" 
                                    Foreground="#555555" 
                                    FontStyle="Italic"/>
 
-                        <Separator VerticalAlignment="Bottom" Margin="0,15,0,0" Background="#333333" Height="2"/>
+                        <Separator VerticalAlignment="Bottom" Margin="0,15,0,0" Background="#245A81" Height="3"/>
                     </Grid>
 
-                    <WrapPanel Grid.Row="1" Margin="0,0,0,20">
-                        <StackPanel Margin="0,0,50,10">
-                            <TextBlock Text="Criterio de Placa:" Foreground="#666666" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,2"/>
-                            <TextBlock Text="{Binding Filter.Plate, TargetNullValue='- Todos -', FallbackValue='- Todos -'}" 
-                                       Foreground="#000000" FontSize="14" FontWeight="Bold"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,50,10">
-                            <TextBlock Text="Criterio de Propietario:" Foreground="#666666" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,2"/>
-                            <TextBlock Text="{Binding Filter.OwnerName, TargetNullValue='- Todos -', FallbackValue='- Todos -'}" 
-                                       Foreground="#000000" FontSize="14" FontWeight="Bold"/>
-                        </StackPanel>
-                    </WrapPanel>
+                    <StackPanel Grid.Row="1" Margin="0,0,0,22">
+                        <TextBlock Text="{Binding AppliedPeriod, StringFormat='Período de búsqueda: {0}'}"
+                                   Foreground="#17324D" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding AppliedCriteria, StringFormat='Criterios: {0}'}"
+                                   Foreground="#596B7A" FontSize="13" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding Vehicles.Count, StringFormat='Vehículos encontrados: {0}'}"
+                                   Foreground="#17324D" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0"/>
+                        <TextBlock Text="Los mensuales muestran actividad histórica; los ocasionales, actividad del período seleccionado."
+                                   Foreground="#596B7A" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    </StackPanel>
 
-                    <!-- CAMBIO CLAVE AQUÍ: Se añadió ScrollViewer.HorizontalScrollBarVisibility="Disabled" -->
-                    <DataGrid Grid.Row="2" 
-                              ItemsSource="{Binding Vehicles}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              CanUserAddRows="False"
-                              MinHeight="450"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Grid.Row="2">
+                        <TextBlock Text="VEHÍCULOS ENCONTRADOS" FontSize="18" FontWeight="Bold"
+                                   Foreground="#245A81" Margin="0,0,0,10"/>
+                        <DataGrid ItemsSource="{Binding ReportRows}" AutoGenerateColumns="False"
+                                  IsReadOnly="True" CanUserAddRows="False" CanUserSortColumns="False"
+                                  HeadersVisibility="Column"
+                                  EnableRowVirtualization="False"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                  ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                  PreviewMouseWheel="ReportGrid_PreviewMouseWheel">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="PLACA" Binding="{Binding Vehicle.Plate}" Width="105"/>
+                                <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding Vehicle.OwnerName}" Width="*"/>
+                                <DataGridTextColumn Header="TIPO / CATEGORÍA" Binding="{Binding TypeAndCategory}"
+                                                    ElementStyle="{StaticResource ReportMultilineCell}" Width="135"/>
+                                <DataGridTextColumn Header="PLAN / CUOTA" Binding="{Binding PlanAndFee}"
+                                                    ElementStyle="{StaticResource ReportMultilineCell}" Width="120"/>
+                                <DataGridTextColumn Header="INGRESOS / MIN" Binding="{Binding Activity}"
+                                                    ElementStyle="{StaticResource ReportMultilineCell}" Width="105"/>
+                                <DataGridTextColumn Header="ÚLTIMOS MOVIMIENTOS" Binding="{Binding Movements}"
+                                                    ElementStyle="{StaticResource ReportMultilineCell}" Width="200"/>
+                                <DataGridTextColumn Header="ESTADO" Binding="{Binding Vehicle.CurrentStatus}" Width="75"/>
+                                <DataGridTextColumn Header="COBRADO" Binding="{Binding Collected}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="No se encontraron vehículos con los criterios seleccionados."
+                                   Foreground="#596B7A" FontStyle="Italic" Margin="0,12,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Vehicles.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
 
-                        <!-- Se removieron los MinWidth para que las columnas se adapten al ancho disponible -->
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="PLACA" Binding="{Binding Plate}" Width="Auto"/>
-                            <DataGridTextColumn Header="PROPIETARIO" Binding="{Binding OwnerName}" Width="*"/>
-                            <DataGridTextColumn Header="TIPO" Binding="{Binding VehicleType}" Width="Auto"/>
-                            <DataGridTextColumn Header="CATEGORÍA" Binding="{Binding Category}" Width="Auto"/>
-                            <DataGridTextColumn Header="ESTADO PLAN" Binding="{Binding PlanStatus}" Width="Auto"/>
-                            <DataGridTextColumn Header="MENSUALIDAD" Binding="{Binding MonthlyFee, StringFormat=C}" Width="Auto"/>
-                            <DataGridTextColumn Header="INGRESOS" Binding="{Binding TotalEntries}" Width="Auto"/>
-                            <DataGridTextColumn Header="ÚLTIMO INGRESO" Binding="{Binding LastEntryDate, StringFormat=dd/MM/yyyy HH:mm}" Width="Auto"/>
-                            <DataGridTextColumn Header="ESTADO" Binding="{Binding CurrentStatus}" Width="Auto"/>
-                            <DataGridTextColumn Header="COBRADO" Binding="{Binding TotalCollected, StringFormat=C}" Width="Auto" FontWeight="Bold"/>
-                            <DataGridTextColumn Header="MINUTOS" Binding="{Binding TotalMinutesParked}" Width="Auto"/>
-                            <DataGridTextColumn Header="ÚLTIMA SALIDA" Binding="{Binding LastExitDate, StringFormat=dd/MM/yyyy HH:mm}" Width="Auto"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <Border Grid.Row="3" 
+                    <Border Grid.Row="3"
                             BorderBrush="#333333" 
                             BorderThickness="0,2,0,0" 
                             Margin="0,35,0,0" 
                             Padding="0,20,0,0">
 
                         <Grid>
-                            <TextBlock Text="Documento confidencial - Generado automáticamente por el sistema de Parqueadero." 
-                                       Foreground="#777777" 
-                                       FontStyle="Italic" 
-                                       VerticalAlignment="Center"/>
-
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                 <StackPanel HorizontalAlignment="Right" Margin="0,0,40,0">
                                     <TextBlock Text="TOTAL VEHÍCULOS" 
@@ -399,7 +410,7 @@
                                 </StackPanel>
 
                                 <StackPanel HorizontalAlignment="Right">
-                                    <TextBlock Text="TOTAL RECAUDADO" 
+                                    <TextBlock Text="TOTAL COBRADO MOSTRADO"
                                                Foreground="#555555" 
                                                HorizontalAlignment="Right" 
                                                FontSize="11" FontWeight="Bold"/>

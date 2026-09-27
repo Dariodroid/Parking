@@ -6,9 +6,6 @@ using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Win32;
-
-
 namespace Parking.UI.Windows.ViewModels;
 
 public class CashViewModel : BaseViewModel
@@ -64,6 +61,8 @@ public class CashViewModel : BaseViewModel
     }
 
     private DateTime _toDate = DateTime.Today;
+    private DateTime _appliedFromDate = DateTime.Today;
+    private DateTime _appliedToDate = DateTime.Today;
     public DateTime ToDate
     {
         get => _toDate;
@@ -106,6 +105,8 @@ public class CashViewModel : BaseViewModel
         {
             Payments.Add(item);
         }
+        _appliedFromDate = FromDate;
+        _appliedToDate = ToDate;
 
         TotalPayments =
             payments.Count;
@@ -154,7 +155,9 @@ private void ExportExcel()
 
     _excelExportService.ExportPayments(
         Payments,
-        dialog.FileName);
+        dialog.FileName,
+        _appliedFromDate,
+        _appliedToDate);
 
     MessageBox.Show(
         "Archivo exportado correctamente.",

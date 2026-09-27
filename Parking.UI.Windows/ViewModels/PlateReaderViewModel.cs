@@ -55,13 +55,21 @@ namespace Parking.UI.Windows.ViewModels
         private DateTime _lastDetectionTime = DateTime.MinValue;
         private string _pendingPlate = string.Empty;
         private DateTime _pendingPlateTime = DateTime.MinValue;
+        private readonly SemaphoreSlim _sessionOperationGate = new(1, 1);
+        private string _handledPlate = string.Empty;
+        private DateTime _handledPlateLastSeenUtc = DateTime.MinValue;
+        private static readonly TimeSpan PlateReentryInterval = TimeSpan.FromSeconds(5);
+        private string _lastExitedPlate = string.Empty;
+        private DateTime _lastExitUtc = DateTime.MinValue;
+        private static readonly TimeSpan ExitEntryCooldown = TimeSpan.FromSeconds(30);
 
         private readonly IQrService _qrService;
         private int _qrDetectionInProgress;
         private DateTime _lastQrDetectionUtc = DateTime.MinValue;
+        private DateTime _lastQrVisibleUtc = DateTime.MinValue;
         private string _lastScannedQr = string.Empty;
         private DateTime _lastQrScanTime = DateTime.MinValue;
-        private static readonly TimeSpan QrDetectionInterval = TimeSpan.FromMilliseconds(1000);
+        private static readonly TimeSpan QrDetectionInterval = TimeSpan.FromMilliseconds(350);
 
         public string PlateNumber
         {
@@ -144,10 +152,11 @@ namespace Parking.UI.Windows.ViewModels
         {
             try
             {
-                // Las consultas comparten el mismo DbContext; deben ejecutarse en secuencia.
+                await StartCameraAsync();
+                // Las consultas comparten el mismo DbContext; van en secuencia,
+                // pero no retrasan la apertura del visor.
                 await LoadVehicleTypesAsync();
                 await LoadSlotStatsAsync();
-                await StartCameraAsync();
             }
             catch (Exception ex)
             {
@@ -200,6 +209,14 @@ namespace Parking.UI.Windows.ViewModels
         private async Task SaveCorrectedPlateAsync()
         {
             if (string.IsNullOrWhiteSpace(PlateNumber)) return;
+            string plate = PlateNumber.Trim().ToUpperInvariant();
+            if (string.Equals(plate, _lastExitedPlate, StringComparison.OrdinalIgnoreCase)
+                && DateTime.UtcNow - _lastExitUtc < ExitEntryCooldown)
+            {
+                _dialogService.ShowWarning("Salida reciente",
+                    $"La salida de {plate} acaba de registrarse. Espere a que el vehículo despeje la puerta antes de iniciar otra entrada.");
+                return;
+            }
             if (SelectedVehicleType == null)
             {
                 _dialogService.ShowWarning("Atención", "Seleccione un tipo de vehículo.");
@@ -214,8 +231,21 @@ namespace Parking.UI.Windows.ViewModels
                 byte[]? plateImage = _currentDetection?.PlateImage.Length > 0
                     && DateTime.UtcNow - _lastDetectionTime < TimeSpan.FromSeconds(30)
                     ? _currentDetection.PlateImage : null;
-                string? assignedSlot = await _entryService.RegisterEntryAsync(
-                    PlateNumber.Trim().ToUpper(), SelectedVehicleType.id, plateImage, SelectedSlot?.id);
+                string? assignedSlot;
+                await _sessionOperationGate.WaitAsync();
+                try
+                {
+                    assignedSlot = await _entryService.RegisterEntryAsync(
+                        plate, SelectedVehicleType.id, plateImage, SelectedSlot?.id);
+                    if (!string.IsNullOrEmpty(assignedSlot) && assignedSlot != "EXISTENTE")
+                    {
+                        // El mismo vehículo puede seguir delante de la cámara tras
+                        // registrar la entrada. Solo una nueva aparición causa salida.
+                        MarkPlateHandled(plate);
+                        await LoadSlotStatsAsync();
+                    }
+                }
+                finally { _sessionOperationGate.Release(); }
 
                 if (assignedSlot == "EXISTENTE")
                 {
@@ -223,8 +253,10 @@ namespace Parking.UI.Windows.ViewModels
                 }
                 else if (!string.IsNullOrEmpty(assignedSlot))
                 {
+                    StatusMessage = $"ENTRADA: {plate} asignado al puesto {assignedSlot}.";
+                    ScannerAudioFeedback.PlayEntry();
                     _dialogService.ShowSuccess("¡Éxito!", $"ENTRADA: {PlateNumber} asignado al puesto {assignedSlot}.");
-                    await LoadSlotStatsAsync(); // Actualizar tarjetas
+                    _parkingStatusNotifier.NotifyParkingStatusChanged();
                 }
                 else
                 {
@@ -234,36 +266,16 @@ namespace Parking.UI.Windows.ViewModels
             catch (Exception ex)
             {
                 _dialogService.ShowError("Error", ex.Message);
-                await LoadSlotStatsAsync();
+                await _sessionOperationGate.WaitAsync();
+                try { await LoadSlotStatsAsync(); }
+                finally { _sessionOperationGate.Release(); }
             }
         }
 
         private async Task RegisterExitAsync()
         {
             if (string.IsNullOrWhiteSpace(PlateNumber)) return;
-            string plate = PlateNumber.Trim().ToUpper();
-
-            try
-            {
-                var session = await _entryService.GetActiveSessionByPlateAsync(plate);
-                if (session == null)
-                {
-                    _dialogService.ShowWarning("Atención", $"No hay sesión activa para {plate}.");
-                    AmountToCharge = 0;
-                    return;
-                }
-
-                bool success = await _entryService.RegisterExitByPlateAsync(plate);
-
-                if (success)
-                {
-                    AmountToCharge = session.amount_due ?? 0;
-                    _dialogService.ShowSuccess("¡Éxito!", $"SALIDA: {plate} | Total: {AmountToCharge:C2}");
-                    await LoadSlotStatsAsync();
-                    _parkingStatusNotifier.NotifyParkingStatusChanged();
-                }
-            }
-            catch (Exception ex) { _dialogService.ShowError("Error", $"Error en salida: {ex.Message}"); }
+            await RegisterExitForIdentifierAsync(PlateNumber.Trim().ToUpperInvariant(), isQr: false, showMissingSession: true);
         }
 
         private async Task StartCameraAsync()
@@ -301,10 +313,13 @@ namespace Parking.UI.Windows.ViewModels
 
                         var preview = BuildBitmapSource(frameToShow);
                         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => CameraPreview = preview);
-                        TryQueueAutomaticEntry(currentFrame);
                         TryQueueQrDetection(currentFrame);
+                        TryQueuePlateDetection(currentFrame);
                     }
-                    await Task.Delay(100, cancellationToken);
+                    // Read() ya espera al siguiente fotograma. Solo hacemos una
+                    // pausa breve si el dispositivo aún no entrega imágenes.
+                    if (currentFrame.Length == 0)
+                        await Task.Delay(50, cancellationToken);
                 }
             }
             catch { }
@@ -324,54 +339,119 @@ namespace Parking.UI.Windows.ViewModels
             try
             {
                 string qrText = await _qrService.ReadQrAsync(frame);
-                if (!string.IsNullOrWhiteSpace(qrText) && qrText.StartsWith("SESSION-"))
+                if (!string.IsNullOrWhiteSpace(qrText))
                 {
-                    if (_lastScannedQr == qrText && (DateTime.UtcNow - _lastQrScanTime) < TimeSpan.FromSeconds(5)) return;
+                    DateTime now = DateTime.UtcNow;
+                    _lastQrVisibleUtc = now;
+                    if (string.Equals(_lastScannedQr, qrText, StringComparison.OrdinalIgnoreCase)
+                        && now - _lastQrScanTime < TimeSpan.FromSeconds(5))
+                    {
+                        // Mientras el ticket siga ante la cámara, una sola lectura
+                        // basta. La siguiente se permite después de retirarlo.
+                        _lastQrScanTime = now;
+                        return;
+                    }
 
                     _lastScannedQr = qrText;
-                    _lastQrScanTime = DateTime.UtcNow;
+                    _lastQrScanTime = now;
 
-                    await RegisterExitFromQrAsync(qrText);
-                }
-            }
-            finally { Interlocked.Exchange(ref _qrDetectionInProgress, 0); }
-        }
-
-        private async Task RegisterExitFromQrAsync(string qrCode)
-        {
-            try
-            {
-                var session = await _entryService.GetActiveSessionByQrAsync(qrCode);
-                if (session == null)
-                {
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = $"❌ QR Inválido o sesión ya cerrada.");
-                    return;
-                }
-
-                bool success = await _entryService.RegisterExitByQrAsync(qrCode);
-
-                if (success)
-                {
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    if (!qrText.StartsWith("SESSION-", StringComparison.OrdinalIgnoreCase))
                     {
-                        AmountToCharge = session.amount_due ?? 0;
-                        PlateNumber = session.plate;
-                        StatusMessage = $"✅ SALIDA POR QR: {session.plate} | Total: {AmountToCharge:C2}";
-                    });
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                            StatusMessage = Uri.TryCreate(qrText, UriKind.Absolute, out _)
+                                ? "El QR contiene un enlace web. El ticket debe codificar directamente el valor qr_data de la sesión."
+                                : "El QR no contiene un código de sesión válido.");
+                        return;
+                    }
 
-                    await LoadSlotStatsAsync();
-                    _parkingStatusNotifier.NotifyParkingStatusChanged();
+                    await RegisterExitForIdentifierAsync(qrText, isQr: true, showMissingSession: false);
                 }
             }
             catch (Exception ex)
             {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => _dialogService.ShowError("Error", $"Error en salida QR: {ex.Message}"));
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    StatusMessage = $"Error al leer el QR: {ex.Message}");
+            }
+            finally { Interlocked.Exchange(ref _qrDetectionInProgress, 0); }
+        }
+
+        private async Task<bool> RegisterExitForIdentifierAsync(string identifier, bool isQr, bool showMissingSession)
+        {
+            try
+            {
+                parking_session? session;
+                bool success;
+                await _sessionOperationGate.WaitAsync();
+                try
+                {
+                    session = isQr
+                        ? await _entryService.GetActiveSessionByQrAsync(identifier)
+                        : await _entryService.GetActiveSessionByPlateAsync(identifier);
+
+                    success = session != null && (isQr
+                        ? await _entryService.RegisterExitByQrAsync(identifier)
+                        : await _entryService.RegisterExitByPlateAsync(identifier));
+
+                    if (success)
+                    {
+                        MarkPlateHandled(session!.plate);
+                        _lastExitedPlate = session.plate;
+                        _lastExitUtc = DateTime.UtcNow;
+                        _lastScannedQr = session.qr_data ?? string.Empty;
+                        _lastQrScanTime = DateTime.UtcNow;
+                        await LoadSlotStatsAsync();
+                    }
+                }
+                finally { _sessionOperationGate.Release(); }
+
+                if (session == null)
+                {
+                    if (showMissingSession)
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            AmountToCharge = 0;
+                            _dialogService.ShowWarning("Atención", $"No hay sesión activa para {identifier}.");
+                        });
+                    else if (isQr)
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = "QR inválido o sesión ya cerrada.");
+                    return false;
+                }
+
+                if (!success)
+                {
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        _dialogService.ShowError("Error", $"No se pudo registrar la salida de {session.plate}."));
+                    return false;
+                }
+
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    AmountToCharge = session.amount_due ?? 0;
+                    // El campo de entrada queda vacío. Una lectura de la placa
+                    // trasera al salir no prepara otra entrada accidentalmente.
+                    PlateNumber = string.Empty;
+                    _currentDetection = null;
+                    _pendingPlate = string.Empty;
+                    StatusMessage = $"SALIDA POR {(isQr ? "QR" : "PLACA")}: {session.plate} | Total: {AmountToCharge:C2}";
+                    ScannerAudioFeedback.PlayExit();
+                    _dialogService.ShowSuccess("¡Éxito!", $"SALIDA: {session.plate} | Total: {AmountToCharge:C2}");
+                });
+                _parkingStatusNotifier.NotifyParkingStatusChanged();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    _dialogService.ShowError("Error", $"Error en salida: {ex.Message}"));
+                return false;
             }
         }
 
-        private void TryQueueAutomaticEntry(byte[] currentFrame)
+        private void TryQueuePlateDetection(byte[] currentFrame)
         {
             if (currentFrame.Length == 0 || DateTime.UtcNow - _lastAutoDetectionUtc < AutoDetectionInterval) return;
+            // Un ticket ante la cámara tiene prioridad sobre el OCR de placas.
+            if (DateTime.UtcNow - _lastQrVisibleUtc < TimeSpan.FromSeconds(2)) return;
             if (Interlocked.CompareExchange(ref _autoDetectionInProgress, 1, 0) != 0) return;
 
             _lastAutoDetectionUtc = DateTime.UtcNow;
@@ -383,6 +463,13 @@ namespace Parking.UI.Windows.ViewModels
             try
             {
                 var detection = await ((PlateReaderService)_plateService).DetectPlateWithRegionsAsync(frame);
+                if (detection.HasPlateCandidates && string.IsNullOrWhiteSpace(detection.PlateNumber)
+                    && !string.IsNullOrEmpty(_handledPlate))
+                {
+                    // El OCR puede fallar unos frames aunque el vehículo continúe
+                    // frente a la cámara; no lo tratamos como una nueva llegada.
+                    _handledPlateLastSeenUtc = DateTime.UtcNow;
+                }
                 if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
                 {
                     // Dos lecturas iguales en frames distintos reducen las placas falsas por reflejos.
@@ -390,20 +477,51 @@ namespace Parking.UI.Windows.ViewModels
                     {
                         _pendingPlate = detection.PlateNumber;
                         _pendingPlateTime = DateTime.UtcNow;
-                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(
-                            () => StatusMessage = $"Verificando placa {detection.PlateNumber}...");
                         return;
                     }
                     _currentDetection = detection;
                     _lastDetectionTime = DateTime.UtcNow;
+                    if (ShouldIgnoreRepeatedPlate(detection.PlateNumber)) return;
+
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     {
                         PlateNumber = detection.PlateNumber;
-                        StatusMessage = $"Placa reconocida: {detection.PlateNumber}";
+                        StatusMessage = $"Placa reconocida: {detection.PlateNumber}. Registre la entrada o escanee el QR para la salida.";
                     });
+
+                    // En la misma puerta no se puede inferir la dirección del
+                    // vehículo a partir de la placa. La cámara solo rellena el
+                    // campo; la salida automática requiere el QR del ticket.
+                    MarkPlateHandled(detection.PlateNumber);
                 }
             }
+            catch (Exception ex)
+            {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    StatusMessage = $"Error al reconocer la placa: {ex.Message}");
+            }
             finally { Interlocked.Exchange(ref _autoDetectionInProgress, 0); }
+        }
+
+        private void MarkPlateHandled(string plate)
+        {
+            _handledPlate = plate;
+            _handledPlateLastSeenUtc = DateTime.UtcNow;
+        }
+
+        private bool ShouldIgnoreRepeatedPlate(string plate)
+        {
+            if (!string.Equals(_handledPlate, plate, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            DateTime now = DateTime.UtcNow;
+            if (now - _handledPlateLastSeenUtc >= PlateReentryInterval)
+                return false;
+
+            // La misma placa debe desaparecer unos segundos antes de que una
+            // nueva lectura se interprete como otro paso por la cámara.
+            _handledPlateLastSeenUtc = now;
+            return true;
         }
 
         private byte[] DrawDetectionOnFrame(byte[] frameBytes, PlateDetectionResult? detection)
@@ -413,12 +531,12 @@ namespace Parking.UI.Windows.ViewModels
             Cv2.Rectangle(mat, roi, Scalar.Cyan, 2, LineTypes.AntiAlias);
             if (detection?.HasDetection == true)
             {
-                foreach (var rect in detection.DetectedRegions)
-                {
-                    Cv2.Rectangle(mat, rect, Scalar.LimeGreen, 4, LineTypes.AntiAlias);
-                    if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
-                        Cv2.PutText(mat, detection.PlateNumber, new OpenCvSharp.Point(rect.X, rect.Y - 15), HersheyFonts.HersheySimplex, 1.2, Scalar.LimeGreen, 3);
-                }
+                var rect = detection.DetectedRegions[0];
+                Cv2.Rectangle(mat, rect, Scalar.LimeGreen, 4, LineTypes.AntiAlias);
+                if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
+                    Cv2.PutText(mat, detection.PlateNumber,
+                        new OpenCvSharp.Point(rect.X, Math.Max(20, rect.Y - 15)),
+                        HersheyFonts.HersheySimplex, 1.2, Scalar.LimeGreen, 3);
             }
             return mat.ToBytes(".jpg");
         }

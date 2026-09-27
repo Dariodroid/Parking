@@ -15,6 +15,7 @@ namespace Parking.Infrastructure.ExternalServices
         public string PlateNumber { get; set; } = string.Empty;
         public List<OpenCvSharp.Rect> DetectedRegions { get; set; } = new List<OpenCvSharp.Rect>();
         public byte[] PlateImage { get; set; } = Array.Empty<byte>();
+        public bool HasPlateCandidates { get; set; }
         public bool HasDetection => DetectedRegions.Count > 0;
     }
 
@@ -22,8 +23,8 @@ namespace Parking.Infrastructure.ExternalServices
     {
         private static readonly Regex PlateRegex = new(@"[A-Z]{3}\d{3,4}", RegexOptions.Compiled);
         private readonly string _tessDataPath;
-        private readonly YoloPlateDetector _detector;
-        private readonly TesseractEngine _engine;
+        private readonly Lazy<YoloPlateDetector> _detector;
+        private readonly Lazy<TesseractEngine> _engine;
 
         // Coordenadas relativas al frame. La zona se muestra en el visor para orientar la cámara.
         public static OpenCvSharp.Rect GetRecognitionRegion(int width, int height) =>
@@ -34,10 +35,15 @@ namespace Parking.Infrastructure.ExternalServices
             _tessDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
             string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Model", "rfdetr_alpr.onnx");
 
-            // Inicialización del detector YOLO/RFDETR
-            _detector = new RfdetrPlateDetector(modelPath);
-            _engine = new TesseractEngine(_tessDataPath, "eng", EngineMode.Default);
-            _engine.SetVariable("tessedit_char_whitelist", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+            // El modelo y Tesseract se cargan durante la primera lectura, en
+            // Task.Run. Así el visor puede abrirse sin esperar su inicialización.
+            _detector = new Lazy<YoloPlateDetector>(() => new RfdetrPlateDetector(modelPath));
+            _engine = new Lazy<TesseractEngine>(() =>
+            {
+                var engine = new TesseractEngine(_tessDataPath, "eng", EngineMode.Default);
+                engine.SetVariable("tessedit_char_whitelist", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+                return engine;
+            });
         }
 
         // IMPLEMENTACIÓN DE LA INTERFAZ
@@ -64,7 +70,7 @@ namespace Parking.Infrastructure.ExternalServices
 
                     var roi = GetRecognitionRegion(src.Width, src.Height);
                     using var searchArea = new Mat(src, roi);
-                    var regions = _detector.Detect(searchArea);
+                    var regions = _detector.Value.Detect(searchArea);
 
                     // 2. Si no detectó nada, fallback
                     if (regions.Count == 0)
@@ -75,8 +81,7 @@ namespace Parking.Infrastructure.ExternalServices
                         .Select(r => OpenCvSharp.Rect.Intersect(r, new OpenCvSharp.Rect(0, 0, src.Width, src.Height)))
                         .Where(r => r.Width >= 60 && r.Height >= 20)
                         .Take(3).ToList();
-                    result.DetectedRegions = regions;
-
+                    result.HasPlateCandidates = regions.Count > 0;
                     foreach (var rect in regions)
                     {
                         var padded = OpenCvSharp.Rect.Intersect(
@@ -86,7 +91,8 @@ namespace Parking.Infrastructure.ExternalServices
                         using var plate = new Mat(src, padded);
                         var readings = new List<string>();
 
-                        lock (_engine)
+                        var engine = _engine.Value;
+                        lock (engine)
                         {
                             // El encabezado (por ejemplo, ECUADOR) está encima del número.
                             // El detector y la captura conservan la placa completa, pero el
@@ -97,7 +103,7 @@ namespace Parking.Infrastructure.ExternalServices
                                 using var characterBand = new Mat(plate,
                                     new OpenCvSharp.Rect(0, top, plate.Width, plate.Height - top));
                                 foreach (var candidate in CreateOcrCandidates(characterBand))
-                                    readings.AddRange(ReadPlateFromCandidate(_engine, candidate));
+                                    readings.AddRange(ReadPlateFromCandidate(engine, candidate));
 
                                 // Varios filtros deben coincidir antes de aceptar la lectura.
                                 // Solo ampliamos la zona si el recorte aún no es concluyente.
@@ -111,6 +117,10 @@ namespace Parking.Infrastructure.ExternalServices
                             result.PlateNumber = readings.GroupBy(text => text)
                                 .OrderByDescending(group => group.Count())
                                 .First().Key;
+                            // Mostrar solo la región que permitió leer la placa.
+                            // Los demás candidatos del detector siguen disponibles
+                            // para OCR, pero no se dibujan sobre el visor.
+                            result.DetectedRegions.Add(ChooseDisplayRegion(regions, rect));
                             result.PlateImage = plate.ToBytes(".jpg");
                             return result;
                         }
@@ -143,6 +153,20 @@ namespace Parking.Infrastructure.ExternalServices
                     regions.Add(rect);
             }
             return regions.OrderByDescending(r => r.Width * r.Height).ToList();
+        }
+        private static OpenCvSharp.Rect ChooseDisplayRegion(
+            IEnumerable<OpenCvSharp.Rect> regions, OpenCvSharp.Rect recognizedRegion)
+        {
+            // Una región amplia puede incluir el vehículo entero. Cuando el
+            // detector también encontró una caja menor dentro de ella, esa es
+            // la que se presenta al operador; el OCR no se modifica.
+            return regions
+                .Where(candidate => candidate.Width * candidate.Height <= recognizedRegion.Width * recognizedRegion.Height)
+                .Where(candidate => recognizedRegion.Contains(
+                    new OpenCvSharp.Point(candidate.X + candidate.Width / 2, candidate.Y + candidate.Height / 2)))
+                .Where(candidate => (double)candidate.Width / candidate.Height is >= 1.8 and <= 6.0)
+                .OrderBy(candidate => candidate.Width * candidate.Height)
+                .FirstOrDefault(recognizedRegion);
         }
 
         private static List<byte[]> CreateOcrCandidates(Mat src)
@@ -228,6 +252,9 @@ namespace Parking.Infrastructure.ExternalServices
             throw new NotImplementedException();
         }
 
-        public void Dispose() => _engine.Dispose();
+        public void Dispose()
+        {
+            if (_engine.IsValueCreated) _engine.Value.Dispose();
+        }
     }
 }

@@ -25,6 +25,11 @@ namespace Parking.UI.Windows.View.Pages
         {
             InitializeComponent();
         }
+        private void LoginPage_ContentRendered(object? sender, EventArgs e)
+        {
+            UsernameTextBox.Focus();
+            Keyboard.Focus(UsernameTextBox);
+        }
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
 

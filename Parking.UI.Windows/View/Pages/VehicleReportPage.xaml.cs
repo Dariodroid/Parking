@@ -24,5 +24,12 @@ namespace Parking.UI.Windows.View.Pages
         {
             InitializeComponent();
         }
+
+        private void ReportGrid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            ReportScrollViewer.ScrollToVerticalOffset(
+                ReportScrollViewer.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
     }
 }

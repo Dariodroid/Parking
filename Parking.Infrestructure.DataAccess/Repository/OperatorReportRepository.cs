@@ -23,7 +23,7 @@ public class OperatorReportRepository
             .Where(x =>
                 !x.is_deleted &&
                 x.collected_at >= fromDate &&
-                x.collected_at <= toDate)
+                x.collected_at < toDate)
             .GroupBy(x =>
                 x.collected_byNavigation.full_name)
             .Select(g =>

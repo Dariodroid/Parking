@@ -114,7 +114,7 @@
 
                 <StackPanel>
 
-                    <TextBlock Text="INGRESOS MES"
+                    <TextBlock Text="TOTAL DEL PERÍODO"
                                Foreground="#9CA3AF"/>
 
                     <TextBlock Text="{Binding MonthIncome,StringFormat=C}"
