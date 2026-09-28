@@ -140,7 +140,9 @@ public class LoginViewModel : BaseViewModel
 
             if (!result.Success)
             {
-                _dialogService.ShowError("Error", result.Message); return;
+                // El login no distingue públicamente entre cuentas ausentes, inactivas o claves erróneas.
+                _dialogService.ShowError("Error", "Usuario o contraseña incorrectos.");
+                return;
             }
 
             if (result.User != null)
@@ -167,7 +169,9 @@ public class LoginViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            _dialogService.ShowError("Error", ex.Message);
+            // El detalle interno puede incluir datos SQL o de una cuenta; solo queda en depuración.
+            System.Diagnostics.Debug.WriteLine($"Error de inicio de sesión: {ex}");
+            _dialogService.ShowError("Error", "No se pudo iniciar sesión. Inténtelo de nuevo más tarde.");
         }
     }
 }

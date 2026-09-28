@@ -8,6 +8,11 @@ namespace Parking.Application.Services;
 
 public class AuthenticationService : IAuthenticationService
 {
+    private const string InvalidCredentialsMessage = "Usuario o contraseña incorrectos.";
+    // Mismo formato PBKDF2 que un usuario real: 100 000 iteraciones, sal y hash de 32 bytes.
+    private const string DummyPasswordHash =
+        "100000.AAAAAAAAAAAAAAAAAAAAAA==.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
     private readonly IuserRepository _userRepository;
 
     private readonly IPasswordHasher _passwordHasher;
@@ -20,39 +25,35 @@ public class AuthenticationService : IAuthenticationService
     }
 
 
+    /// <summary>Comprueba credenciales sin revelar si el usuario existe o está activo.</summary>
+    /// <param name="request">Nombre de usuario y contraseña introducidos.</param>
+    /// <returns>Usuario autenticado o un mismo rechazo para todos los fallos de credenciales.</returns>
     public async Task<LoginResult> LoginAsync(
         LoginRequest request)
     {
+        // La consulta no cambia el texto mostrado al usuario según su resultado.
         var user = await _userRepository.GetByusernameAsync(request.Username);
-
-        if (user == null)
+        bool validPassword;
+        try
         {
-            return new LoginResult
-            {
-                Success = false,
-                Message = "Usuario no encontrado."
-            };
+            // Un usuario inexistente también ejecuta PBKDF2 para reducir diferencias de tiempo.
+            validPassword = _passwordHasher.VerifyPassword(
+                request.Password, user?.password_hash ?? DummyPasswordHash);
+        }
+        catch (Exception ex) when (ex is FormatException or ArgumentException or OverflowException)
+        {
+            // Un hash dañado tampoco debe revelar que la cuenta sí existe.
+            _passwordHasher.VerifyPassword(request.Password, DummyPasswordHash);
+            validPassword = false;
         }
 
-        if (!user.is_active)
+        if (user == null || !user.is_active || !validPassword)
         {
             return new LoginResult
             {
                 Success = false,
-                Message = "Usuario desactivado."
+                Message = InvalidCredentialsMessage
             };
-        }
-
-        bool validPassword = _passwordHasher.VerifyPassword(request.Password, user.password_hash);
-
-        if (!validPassword)
-        {
-            return new LoginResult
-            {
-                Success = false,
-                Message = "Usuario o contraseña incorrectos."
-            };
-
         }
 
         UserDto dto = new()
