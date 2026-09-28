@@ -655,12 +655,12 @@
 
                                             <!-- HORA INICIO -->
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <TextBox Text="{Binding StartTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding IsEnabled}"/>
+                                                <TextBox Text="{Binding StartTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding CanEditHours}"/>
                                                 <StackPanel Margin="5,0,0,0">
-                                                    <Button Style="{StaticResource HourButtonStyle}" Command="{Binding IncreaseStartHourCommand}">
+                                                    <Button Style="{StaticResource HourButtonStyle}" IsEnabled="{Binding CanEditHours}" Command="{Binding IncreaseStartHourCommand}">
                                                         <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
-                                                    <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" Command="{Binding DecreaseStartHourCommand}">
+                                                    <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" IsEnabled="{Binding CanEditHours}" Command="{Binding DecreaseStartHourCommand}">
                                                         <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
                                                 </StackPanel>
@@ -668,19 +668,19 @@
 
                                             <!-- HORA FIN -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
-                                                <TextBox Text="{Binding EndTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding IsEnabled}"/>
+                                                <TextBox Text="{Binding EndTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding CanEditHours}"/>
                                                 <StackPanel Margin="5,0,0,0">
-                                                    <Button Style="{StaticResource HourButtonStyle}" Command="{Binding IncreaseEndHourCommand}">
+                                                    <Button Style="{StaticResource HourButtonStyle}" IsEnabled="{Binding CanEditHours}" Command="{Binding IncreaseEndHourCommand}">
                                                         <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
-                                                    <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" Command="{Binding DecreaseEndHourCommand}">
+                                                    <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" IsEnabled="{Binding CanEditHours}" Command="{Binding DecreaseEndHourCommand}">
                                                         <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
                                                 </StackPanel>
                                             </StackPanel>
 
                                             <!-- 24 HORAS -->
-                                            <CheckBox Grid.Column="3" IsChecked="{Binding IsFullDay}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModernToggleCheckStyle}"/>
+                                            <CheckBox Grid.Column="3" IsChecked="{Binding IsFullDay}" IsEnabled="{Binding IsEnabled}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ModernToggleCheckStyle}"/>
 
                                         </Grid>
                                     </Border>
