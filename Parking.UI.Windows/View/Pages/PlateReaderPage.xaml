@@ -1,15 +1,13 @@
-﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.PlateReaderPage"
+<UserControl x:Class="Parking.UI.Windows.View.Pages.PlateReaderPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:Parking.UI.Windows.Converters"
-             mc:Ignorable="d" 
-             Background="#121212"
+             mc:Ignorable="d"
+             Background="{DynamicResource AppPageBrush}"
              d:DesignHeight="720" d:DesignWidth="1280"
-             Loaded="PlateReaderPage_Loaded"
-             Unloaded="PlateReaderPage_Unloaded"
              SizeChanged="PlateReaderPage_SizeChanged">
 
     <UserControl.Resources>
@@ -17,27 +15,29 @@
         <local:EqualityConverter x:Key="EqualityConverter"/>
         <local:VehicleNameToIconConverter x:Key="VehicleNameToIconConverter"/>
 
-        <!-- Los controles de cámara mantienen texto blanco en el tema oscuro. -->
+        <!-- La selección de cámaras usa los colores activos del tema. -->
         <Style x:Key="CameraSourceItemStyle" TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#18232E"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
             <Setter Property="Padding" Value="10,7"/>
             <Style.Triggers>
                 <Trigger Property="IsHighlighted" Value="True">
                     <Setter Property="Background" Value="#1769A8"/>
+                    <Setter Property="Foreground" Value="White"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="#1769A8"/>
+                    <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="CameraSourceStyle" TargetType="ComboBox">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#18232E"/>
-            <Setter Property="BorderBrush" Value="#6B8499"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="ItemContainerStyle" Value="{StaticResource CameraSourceItemStyle}"/>
-            <!-- El tema global dibuja blanco el área seleccionada; esta plantilla fija el fondo oscuro. -->
+            <!-- La plantilla conserva el nombre legible y usa el fondo del tema. -->
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
@@ -48,9 +48,9 @@
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="#18232E" BorderBrush="#6B8499" BorderThickness="1" CornerRadius="4">
+                                        <Border Background="{DynamicResource AppInputBrush}" BorderBrush="{DynamicResource AppInputBorderBrush}" BorderThickness="1" CornerRadius="4">
                                             <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18"
-                                                                     Foreground="White" HorizontalAlignment="Right"
+                                                                     Foreground="{DynamicResource AppTextBrush}" HorizontalAlignment="Right"
                                                                      VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         </Border>
                                     </ControlTemplate>
@@ -59,12 +59,12 @@
                             <!-- La lista contiene CameraSource; mostramos su nombre legible, no el record completo. -->
                             <TextBlock IsHitTestVisible="False" Margin="9,0,32,0"
                                        HorizontalAlignment="Left" VerticalAlignment="Center"
-                                       Foreground="White" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource AppTextBrush}" TextTrimming="CharacterEllipsis"
                                        Text="{Binding SelectedItem.DisplayName, RelativeSource={RelativeSource TemplatedParent}}"/>
                             <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
                                    Focusable="False" PopupAnimation="Fade"
                                    IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                <Border Background="#18232E" BorderBrush="#6B8499" BorderThickness="1"
+                                <Border Background="{DynamicResource AppInputBrush}" BorderBrush="{DynamicResource AppInputBorderBrush}" BorderThickness="1"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
                                     <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
                                         <StackPanel IsItemsHost="True"/>
@@ -77,10 +77,10 @@
             </Setter>
         </Style>
         <Style x:Key="CameraUrlStyle" TargetType="TextBox">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="Background" Value="#18232E"/>
-            <Setter Property="BorderBrush" Value="#6B8499"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
         </Style>
         <Style x:Key="CameraControlButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
@@ -92,8 +92,8 @@
 
         <!-- ESPACIOS REDUCIDOS PARA EVITAR SCROLL -->
         <Style x:Key="SidebarSectionStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="12"/>
@@ -132,10 +132,10 @@
             <UniformGrid Grid.Row="0" Columns="3" Margin="0,0,0,10">
 
                 <!-- TOTAL -->
-                <Border Margin="5" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="15,10">
+                <Border Margin="5" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="15,10">
                     <StackPanel>
-                        <TextBlock Text="TOTAL DE PUESTOS" Foreground="#9E9E9E" FontSize="11" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding TotalSlots}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                        <TextBlock Text="TOTAL DE PUESTOS" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding TotalSlots}" Foreground="{DynamicResource AppTextBrush}" FontSize="28" FontWeight="Bold"/>
                     </StackPanel>
                 </Border>
 
@@ -170,14 +170,14 @@
 
                 <!-- Cámara orientada a la entrada de vehículos. -->
                 <Border x:Name="EntranceCameraPanel" Grid.Column="0" DataContext="{Binding EntranceFeed}" Margin="0,0,5,0"
-                        Background="#101820" CornerRadius="8" BorderBrush="#2D4A63" BorderThickness="1">
+                        Background="{DynamicResource AppCameraPanelBrush}" CornerRadius="8" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <StackPanel Margin="10,8">
-                            <TextBlock Text="{Binding Title}" Foreground="#4FC3F7" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppAccentTextBrush}" FontWeight="Bold"/>
                             <ComboBox Style="{StaticResource CameraSourceStyle}" ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource, Mode=TwoWay}"
                                       DisplayMemberPath="DisplayName" Height="30" Margin="0,5,0,0"/>
                             <TextBox Style="{StaticResource CameraUrlStyle}" Text="{Binding NetworkUrl, UpdateSourceTrigger=PropertyChanged}"
@@ -185,11 +185,11 @@
                                      ToolTip="URL de vídeo RTSP/HTTP; en el perfil DroidCam también se admite solo la IP" Margin="0,5,0,0" Height="30"/>
                             <TextBlock Text="Introduzca la URL completa del vídeo RTSP/HTTP de la cámara IP o ANPR."
                                        Visibility="{Binding IsGenericNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
-                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                                       Foreground="{DynamicResource AppTextBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="DroidCam: escriba IP o IP:puerto; se añade /video automáticamente."
                                        Visibility="{Binding IsDroidCamSelected, Converter={StaticResource BoolToVisibilityConverter}}"
-                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
-                            <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource AppTextBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource AppTextBrush}" TextWrapping="Wrap"
                                        FontSize="11" Margin="0,5,0,0"/>
                             <!-- Los controles de Entrada actúan solo sobre este panel. -->
                             <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
@@ -202,7 +202,7 @@
                             </StackPanel>
                         </StackPanel>
                         <Grid Grid.Row="1" Background="Black">
-                            <TextBlock Text="Sin imagen de entrada" Foreground="White"
+                            <TextBlock Text="Sin imagen de entrada" Foreground="{DynamicResource AppTextBrush}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             <Image Source="{Binding Preview}" Stretch="Uniform"/>
                         </Grid>
@@ -211,14 +211,14 @@
 
                 <!-- Cámara orientada a la salida; también admite placa o QR. -->
                 <Border x:Name="ExitCameraPanel" Grid.Column="1" DataContext="{Binding ExitFeed}" Margin="5,0,0,0"
-                        Background="#101820" CornerRadius="8" BorderBrush="#2D4A63" BorderThickness="1">
+                        Background="{DynamicResource AppCameraPanelBrush}" CornerRadius="8" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <StackPanel Margin="10,8">
-                            <TextBlock Text="{Binding Title}" Foreground="#4FC3F7" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppAccentTextBrush}" FontWeight="Bold"/>
                             <ComboBox Style="{StaticResource CameraSourceStyle}" ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource, Mode=TwoWay}"
                                       DisplayMemberPath="DisplayName" Height="30" Margin="0,5,0,0"/>
                             <TextBox Style="{StaticResource CameraUrlStyle}" Text="{Binding NetworkUrl, UpdateSourceTrigger=PropertyChanged}"
@@ -226,11 +226,11 @@
                                      ToolTip="URL de vídeo RTSP/HTTP; en el perfil DroidCam también se admite solo la IP" Margin="0,5,0,0" Height="30"/>
                             <TextBlock Text="Introduzca la URL completa del vídeo RTSP/HTTP de la cámara IP o ANPR."
                                        Visibility="{Binding IsGenericNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
-                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                                       Foreground="{DynamicResource AppTextBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="DroidCam: escriba IP o IP:puerto; se añade /video automáticamente."
                                        Visibility="{Binding IsDroidCamSelected, Converter={StaticResource BoolToVisibilityConverter}}"
-                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
-                            <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource AppTextBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource AppTextBrush}" TextWrapping="Wrap"
                                        FontSize="11" Margin="0,5,0,0"/>
                             <!-- Los controles de Salida permiten trasladar aquí una cámara liberada de Entrada. -->
                             <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
@@ -243,7 +243,7 @@
                             </StackPanel>
                         </StackPanel>
                         <Grid Grid.Row="1" Background="Black">
-                            <TextBlock Text="Sin imagen de salida" Foreground="White"
+                            <TextBlock Text="Sin imagen de salida" Foreground="{DynamicResource AppTextBrush}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             <Image Source="{Binding Preview}" Stretch="Uniform"/>
                         </Grid>
@@ -259,25 +259,25 @@
                 <!-- DETECCIÓN DE PLACA -->
                 <Border Style="{StaticResource SidebarSectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
                         <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
                                  MaxLength="8"
                                  FontSize="28" FontWeight="Bold" Height="50"
-                                 Background="#0A0A0A" Foreground="#FFFFFF" 
-                                 BorderBrush="#444444" BorderThickness="1"
+                                 Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
+                                 BorderBrush="{DynamicResource AppInputBorderBrush}" BorderThickness="1"
                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                 CaretBrush="White"/>
-                        <TextBlock Text="Escriba letras y números; el guion se agrega solo" Foreground="#555555" FontSize="10" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                                 CaretBrush="{DynamicResource AppTextBrush}"/>
+                        <TextBlock Text="Escriba letras y números; el guion se agrega solo" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="10" Margin="0,4,0,0" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
                 <!-- RESUMEN DE COBRO -->
-                <Border Style="{StaticResource SidebarSectionStyle}" Background="#151A20" BorderBrush="#2D4A63">
+                <Border Style="{StaticResource SidebarSectionStyle}" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}">
                     <StackPanel>
                         <TextBlock Text="RESUMEN DE COBRO" Foreground="#4A90E2" FontSize="11" FontWeight="Bold" Margin="0,0,0,4"/>
                         <Viewbox Height="40">
-                            <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}" 
-                                       FontWeight="Black" Foreground="#FFFFFF" />
+                            <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}"
+                                       FontWeight="Black" Foreground="{DynamicResource AppTextBrush}" />
                         </Viewbox>
                     </StackPanel>
                 </Border>
@@ -286,7 +286,7 @@
                 <Border Style="{StaticResource SidebarSectionStyle}">
                     <StackPanel>
 
-                        <TextBlock Text="TIPO DE VEHÍCULO" Foreground="#AAAAAA" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <TextBlock Text="TIPO DE VEHÍCULO" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
                         <ItemsControl ItemsSource="{Binding VehicleTypes}">
                             <ItemsControl.ItemsPanel>
@@ -308,13 +308,13 @@
 
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
-                                                <Border x:Name="cardBorder" CornerRadius="8" BorderThickness="2" Background="#1A1A1A" BorderBrush="#333333">
+                                                <Border x:Name="cardBorder" CornerRadius="8" BorderThickness="2" Background="{DynamicResource AppSidebarBrush}" BorderBrush="{DynamicResource AppBorderBrush}">
                                                     <ContentPresenter Content="{TemplateBinding Content}"/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="cardBorder" Property="BorderBrush" Value="#4FC3F7"/>
-                                                        <Setter TargetName="cardBorder" Property="Background" Value="#15293A"/>
+                                                        <Setter TargetName="cardBorder" Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
                                                     </Trigger>
                                                     <MultiDataTrigger>
                                                         <MultiDataTrigger.Conditions>
@@ -328,7 +328,7 @@
                                                             </Condition>
                                                         </MultiDataTrigger.Conditions>
                                                         <Setter TargetName="cardBorder" Property="BorderBrush" Value="#00BFFF"/>
-                                                        <Setter TargetName="cardBorder" Property="Background" Value="#0F1D29"/>
+                                                        <Setter TargetName="cardBorder" Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
                                                     </MultiDataTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -338,13 +338,13 @@
                                             <materialDesign:PackIcon Kind="{Binding name, Converter={StaticResource VehicleNameToIconConverter}}"
                                                                      Width="26"
                                                                      Height="26"
-                                                                     Foreground="#4FC3F7"
+                                                                     Foreground="{DynamicResource AppAccentTextBrush}"
                                                                      HorizontalAlignment="Center"/>
                                             <TextBlock Margin="0,4,0,0"
                                                        Text="{Binding name}"
                                                        FontWeight="Bold"
                                                        FontSize="12"
-                                                       Foreground="White"
+                                                       Foreground="{DynamicResource AppTextBrush}"
                                                        HorizontalAlignment="Center"/>
                                             <TextBlock Margin="0,2,0,0"
                                                        Text="{Binding hourly_rate, StringFormat=$ {0:F2}/h}"
@@ -360,10 +360,10 @@
                         <TextBlock Margin="0,10,0,12"
                                    Text="Seleccione el tipo con un clic."
                                    HorizontalAlignment="Center"
-                                   Foreground="#666666"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"
                                    FontSize="11"/>
 
-                        <TextBlock Text="PUESTO LIBRE (OPCIONAL)" Foreground="#AAAAAA"
+                        <TextBlock Text="PUESTO LIBRE (OPCIONAL)" Foreground="{DynamicResource AppMutedTextBrush}"
                                    FontSize="12" FontWeight="SemiBold" Margin="0,0,0,7"/>
                         <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>
@@ -374,16 +374,16 @@
                                       SelectedItem="{Binding SelectedSlot, Mode=TwoWay}"
                                       DisplayMemberPath="slot_number"
                                       Height="36" VerticalContentAlignment="Center"
-                                      Background="#0A0A0A" Foreground="White"
-                                      BorderBrush="#444444"/>
+                                      Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
+                                      BorderBrush="{DynamicResource AppInputBorderBrush}"/>
                             <Button Grid.Column="1" Content="Automático"
                                     Command="{Binding UseAutomaticSlotCommand}"
                                     Margin="8,0,0,0" Padding="10,4"
-                                    Background="#263238" Foreground="White"
-                                    BorderBrush="#444444" Cursor="Hand"/>
+                                    Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppTextBrush}"
+                                    BorderBrush="{DynamicResource AppInputBorderBrush}" Cursor="Hand"/>
                         </Grid>
                         <TextBlock Text="Sin elegir un puesto, se asigna automáticamente."
-                                   Foreground="#666666" FontSize="11" Margin="0,0,0,12"/>
+                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" Margin="0,0,0,12"/>
 
                         <!-- BOTÓN REGISTRAR ENTRADA CON ICONO -->
                         <Button Command="{Binding SavePlateCommand}"
@@ -398,7 +398,7 @@
                         <!-- BOTÓN REGISTRAR SALIDA CON ICONO -->
                         <Button Command="{Binding RegisterExitCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
-                                Background="#C62828" Foreground="White" 
+                                Background="#C62828" Foreground="White"
                                 Margin="0">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="Logout" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -411,16 +411,16 @@
                 <!-- RESULTADO DE LA OPERACIÓN -->
                 <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="60">
                     <StackPanel>
-                        <TextBlock Text="ESTADO DE OPERACIÓN" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <TextBlock Text="ESTADO DE OPERACIÓN" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
                         <TextBlock Text="{Binding StatusMessage}"
-                                   Foreground="#CCCCCC" FontSize="13" 
+                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="13"
                                    TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Las fuentes se inician solo al pulsar el control del visor correspondiente. -->
                 <TextBlock Text="Webcam USB o virtual: elija Cámara Windows. Cámara IP o ANPR: configure su URL de vídeo en Cámara IP / red."
-                           Foreground="White" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                           Foreground="{DynamicResource AppTextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
                 <Grid Margin="0,2,0,5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -429,8 +429,8 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- BOTÓN INICIAR CÁMARA CON ICONO -->
-                    <Button Command="{Binding StartCameraCommand}" 
-                            Background="#333333" Foreground="White"
+                    <Button Command="{Binding StartCameraCommand}"
+                            Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppTextBrush}"
                             Padding="5" Margin="0,0,5,0" FontSize="12"
                             BorderThickness="0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -441,8 +441,8 @@
 
                     <!-- El control lateral cierra las dos capturas. -->
                     <Button Grid.Column="1"
-                            Command="{Binding StopCameraCommand}" 
-                            Background="#333333" Foreground="White"
+                            Command="{Binding StopCameraCommand}"
+                            Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppTextBrush}"
                             Padding="5" Margin="5,0,5,0" FontSize="12"
                             BorderThickness="0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -452,7 +452,7 @@
                     </Button>
                     <!-- Permite descubrir una webcam conectada después de abrir la pantalla. -->
                     <Button Grid.Column="2" Command="{Binding RefreshCamerasCommand}"
-                            Background="#333333" Foreground="White"
+                            Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppTextBrush}"
                             Padding="5" Margin="5,0,0,0" FontSize="12"
                             BorderThickness="0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

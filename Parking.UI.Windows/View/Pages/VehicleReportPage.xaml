@@ -1,8 +1,8 @@
-﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.VehicleReportPage"
+<UserControl x:Class="Parking.UI.Windows.View.Pages.VehicleReportPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             Background="#121212">
+             Background="{DynamicResource AppPageBrush}">
 
     <UserControl.Resources>
         <!-- Agrupa datos relacionados en una sola celda sin recortar el texto. -->
@@ -11,24 +11,17 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,3"/>
         </Style>
-        <SolidColorBrush x:Key="WindowBg" Color="#121212"/>
-        <SolidColorBrush x:Key="PanelBg" Color="#1F1F1F"/>
-        <SolidColorBrush x:Key="InputBg" Color="#141414"/>
-        <SolidColorBrush x:Key="BorderDark" Color="#333333"/>
-        <SolidColorBrush x:Key="TextNormal" Color="#C8C8C8"/>
-        <SolidColorBrush x:Key="TextHighlight" Color="#F0F0F0"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#888888"/>
         <SolidColorBrush x:Key="AccentColor" Color="#E46D24"/>
 
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource InputBg}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextHighlight}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderDark}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,0"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
             <Style.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="4"/>
@@ -36,16 +29,16 @@
             </Style.Resources>
             <Style.Triggers>
                 <Trigger Property="IsKeyboardFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#555555"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#2A2A2A"/>
-            <Setter Property="Foreground" Value="{StaticResource TextHighlight}"/>
+            <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#3F3F3F"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="Padding" Value="15,6"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -57,18 +50,18 @@
             </Style.Resources>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#383838"/>
+                    <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
                     <Setter Property="BorderBrush" Value="#555"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#1A1A1A"/>
+                    <Setter Property="Background" Value="{DynamicResource AppSidebarBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style TargetType="ToggleButton">
-            <Setter Property="Background" Value="#2A2A2A"/>
-            <Setter Property="BorderBrush" Value="#3F3F3F"/>
+            <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Width" Value="42"/>
@@ -78,18 +71,18 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <Grid>
-                            <Border x:Name="Track" 
-                                    Background="{TemplateBinding Background}" 
-                                    BorderBrush="{TemplateBinding BorderBrush}" 
-                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                            <Border x:Name="Track"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="10"/>
 
-                            <Border x:Name="Thumb" 
-                                    Width="14" 
-                                    Height="14" 
-                                    CornerRadius="7" 
-                                    Background="#A0A0A0" 
-                                    HorizontalAlignment="Left" 
+                            <Border x:Name="Thumb"
+                                    Width="14"
+                                    Height="14"
+                                    CornerRadius="7"
+                                    Background="#A0A0A0"
+                                    HorizontalAlignment="Left"
                                     Margin="3,0,0,0"
                                     VerticalAlignment="Center">
                                 <Border.Effect>
@@ -143,8 +136,8 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Background="{StaticResource PanelBg}"
-                BorderBrush="{StaticResource BorderDark}"
+                Background="{DynamicResource AppSurfaceBrush}"
+                BorderBrush="{DynamicResource AppBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="15"
@@ -154,64 +147,64 @@
 
                 <!-- GRUPO 1: Filtros de Texto -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
-                    <TextBlock Text="PLACA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBlock Text="PLACA" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <TextBox Width="130" Text="{Binding Filter.Plate, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
-                    <TextBlock Text="PROPIETARIO" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBlock Text="PROPIETARIO" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <TextBox Width="170" Text="{Binding Filter.OwnerName, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
-                <Border Background="#333333" Width="1" Height="25" Margin="0,0,20,5"/>
+                <Border Background="{DynamicResource AppRaisedBrush}" Width="1" Height="25" Margin="0,0,20,5"/>
 
                 <!-- GRUPO 2: Toggles -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
-                    <TextBlock Text="MENSUALES" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBlock Text="MENSUALES" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeMonthly}" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <TextBlock Text="OCASIONALES" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBlock Text="OCASIONALES" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeOccasional}" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
-                    <TextBlock Text="DENTRO" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBlock Text="DENTRO" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeInside}" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <TextBlock Text="FUERA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <TextBlock Text="FUERA" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                     <ToggleButton IsChecked="{Binding Filter.IncludeOutside}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Border Background="#333333" Width="1" Height="25" Margin="0,0,20,5"/>
+                <Border Background="{DynamicResource AppRaisedBrush}" Width="1" Height="25" Margin="0,0,20,5"/>
 
                 <!-- GRUPO 3: Fechas -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,20,5" VerticalAlignment="Center">
-                    <TextBlock Text="DESDE" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                    <DatePicker Width="130" SelectedDate="{Binding Filter.FromDate}" Foreground="White" Background="#0A0A0A">
+                    <TextBlock Text="DESDE" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                    <DatePicker Width="130" SelectedDate="{Binding Filter.FromDate}" Foreground="{DynamicResource AppTextBrush}" Background="{DynamicResource AppInputBrush}">
                         <DatePicker.Resources>
                             <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
                             <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
                             <Style TargetType="{x:Type DatePickerTextBox}">
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="Background" Value="#0A0A0A"/>
-                                <Setter Property="CaretBrush" Value="White"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+                                <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
                             </Style>
                         </DatePicker.Resources>
                     </DatePicker>
 
-                    <TextBlock Text="HASTA" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="15,0,8,0"/>
-                    <DatePicker Width="130" SelectedDate="{Binding Filter.ToDate}" Foreground="White" Background="#0A0A0A">
+                    <TextBlock Text="HASTA" Foreground="{DynamicResource AppMutedTextBrush}" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="15,0,8,0"/>
+                    <DatePicker Width="130" SelectedDate="{Binding Filter.ToDate}" Foreground="{DynamicResource AppTextBrush}" Background="{DynamicResource AppInputBrush}">
                         <DatePicker.Resources>
                             <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
                             <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
                             <Style TargetType="{x:Type DatePickerTextBox}">
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="Background" Value="#0A0A0A"/>
-                                <Setter Property="CaretBrush" Value="White"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+                                <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
                             </Style>
                         </DatePicker.Resources>
                     </DatePicker>
                 </StackPanel>
 
-                <Border Background="#333333" Width="1" Height="25" Margin="0,0,20,5"/>
+                <Border Background="{DynamicResource AppRaisedBrush}" Width="1" Height="25" Margin="0,0,20,5"/>
 
                 <!-- GRUPO 4: Acciones con Iconos -->
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5" VerticalAlignment="Center">
@@ -240,16 +233,16 @@
 
         <!-- Este visor desplaza la hoja completa; la tabla no mantiene un scroll vertical propio. -->
         <ScrollViewer x:Name="ReportScrollViewer" Grid.Row="1"
-                      Background="#0A0A0A" 
-                      VerticalScrollBarVisibility="Auto" 
+                      Background="{DynamicResource AppInputBrush}"
+                      VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Auto"
                       Padding="20">
 
-            <Border Width="1200" 
-                    MinHeight="850" 
-                    Background="White" 
-                    Padding="60,50" 
-                    HorizontalAlignment="Center" 
+            <Border Width="1200"
+                    MinHeight="850"
+                    Background="White"
+                    Padding="60,50"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Top">
 
                 <Border.Effect>
@@ -263,7 +256,7 @@
 
                     <Style TargetType="DataGrid">
                         <Setter Property="Background" Value="White"/>
-                        <Setter Property="BorderBrush" Value="#333333"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
                         <Setter Property="BorderThickness" Value="1"/>
                         <Setter Property="RowBackground" Value="White"/>
                         <Setter Property="AlternatingRowBackground" Value="#F4F6F8"/>
@@ -320,21 +313,21 @@
 
                     <Grid Grid.Row="0" Margin="0,0,0,25">
                         <StackPanel HorizontalAlignment="Left">
-                            <TextBlock Text="SISTEMA DE GESTIÓN DE PARQUEADERO" 
-                                       FontSize="13" 
-                                       FontWeight="SemiBold" 
-                                       Foreground="#666666"/>
+                            <TextBlock Text="SISTEMA DE GESTIÓN DE PARQUEADERO"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppMutedTextBrush}"/>
                             <TextBlock Text="INFORME DETALLADO DE VEHÍCULOS"
-                                       FontSize="26" 
-                                       FontWeight="Black" 
+                                       FontSize="26"
+                                       FontWeight="Black"
                                        Foreground="#17324D"
                                        Margin="0,2,0,0"/>
                         </StackPanel>
 
                         <TextBlock Text="{Binding ReportDate, StringFormat='Emitido: {0:dd/MM/yyyy HH:mm}'}"
-                                   HorizontalAlignment="Right" 
-                                   VerticalAlignment="Top" 
-                                   Foreground="#555555" 
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Top"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"
                                    FontStyle="Italic"/>
 
                         <Separator VerticalAlignment="Bottom" Margin="0,15,0,0" Background="#245A81" Height="3"/>
@@ -393,34 +386,34 @@
                     </StackPanel>
 
                     <Border Grid.Row="3"
-                            BorderBrush="#333333" 
-                            BorderThickness="0,2,0,0" 
-                            Margin="0,35,0,0" 
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="0,2,0,0"
+                            Margin="0,35,0,0"
                             Padding="0,20,0,0">
 
                         <Grid>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                 <StackPanel HorizontalAlignment="Right" Margin="0,0,40,0">
-                                    <TextBlock Text="TOTAL VEHÍCULOS" 
-                                               Foreground="#555555" 
-                                               HorizontalAlignment="Right" 
+                                    <TextBlock Text="TOTAL VEHÍCULOS"
+                                               Foreground="{DynamicResource AppMutedTextBrush}"
+                                               HorizontalAlignment="Right"
                                                FontSize="11" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding Vehicles.Count}" 
-                                               FontSize="24" 
-                                               FontWeight="Black" 
-                                               Foreground="#111111" 
+                                    <TextBlock Text="{Binding Vehicles.Count}"
+                                               FontSize="24"
+                                               FontWeight="Black"
+                                               Foreground="#111111"
                                                HorizontalAlignment="Right"/>
                                 </StackPanel>
 
                                 <StackPanel HorizontalAlignment="Right">
                                     <TextBlock Text="TOTAL COBRADO MOSTRADO"
-                                               Foreground="#555555" 
-                                               HorizontalAlignment="Right" 
+                                               Foreground="{DynamicResource AppMutedTextBrush}"
+                                               HorizontalAlignment="Right"
                                                FontSize="11" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding TotalCollected, StringFormat=C}" 
-                                               FontSize="24" 
-                                               FontWeight="Black" 
-                                               Foreground="#000000" 
+                                    <TextBlock Text="{Binding TotalCollected, StringFormat=C}"
+                                               FontSize="24"
+                                               FontWeight="Black"
+                                               Foreground="#000000"
                                                HorizontalAlignment="Right"/>
                                 </StackPanel>
                             </StackPanel>

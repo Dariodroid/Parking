@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             Background="#121212" FontFamily="Segoe UI">
+             Background="{DynamicResource AppPageBrush}" FontFamily="Segoe UI">
     <!-- Estilos compartidos de las acciones y de la tabla del informe. -->
     <UserControl.Resources>
         <Style x:Key="ActionButton" TargetType="Button">
@@ -31,15 +31,15 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Border Grid.Row="0" Background="#1E1E1E" BorderBrush="#333333"
+        <Border Grid.Row="0" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
                 BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,12">
             <WrapPanel VerticalAlignment="Center">
-                <TextBlock Text="DESDE" Foreground="#AAAAAA" FontWeight="SemiBold"
+                <TextBlock Text="DESDE" Foreground="{DynamicResource AppMutedTextBrush}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <DatePicker Width="140" SelectedDate="{Binding FromDate}" Foreground="White" Background="#0A0A0A"/>
-                <TextBlock Text="HASTA" Foreground="#AAAAAA" FontWeight="SemiBold"
+                <DatePicker Width="140" SelectedDate="{Binding FromDate}" Foreground="{DynamicResource AppTextBrush}" Background="{DynamicResource AppInputBrush}"/>
+                <TextBlock Text="HASTA" Foreground="{DynamicResource AppMutedTextBrush}" FontWeight="SemiBold"
                            VerticalAlignment="Center" Margin="20,0,8,0"/>
-                <DatePicker Width="140" SelectedDate="{Binding ToDate}" Foreground="White" Background="#0A0A0A"/>
+                <DatePicker Width="140" SelectedDate="{Binding ToDate}" Foreground="{DynamicResource AppTextBrush}" Background="{DynamicResource AppInputBrush}"/>
                 <Button Command="{Binding RefreshCommand}" Background="#245A81" Style="{StaticResource ActionButton}">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="DatabaseRefresh" Width="18" Height="18" Margin="0,0,8,0"/>

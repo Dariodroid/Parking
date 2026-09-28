@@ -1,4 +1,4 @@
-﻿using OpenCvSharp;
+using OpenCvSharp;
 using Parking.Application.EntityService;
 using Parking.Application.Services;
 using Parking.Application.UseCases;
@@ -39,7 +39,7 @@ namespace Parking.UI.Windows.ViewModels
         private readonly SemaphoreSlim _plateReaderGate = new(1, 1);
         // Apertura y cierre se serializan para que una captura no se libere durante su inicio.
         private readonly SemaphoreSlim _cameraOperationGate = new(1, 1);
-        private bool _isViewActive = true;
+        private bool _isOperational = true;
 
         private string _plateNumber = string.Empty;
         private string _statusMessage = "Listo para iniciar.";
@@ -197,8 +197,8 @@ namespace Parking.UI.Windows.ViewModels
             {
                 // Detectamos dispositivos sin abrirlos de forma permanente.
                 await RefreshCamerasAsync();
-                // La navegación puede retirar la vista mientras se buscan drivers.
-                if (!_isViewActive) return;
+                // El cierre de la aplicación puede comenzar mientras se buscan drivers.
+                if (!_isOperational) return;
                 // Se espera la orden explícita del operador para cada cámara.
                 EntranceFeed.Status = "Seleccione una cámara y pulse Iniciar entrada.";
                 ExitFeed.Status = "Seleccione una cámara y pulse Iniciar salida.";
@@ -410,7 +410,7 @@ namespace Parking.UI.Windows.ViewModels
                 }
 
                 // Se reabren únicamente los visores que estaban activos antes de Buscar.
-                if (_isViewActive)
+                if (_isOperational)
                 {
                     if (restartEntrance) await StartFeedAsync(EntranceFeed);
                     if (restartExit) await StartFeedAsync(ExitFeed);
@@ -420,12 +420,12 @@ namespace Parking.UI.Windows.ViewModels
             finally { _cameraOperationGate.Release(); }
         }
 
-        /// <summary>Detiene las capturas al abandonar la pantalla de operaciones.</summary>
+        /// <summary>Detiene las capturas al cerrar la ventana principal.</summary>
         /// <returns>Tarea que termina cuando ambas fuentes quedan liberadas.</returns>
         public Task DeactivateAsync()
         {
             // Evita que una enumeración aún pendiente vuelva a abrir cámaras.
-            _isViewActive = false;
+            _isOperational = false;
             return StopCameraAsync();
         }
 
@@ -433,8 +433,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <returns>Tarea que termina tras intentar conectar ambos visores.</returns>
         private async Task StartCameraAsync()
         {
-            // Una vista retirada no debe conservar capturas en segundo plano.
-            if (!_isViewActive) return;
+            // Una aplicación en cierre no debe volver a abrir capturas.
+            if (!_isOperational) return;
             await _cameraOperationGate.WaitAsync();
             try
             {
@@ -529,8 +529,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <returns>Tarea que termina cuando la captura anterior se libera y la nueva se abre.</returns>
         private async Task StartSingleFeedAsync(CameraFeedViewModel feed)
         {
-            // Una vista retirada no debe volver a encender el dispositivo.
-            if (!_isViewActive) return;
+            // Una aplicación en cierre no debe volver a encender el dispositivo.
+            if (!_isOperational) return;
             await _cameraOperationGate.WaitAsync();
             try
             {

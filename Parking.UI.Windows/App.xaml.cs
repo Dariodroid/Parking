@@ -23,19 +23,33 @@ namespace Parking.UI.Windows
 {
     public partial class App : System.Windows.Application
     {
+        /// <summary>Contenedor de servicios compartido por las ventanas de la aplicación.</summary>
         public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
+        /// <summary>Carga preferencias locales, registra servicios y abre configuración o login.</summary>
+        /// <param name="e">Argumentos de inicio proporcionados por WPF.</param>
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
+            // El tema y la conexión pertenecen al usuario actual de esta instalación.
+            var settingsStore = new ApplicationSettingsStore();
+            var themeService = new ThemeService(settingsStore);
+            themeService.ApplyStored();
             var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSingleton(settingsStore);
+            serviceCollection.AddSingleton(themeService);
 
             // ====================== 1. ENTITY FRAMEWORK CORE ======================
-            serviceCollection.AddDbContext<parking_dbContext>(options =>
+            serviceCollection.AddDbContext<parking_dbContext>((provider, options) =>
             {
+                // No se distribuye la dirección SQL de la computadora de desarrollo.
+                string connectionString = provider.GetRequiredService<ApplicationSettingsStore>()
+                    .Load().ConnectionString;
+                if (string.IsNullOrWhiteSpace(connectionString))
+                    throw new InvalidOperationException("Configure la conexión SQL antes de iniciar sesión.");
                 options.UseSqlServer(
-                    "Server=LAPTOP-E00ITAMO\\SQLEXPRESS;Database=parking_db;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true;",
+                    connectionString,
                     sql => sql.MigrationsAssembly("Parking.Infrastructure.DataAccess")
                 );
             });
@@ -56,8 +70,9 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<IAuthenticationService, AuthenticationService>();
             serviceCollection.AddScoped<IPasswordHasher, PasswordHasher>();
             // ====================== 3. SERVICIOS EXTERNOS ======================
-            serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
-                new RfdetrPlateDetector(@"C:\users\Dario Castillo\source\repos\Parking\Parking.Infreastructure.ExternalServices\Model\rfdetr_alpr.onnx"));
+            serviceCollection.AddSingleton<YoloPlateDetector>(_ =>
+                new RfdetrPlateDetector(System.IO.Path.Combine(
+                    AppContext.BaseDirectory, "Model", "rfdetr_alpr.onnx")));
 
             // Los visores reciben capturas independientes y el catálogo enumera las cámaras Windows.
             serviceCollection.AddSingleton<ICameraServiceFactory, OpenCvCameraServiceFactory>();
@@ -91,6 +106,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<VehicleReportViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();
             serviceCollection.AddTransient<LoginViewModel>();
+            serviceCollection.AddTransient<ApplicationSettingsViewModel>();
 
             // ====================== 6. VENTANAS ======================
             serviceCollection.AddSingleton<MainWindow>();
@@ -98,21 +114,24 @@ namespace Parking.UI.Windows
             // ====================== BUILD ======================
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            // Mostrar ventana principal
-            //var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-            //MainWindow = mainWindow;
-            //mainWindow.Show();
+            // La instalación inicial pide el servidor antes de construir el login.
+            if (string.IsNullOrWhiteSpace(settingsStore.Load().ConnectionString))
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                var settingsVm = ServiceProvider.GetRequiredService<ApplicationSettingsViewModel>();
+                if (new ConnectionSetupWindow(settingsVm).ShowDialog() != true)
+                {
+                    Shutdown();
+                    return;
+                }
+            }
 
+            // El login se crea después de que exista una cadena SQL válida.
             var loginWindow = new LoginPage();
-
-
-
             loginWindow.DataContext =
                 ServiceProvider.GetRequiredService<LoginViewModel>();
-
-
-
             loginWindow.Show();
+            ShutdownMode = ShutdownMode.OnLastWindowClose;
         }
 
         protected override void OnExit(ExitEventArgs e)

@@ -11,6 +11,8 @@ namespace Parking.UI.Windows.ViewModels
         private string _pageTitle = "Operaciones";
         private string _currentMenuKey = "Operaciones"; // Propiedad para el menú activo
         private readonly IServiceProvider _serviceProvider;
+        // La sesión de captura permanece viva mientras se visitan otras secciones.
+        private PlateReaderViewModel? _operationViewModel;
 
         public object? CurrentView
         {
@@ -32,6 +34,10 @@ namespace Parking.UI.Windows.ViewModels
         }
 
         public ICommand NavigateCommand { get; }
+
+        /// <summary>Libera las cámaras al cerrar la ventana principal.</summary>
+        /// <returns>Tarea que finaliza tras detener las capturas activas.</returns>
+        public Task ShutdownCamerasAsync() => _operationViewModel?.DeactivateAsync() ?? Task.CompletedTask;
 
         public MainWindowViewModel(IServiceProvider serviceProvider)
         {
@@ -55,8 +61,9 @@ namespace Parking.UI.Windows.ViewModels
             switch (destination)
             {
                 case "Operaciones":
-                    var operationVm = _serviceProvider.GetRequiredService<PlateReaderViewModel>();
-                    CurrentView = operationVm;
+                    // Reutilizar el mismo controlador conserva vídeo, selección y reconocimiento.
+                    _operationViewModel ??= _serviceProvider.GetRequiredService<PlateReaderViewModel>();
+                    CurrentView = _operationViewModel;
                     PageTitle = "Registro de Entrada / Salida";
                     break;
 
@@ -74,6 +81,11 @@ namespace Parking.UI.Windows.ViewModels
                     var configVm = _serviceProvider.GetRequiredService<ParkingSlotViewModel>();
                     CurrentView = configVm;
                     PageTitle = "Configuraciones";
+                    break;
+
+                case "Apariencia y conexión":
+                    CurrentView = _serviceProvider.GetRequiredService<ApplicationSettingsViewModel>();
+                    PageTitle = "Apariencia y conexión";
                     break;
 
                 case "Seguridad":

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.ParkingSlotPage"
+<UserControl x:Class="Parking.UI.Windows.View.Pages.ParkingSlotPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,14 +6,14 @@
              xmlns:conv="clr-namespace:Parking.UI.Windows.Converters"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             Background="#121212"
+             Background="{DynamicResource AppPageBrush}"
              FontFamily="Segoe UI">
 
     <UserControl.Resources>
 
         <Style x:Key="SectionStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="15"/>
@@ -21,7 +21,7 @@
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedTextBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
@@ -29,15 +29,15 @@
 
         <!-- NUEVO ESTILO DE INPUTS (BORDE REDONDEADO) -->
         <Style x:Key="ModernInputBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Height" Value="38"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#555555"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -73,9 +73,9 @@
         </Style>
 
         <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#1A1A1A"/>
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSidebarBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -84,21 +84,21 @@
         </Style>
 
         <Style TargetType="DataGridCell">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="8"/>
         </Style>
 
         <Style TargetType="DataGridRow">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#252525"/>
+                    <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#15293A"/>
+                    <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -120,19 +120,19 @@
                 <!-- FORMULARIO -->
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="PUESTO DE PARQUEO" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+                        <TextBlock Text="PUESTO DE PARQUEO" Foreground="{DynamicResource AppTextBrush}" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
 
                         <TextBlock Text="CÓDIGO DEL PUESTO" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
-                            <TextBox Text="{Binding SlotNumber, UpdateSourceTrigger=PropertyChanged}" 
-                                     BorderThickness="0" Background="Transparent" Foreground="White" 
-                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                            <TextBox Text="{Binding SlotNumber, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}"
+                                     VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                         </Border>
 
-                        <TextBlock Text="Ejemplos: 1, 1A, A-01, MOTO-01" Foreground="#666666" FontSize="11" Margin="0,0,0,15"/>
+                        <TextBlock Text="Ejemplos: 1, 1A, A-01, MOTO-01" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" Margin="0,0,0,15"/>
 
                         <TextBlock Text="ESTADO" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding OccupancyStatus}" Foreground="#4FC3F7" FontWeight="SemiBold" FontSize="14"/>
+                        <TextBlock Text="{Binding OccupancyStatus}" Foreground="{DynamicResource AppAccentTextBrush}" FontWeight="SemiBold" FontSize="14"/>
                     </StackPanel>
                 </Border>
 
@@ -153,7 +153,7 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Command="{Binding NewCommand}" Background="#333333" Foreground="#DDDDDD" Style="{StaticResource ActionButtonStyle}">
+                        <Button Command="{Binding NewCommand}" Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppMutedTextBrush}" Style="{StaticResource ActionButtonStyle}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="PlusBox" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="NUEVO" VerticalAlignment="Center"/>
@@ -172,8 +172,8 @@
                 <!-- LOG DEL SISTEMA -->
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="#CCCCCC" TextWrapping="Wrap" FontSize="13"/>
+                        <TextBlock Text="LOG DEL SISTEMA" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" FontSize="13"/>
                     </StackPanel>
                 </Border>
 
@@ -181,19 +181,19 @@
         </ScrollViewer>
 
         <!-- TABLA -->
-        <Border Grid.Column="2" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
+        <Border Grid.Column="2" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
             <DataGrid ItemsSource="{Binding Slots}"
                       SelectedItem="{Binding SelectedSlot}"
                       AutoGenerateColumns="False"
                       Background="Transparent"
-                      Foreground="White"
+                      Foreground="{DynamicResource AppTextBrush}"
                       BorderThickness="0"
                       GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#333333"
-                      VerticalGridLinesBrush="#333333"
+                      HorizontalGridLinesBrush="{DynamicResource AppBorderBrush}"
+                      VerticalGridLinesBrush="{DynamicResource AppBorderBrush}"
                       HeadersVisibility="Column"
                       RowBackground="Transparent"
-                      AlternatingRowBackground="#252525"
+                      AlternatingRowBackground="{DynamicResource AppRaisedBrush}"
                       CanUserAddRows="False"
                       IsReadOnly="True"
                       ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
@@ -223,7 +223,7 @@
                                                         <Border Width="70" Height="30" Background="{TemplateBinding Background}" CornerRadius="15">
                                                             <Grid>
                                                                 <Ellipse x:Name="SwitchThumb" Width="24" Height="24" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0"/>
-                                                                <TextBlock x:Name="SwitchText" Text="LIBRE" Foreground="White" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0"/>
+                                                                <TextBlock x:Name="SwitchText" Text="LIBRE" Foreground="{DynamicResource AppTextBrush}" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0"/>
                                                             </Grid>
                                                         </Border>
                                                         <ControlTemplate.Triggers>

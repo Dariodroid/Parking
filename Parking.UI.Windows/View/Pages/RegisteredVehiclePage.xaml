@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.RegisteredVehiclePage"
+<UserControl x:Class="Parking.UI.Windows.View.Pages.RegisteredVehiclePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,7 +6,7 @@
              xmlns:conv="clr-namespace:Parking.UI.Windows.Converters"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             Background="#121212"
+             Background="{DynamicResource AppPageBrush}"
              FontFamily="Segoe UI"
              d:DesignHeight="720"
              d:DesignWidth="1280">
@@ -20,9 +20,9 @@
         <!-- ========================================================== -->
         <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Height" Value="34"/>
-            <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="6,2"/>
             <Setter Property="FontSize" Value="13"/>
@@ -30,8 +30,8 @@
             <Setter Property="ItemContainerStyle">
                 <Setter.Value>
                     <Style TargetType="ComboBoxItem">
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="Background" Value="#0A0A0A"/>
+                        <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
                         <Setter Property="Padding" Value="10,8"/>
                         <Style.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
@@ -59,8 +59,8 @@
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
                                         <Border x:Name="ToggleButtonBorder"
-                                                Background="#0A0A0A"
-                                                BorderBrush="#444444"
+                                                Background="{DynamicResource AppInputBrush}"
+                                                BorderBrush="{DynamicResource AppInputBorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="6">
                                             <Grid>
@@ -71,14 +71,14 @@
                                                 <materialDesign:PackIcon Grid.Column="1"
                                                                          Kind="ChevronDown"
                                                                          Width="20" Height="20"
-                                                                         Foreground="#AAAAAA"
+                                                                         Foreground="{DynamicResource AppMutedTextBrush}"
                                                                          HorizontalAlignment="Center"
                                                                          VerticalAlignment="Center"/>
                                             </Grid>
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ToggleButtonBorder" Property="BorderBrush" Value="#555555"/>
+                                                <Setter TargetName="ToggleButtonBorder" Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -93,7 +93,7 @@
                                               VerticalAlignment="Center"
                                               Content="{TemplateBinding SelectionBoxItem}"
                                               ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                              TextElement.Foreground="White"
+                                              TextElement.Foreground="{DynamicResource AppTextBrush}"
                                               TextElement.FontSize="13"
                                               TextElement.FontWeight="SemiBold"/>
 
@@ -104,8 +104,8 @@
                                    Focusable="False"
                                    PopupAnimation="Slide"
                                    IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                <Border Background="#0A0A0A"
-                                        BorderBrush="#444444"
+                                <Border Background="{DynamicResource AppInputBrush}"
+                                        BorderBrush="{DynamicResource AppInputBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
@@ -123,8 +123,8 @@
 
         <!-- ESTILOS GENERALES (ESPACIOS REDUCIDOS) -->
         <Style x:Key="SectionStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="12"/>
@@ -132,49 +132,49 @@
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedTextBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
 
         <Style x:Key="ModernInputBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Height" Value="34"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#555555"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- HORARIOS MODERNOS -->
         <Style x:Key="ModernScheduleCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1C1C1C"/>
+            <Setter Property="Background" Value="{DynamicResource AppSidebarBrush}"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="12"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
-            <Setter Property="BorderBrush" Value="#2B2B2B"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
         <Style x:Key="ModernHourBoxStyle" TargetType="TextBox">
             <Setter Property="Width" Value="90"/>
             <Setter Property="Height" Value="36"/>
-            <Setter Property="Background" Value="#101010"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="10,0"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -187,7 +187,7 @@
         </Style>
 
         <Style x:Key="ModernDayCheckStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -212,7 +212,7 @@
                             <Border x:Name="SwitchTrack" Width="42" Height="22" Background="#444444" CornerRadius="11" VerticalAlignment="Center">
                                 <Ellipse x:Name="SwitchThumb" Width="18" Height="18" Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0"/>
                             </Border>
-                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" TextElement.Foreground="White" TextElement.FontWeight="SemiBold" TextElement.FontSize="13"/>
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" TextElement.Foreground="{DynamicResource AppTextBrush}" TextElement.FontWeight="SemiBold" TextElement.FontSize="13"/>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
@@ -230,9 +230,9 @@
         <Style x:Key="HourButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="28"/>
             <Setter Property="Height" Value="18"/>
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -278,9 +278,9 @@
 
         <!-- DATAGRID -->
         <Style x:Key="DarkDataGridHeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#1A1A1A"/>
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSidebarBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -289,21 +289,21 @@
         </Style>
 
         <Style TargetType="DataGridCell">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="8"/>
         </Style>
 
         <Style TargetType="DataGridRow">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#252525"/>
+                    <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#15293A"/>
+                    <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -333,7 +333,7 @@
                 <!-- CLIENTE -->
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="CLIENTE MENSUALIZADO" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBlock Text="CLIENTE MENSUALIZADO" Foreground="{DynamicResource AppTextBrush}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -345,7 +345,7 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="PLACA" Style="{StaticResource LabelStyle}"/>
                                 <Border Style="{StaticResource ModernInputBorderStyle}">
-                                    <TextBox Text="{Binding Plate, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                    <TextBox Text="{Binding Plate, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                                 </Border>
                             </StackPanel>
 
@@ -364,7 +364,7 @@
                   Margin="0"
                   Padding="6,0"
                   FontSize="14"
-                  Foreground="White"
+                  Foreground="{DynamicResource AppTextBrush}"
                   Background="Transparent"
                   BorderThickness="0"
                   VerticalContentAlignment="Center"/>
@@ -374,7 +374,7 @@
 
                         <TextBlock Text="NOMBRE PROPIETARIO" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
-                            <TextBox Text="{Binding OwnerName}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                            <TextBox Text="{Binding OwnerName}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                         </Border>
 
                         <Grid>
@@ -387,21 +387,21 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="TELÉFONO" Style="{StaticResource LabelStyle}"/>
                                 <Border Style="{StaticResource ModernInputBorderStyle}">
-                                    <TextBox Text="{Binding OwnerPhone}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                    <TextBox Text="{Binding OwnerPhone}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                                 </Border>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="CÉDULA" Style="{StaticResource LabelStyle}"/>
                                 <Border Style="{StaticResource ModernInputBorderStyle}">
-                                    <TextBox Text="{Binding OwnerCedula}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                    <TextBox Text="{Binding OwnerCedula}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                                 </Border>
                             </StackPanel>
                         </Grid>
 
                         <TextBlock Text="EMAIL" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
-                            <TextBox Text="{Binding OwnerEmail}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                            <TextBox Text="{Binding OwnerEmail}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                         </Border>
 
                     </StackPanel>
@@ -410,7 +410,7 @@
                 <!-- CONFIG -->
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="CONFIGURACIÓN MENSUALIDAD" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <TextBlock Text="CONFIGURACIÓN MENSUALIDAD" Foreground="{DynamicResource AppTextBrush}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -422,7 +422,7 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="VALOR MENSUAL" Style="{StaticResource LabelStyle}"/>
                                 <Border Style="{StaticResource ModernInputBorderStyle}">
-                                    <TextBox Text="{Binding MonthlyFee}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                                    <TextBox Text="{Binding MonthlyFee}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                                 </Border>
                             </StackPanel>
 
@@ -438,7 +438,7 @@
                                                         <Border Width="70" Height="34" Background="{TemplateBinding Background}" CornerRadius="17">
                                                             <Grid>
                                                                 <Ellipse x:Name="SwitchThumb" Width="24" Height="24" Fill="White" HorizontalAlignment="Left" Margin="5,0,0,0"/>
-                                                                <TextBlock x:Name="SwitchText" Text="OFF" Foreground="White" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0"/>
+                                                                <TextBlock x:Name="SwitchText" Text="OFF" Foreground="{DynamicResource AppTextBrush}" FontWeight="Bold" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0"/>
                                                             </Grid>
                                                         </Border>
                                                         <ControlTemplate.Triggers>
@@ -470,16 +470,16 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="FECHA INICIO" Style="{StaticResource LabelStyle}"/>
                                 <DatePicker SelectedDate="{Binding MonthlyStartDate}"
-                                    Foreground="White"
-                                    Background="#0A0A0A"
+                                    Foreground="{DynamicResource AppTextBrush}"
+                                    Background="{DynamicResource AppInputBrush}"
                                     Margin="0,0,0,10">
                                     <DatePicker.Resources>
                                         <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
                                         <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
                                         <Style TargetType="{x:Type DatePickerTextBox}">
-                                            <Setter Property="Foreground" Value="White"/>
-                                            <Setter Property="Background" Value="#0A0A0A"/>
-                                            <Setter Property="CaretBrush" Value="White"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+                                            <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
                                         </Style>
                                     </DatePicker.Resources>
                                 </DatePicker>
@@ -488,16 +488,16 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="FECHA FIN" Style="{StaticResource LabelStyle}"/>
                                 <DatePicker SelectedDate="{Binding MonthlyEndDate}"
-                                    Foreground="White"
-                                    Background="#0A0A0A"
+                                    Foreground="{DynamicResource AppTextBrush}"
+                                    Background="{DynamicResource AppInputBrush}"
                                     Margin="0,0,0,10">
                                     <DatePicker.Resources>
                                         <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
                                         <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="White"/>
                                         <Style TargetType="{x:Type DatePickerTextBox}">
-                                            <Setter Property="Foreground" Value="White"/>
-                                            <Setter Property="Background" Value="#0A0A0A"/>
-                                            <Setter Property="CaretBrush" Value="White"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+                                            <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
                                         </Style>
                                     </DatePicker.Resources>
                                 </DatePicker>
@@ -506,7 +506,7 @@
 
                         <TextBlock Text="OBSERVACIONES" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}" Height="50">
-                            <TextBox Text="{Binding Notes}" Height="50" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                            <TextBox Text="{Binding Notes}" Height="50" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                         </Border>
 
                     </StackPanel>
@@ -517,7 +517,7 @@
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
                         <TextBlock Text="CUOTA MENSUAL VENCIDA" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding PendingMonthlyFee, StringFormat={}{0:C2}}" Foreground="White" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding PendingMonthlyFee, StringFormat={}{0:C2}}" Foreground="{DynamicResource AppTextBrush}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
                         <Button Command="{Binding MarkMonthlyFeePaidCommand}" Content="MARCAR CUOTA COMO PAGADA"
                                 Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}"/>
                     </StackPanel>
@@ -543,7 +543,7 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Command="{Binding NewCommand}" Background="#333333" Foreground="#DDDDDD" Style="{StaticResource ActionButtonStyle}">
+                        <Button Command="{Binding NewCommand}" Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppMutedTextBrush}" Style="{StaticResource ActionButtonStyle}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="AccountPlus" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="NUEVO" VerticalAlignment="Center"/>
@@ -570,8 +570,8 @@
             </Grid.RowDefinitions>
 
             <!-- TABLA VEHICULOS -->
-            <Border Grid.Row="0" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10" Grid.RowSpan="2">
-                <DataGrid ItemsSource="{Binding RegisteredVehicles}" SelectedItem="{Binding SelectedRegisteredVehicle}" AutoGenerateColumns="False" Background="Transparent" Foreground="White" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowBackground="Transparent" AlternatingRowBackground="#252525" CanUserAddRows="False" IsReadOnly="True" ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
+            <Border Grid.Row="0" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Grid.RowSpan="2">
+                <DataGrid ItemsSource="{Binding RegisteredVehicles}" SelectedItem="{Binding SelectedRegisteredVehicle}" AutoGenerateColumns="False" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowBackground="Transparent" AlternatingRowBackground="{DynamicResource AppRaisedBrush}" CanUserAddRows="False" IsReadOnly="True" ColumnHeaderStyle="{StaticResource DarkDataGridHeaderStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Placa" Binding="{Binding plate}" Width="90"/>
                         <DataGridTextColumn Header="Propietario" Binding="{Binding owner_name}" Width="*"/>
@@ -595,14 +595,14 @@
                     <!-- TITULO -->
                     <DockPanel Grid.Row="0" Margin="0,0,0,18">
                         <StackPanel DockPanel.Dock="Left">
-                            <TextBlock Text="HORARIOS PERMITIDOS" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                            <TextBlock Text="HORARIOS PERMITIDOS" Foreground="{DynamicResource AppTextBrush}" FontSize="18" FontWeight="Bold"/>
                             <!-- 24H se aplica solo a los días activados en la lista. -->
                             <TextBlock Text="24H permite ingresar a cualquier hora del día seleccionado" Foreground="#8A8A8A" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
                     </DockPanel>
 
                     <!-- CABECERA -->
-                    <Border Grid.Row="1" Background="#151515" CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
+                    <Border Grid.Row="1" Background="{DynamicResource AppSurfaceBrush}" CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
@@ -658,10 +658,10 @@
                                                 <TextBox Text="{Binding StartTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding IsEnabled}"/>
                                                 <StackPanel Margin="5,0,0,0">
                                                     <Button Style="{StaticResource HourButtonStyle}" Command="{Binding IncreaseStartHourCommand}">
-                                                        <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="White"/>
+                                                        <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
                                                     <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" Command="{Binding DecreaseStartHourCommand}">
-                                                        <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="White"/>
+                                                        <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
                                                 </StackPanel>
                                             </StackPanel>
@@ -671,10 +671,10 @@
                                                 <TextBox Text="{Binding EndTime}" Style="{StaticResource ModernHourBoxStyle}" Width="80" IsEnabled="{Binding IsEnabled}"/>
                                                 <StackPanel Margin="5,0,0,0">
                                                     <Button Style="{StaticResource HourButtonStyle}" Command="{Binding IncreaseEndHourCommand}">
-                                                        <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="White"/>
+                                                        <materialDesign:PackIcon Kind="ChevronUp" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
                                                     <Button Style="{StaticResource HourButtonStyle}" Margin="0,2,0,0" Command="{Binding DecreaseEndHourCommand}">
-                                                        <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="White"/>
+                                                        <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="{DynamicResource AppTextBrush}"/>
                                                     </Button>
                                                 </StackPanel>
                                             </StackPanel>

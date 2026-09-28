@@ -21,41 +21,11 @@ namespace Parking.UI.Windows.View.Pages
     /// </summary>
     public partial class PlateReaderPage : UserControl
     {
-        // Conserva el ViewModel para liberarlo aunque DataContext cambie al retirar la vista.
-        private PlateReaderViewModel? _activeViewModel;
-
         /// <summary>Construye la vista de operaciones y sus dos paneles de cámara.</summary>
         public PlateReaderPage()
         {
             // Carga los controles y enlaces declarados en XAML.
             InitializeComponent();
-        }
-
-        /// <summary>Recuerda el controlador de capturas asociado a esta instancia de la vista.</summary>
-        /// <param name="sender">Página que acaba de cargarse.</param>
-        /// <param name="e">Datos del evento Loaded.</param>
-        private void PlateReaderPage_Loaded(object sender, RoutedEventArgs e)
-        {
-            // El DataContext es heredado del DataTemplate de Operaciones.
-            _activeViewModel = DataContext as PlateReaderViewModel;
-        }
-
-        /// <summary>Libera ambas fuentes al navegar fuera de la pantalla de operaciones.</summary>
-        /// <param name="sender">Vista que sale del árbol visual.</param>
-        /// <param name="e">Datos del evento Unloaded.</param>
-        private async void PlateReaderPage_Unloaded(object sender, RoutedEventArgs e)
-        {
-            // El ViewModel inicia el cierre para que cada VideoCapture suelte el driver.
-            var viewModel = _activeViewModel ?? DataContext as PlateReaderViewModel;
-            _activeViewModel = null;
-            if (viewModel != null)
-            {
-                try { await viewModel.DeactivateAsync(); }
-                catch (Exception)
-                {
-                    // Un driver defectuoso no debe impedir el cambio de pantalla.
-                }
-            }
         }
 
         /// <summary>Distribuye los dos visores en columnas anchas o en filas cuando falta espacio horizontal.</summary>

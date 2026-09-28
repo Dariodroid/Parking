@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Parking.UI.Windows.View.Pages.userPage"
+<UserControl x:Class="Parking.UI.Windows.View.Pages.userPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,7 +6,7 @@
              xmlns:conv="clr-namespace:Parking.UI.Windows.Converters"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             Background="#121212"
+             Background="{DynamicResource AppPageBrush}"
              FontFamily="Segoe UI"
              d:DesignHeight="720"
              d:DesignWidth="1280">
@@ -17,8 +17,8 @@
 
         <!-- ESTILOS GENERALES -->
         <Style x:Key="SectionStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="20"/>
@@ -26,22 +26,22 @@
         </Style>
 
         <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#9E9E9E"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedTextBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
         </Style>
 
         <Style x:Key="ModernInputBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Height" Value="38"/>
             <Setter Property="Margin" Value="0,0,0,15"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#555555"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -79,21 +79,21 @@
         <!-- COMBOBOX MODERNO -->
         <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Height" Value="38"/>
-            <Setter Property="Background" Value="#0A0A0A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="0,0,0,15"/>
             <Setter Property="ItemContainerStyle">
                 <Setter.Value>
                     <Style TargetType="ComboBoxItem">
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="Background" Value="#1E1E1E"/>
+                        <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
                         <Setter Property="Padding" Value="10,8"/>
                         <Style.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter Property="Background" Value="#252525"/>
+                                <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="#1565C0"/>
@@ -108,12 +108,12 @@
                         <Grid>
                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
                                 <Grid>
-                                    <ContentPresenter Margin="12,0,35,0" VerticalAlignment="Center" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" TextElement.Foreground="White"/>
+                                    <ContentPresenter Margin="12,0,35,0" VerticalAlignment="Center" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" TextElement.Foreground="{DynamicResource AppTextBrush}"/>
                                     <ToggleButton Grid.Column="1" HorizontalAlignment="Right" Width="35" Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                                         <ToggleButton.Template>
                                             <ControlTemplate TargetType="ToggleButton">
                                                 <Border Background="Transparent">
-                                                    <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" Foreground="#AAAAAA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <materialDesign:PackIcon Kind="ChevronDown" Width="20" Height="20" Foreground="{DynamicResource AppMutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </ToggleButton.Template>
@@ -121,7 +121,7 @@
                                 </Grid>
                             </Border>
                             <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" Focusable="False" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="#1E1E1E" BorderBrush="#444444" BorderThickness="1" CornerRadius="6" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Padding="5">
+                                <Border Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppInputBorderBrush}" BorderThickness="1" CornerRadius="6" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Padding="5">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <StackPanel IsItemsHost="True"/>
                                     </ScrollViewer>
@@ -135,9 +135,9 @@
 
         <!-- DATAGRID MODERNO -->
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#1A1A1A"/>
-            <Setter Property="Foreground" Value="#AAAAAA"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
+            <Setter Property="Background" Value="{DynamicResource AppSidebarBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -145,22 +145,22 @@
         </Style>
 
         <Style TargetType="DataGridCell">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="12,8"/>
         </Style>
 
         <Style TargetType="DataGridRow">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#252525"/>
+                    <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#15293A"/>
-                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -182,18 +182,18 @@
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
 
-                        <TextBlock Text="GESTIÓN DE USUARIOS" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+                        <TextBlock Text="GESTIÓN DE USUARIOS" Foreground="{DynamicResource AppTextBrush}" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
 
                         <!-- USUARIO -->
                         <TextBlock Text="USUARIO" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
-                            <TextBox Text="{Binding username, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                            <TextBox Text="{Binding username, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                         </Border>
 
                         <!-- NOMBRE COMPLETO -->
                         <TextBlock Text="NOMBRE COMPLETO" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
-                            <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="White" FontSize="14"/>
+                            <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14"/>
                         </Border>
 
                         <!-- ROL -->
@@ -204,7 +204,7 @@
                         <TextBlock Text="CONTRASEÑA" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
                             <Grid>
-                                <PasswordBox x:Name="PasswordBox" PasswordChanged="PasswordBox_PasswordChanged" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="White" FontSize="14">
+                                <PasswordBox x:Name="PasswordBox" PasswordChanged="PasswordBox_PasswordChanged" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14">
                                     <PasswordBox.Style>
                                         <Style TargetType="PasswordBox">
                                             <Setter Property="Visibility" Value="Visible"/>
@@ -216,7 +216,7 @@
                                         </Style>
                                     </PasswordBox.Style>
                                 </PasswordBox>
-                                <TextBox x:Name="PasswordTextBox" TextChanged="PasswordTextBox_TextChanged" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="White" FontSize="14">
+                                <TextBox x:Name="PasswordTextBox" TextChanged="PasswordTextBox_TextChanged" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14">
                                     <TextBox.Style>
                                         <Style TargetType="TextBox">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -236,7 +236,7 @@
                                             </Border>
                                         </ControlTemplate>
                                     </ToggleButton.Template>
-                                    <materialDesign:PackIcon Width="20" Height="20" Foreground="#AAAAAA">
+                                    <materialDesign:PackIcon Width="20" Height="20" Foreground="{DynamicResource AppMutedTextBrush}">
                                         <materialDesign:PackIcon.Style>
                                             <Style TargetType="materialDesign:PackIcon">
                                                 <Setter Property="Kind" Value="EyeOutline"/>
@@ -256,7 +256,7 @@
                         <TextBlock Text="CONFIRMAR CONTRASEÑA" Style="{StaticResource LabelStyle}"/>
                         <Border Style="{StaticResource ModernInputBorderStyle}">
                             <Grid>
-                                <PasswordBox x:Name="ConfirmPasswordBox" PasswordChanged="ConfirmPasswordBox_PasswordChanged" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="White" FontSize="14">
+                                <PasswordBox x:Name="ConfirmPasswordBox" PasswordChanged="ConfirmPasswordBox_PasswordChanged" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14">
                                     <PasswordBox.Style>
                                         <Style TargetType="PasswordBox">
                                             <Setter Property="Visibility" Value="Visible"/>
@@ -268,7 +268,7 @@
                                         </Style>
                                     </PasswordBox.Style>
                                 </PasswordBox>
-                                <TextBox x:Name="ConfirmPasswordTextBox" TextChanged="ConfirmPasswordTextBox_TextChanged" BorderThickness="0" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="White" FontSize="14">
+                                <TextBox x:Name="ConfirmPasswordTextBox" TextChanged="ConfirmPasswordTextBox_TextChanged" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" VerticalContentAlignment="Center" Padding="10,0,40,0" CaretBrush="{DynamicResource AppTextBrush}" FontSize="14">
                                     <TextBox.Style>
                                         <Style TargetType="TextBox">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -288,7 +288,7 @@
                                             </Border>
                                         </ControlTemplate>
                                     </ToggleButton.Template>
-                                    <materialDesign:PackIcon Width="20" Height="20" Foreground="#AAAAAA">
+                                    <materialDesign:PackIcon Width="20" Height="20" Foreground="{DynamicResource AppMutedTextBrush}">
                                         <materialDesign:PackIcon.Style>
                                             <Style TargetType="materialDesign:PackIcon">
                                                 <Setter Property="Kind" Value="EyeOutline"/>
@@ -312,7 +312,7 @@
                                     <Border Background="Transparent">
                                         <Grid Width="150" Height="38">
                                             <Border x:Name="SwitchBackground" CornerRadius="19" Background="#2E7D32"/>
-                                            <TextBlock x:Name="SwitchText" Text="ACTIVO" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="SwitchText" Text="ACTIVO" Foreground="{DynamicResource AppTextBrush}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                             <Border x:Name="Knob" Width="30" Height="30" CornerRadius="15" Background="White" HorizontalAlignment="Right" Margin="4"/>
                                         </Grid>
                                     </Border>
@@ -347,7 +347,7 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Command="{Binding NewCommand}" Background="#333333" Foreground="#DDDDDD" Style="{StaticResource ActionButtonStyle}">
+                        <Button Command="{Binding NewCommand}" Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppMutedTextBrush}" Style="{StaticResource ActionButtonStyle}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="AccountPlus" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="NUEVO" VerticalAlignment="Center"/>
@@ -366,8 +366,8 @@
                 <!-- ESTADO / LOG -->
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="LOG DEL SISTEMA" Foreground="#888888" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="#CCCCCC" TextWrapping="Wrap" FontSize="13"/>
+                        <TextBlock Text="LOG DEL SISTEMA" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" FontSize="13"/>
                     </StackPanel>
                 </Border>
 
@@ -375,8 +375,8 @@
         </ScrollViewer>
 
         <!-- TABLA -->
-        <Border Grid.Column="2" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
-            <DataGrid ItemsSource="{Binding users}" SelectedItem="{Binding Selecteduser, Mode=TwoWay}" AutoGenerateColumns="False" Background="Transparent" Foreground="White" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowBackground="Transparent" AlternatingRowBackground="#252525" CanUserAddRows="False" IsReadOnly="True">
+        <Border Grid.Column="2" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
+            <DataGrid ItemsSource="{Binding users}" SelectedItem="{Binding Selecteduser, Mode=TwoWay}" AutoGenerateColumns="False" Background="Transparent" Foreground="{DynamicResource AppTextBrush}" BorderThickness="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" RowBackground="Transparent" AlternatingRowBackground="{DynamicResource AppRaisedBrush}" CanUserAddRows="False" IsReadOnly="True">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Usuario" Binding="{Binding username}" Width="120"/>
                     <DataGridTextColumn Header="Nombre" Binding="{Binding full_name}" Width="*"/>
@@ -384,7 +384,7 @@
                     <DataGridTemplateColumn Header="Activo" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock HorizontalAlignment="Center" Foreground="White" Text="{Binding is_active, Converter={StaticResource BooleanToCheckConverter}}"/>
+                                <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource AppTextBrush}" Text="{Binding is_active, Converter={StaticResource BooleanToCheckConverter}}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

@@ -1,0 +1,69 @@
+<UserControl x:Class="Parking.UI.Windows.View.Pages.ApplicationSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource AppPageBrush}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Text="Apariencia y conexión" FontSize="25" FontWeight="Bold"
+                       Foreground="{DynamicResource AppTextBrush}" Margin="0,0,0,6"/>
+            <TextBlock Text="Estas preferencias pertenecen a este equipo y a tu usuario de Windows."
+                       Foreground="{DynamicResource AppMutedTextBrush}" Margin="0,0,0,20"/>
+
+            <Border Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1" CornerRadius="10" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="TEMA" Foreground="{DynamicResource AppAccentTextBrush}"
+                               FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Content="Oscuro" IsChecked="{Binding IsDarkTheme, Mode=TwoWay}"
+                                     Foreground="{DynamicResource AppTextBrush}" Margin="0,0,24,0"/>
+                        <RadioButton Content="Claro" IsChecked="{Binding IsLightTheme, Mode=TwoWay}"
+                                     Foreground="{DynamicResource AppTextBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="El cambio de tema se aplica y guarda al momento."
+                               Foreground="{DynamicResource AppMutedTextBrush}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1" CornerRadius="10" Padding="20"
+                    Visibility="{Binding CanManageConnection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="BASE DE DATOS SQL SERVER" Foreground="{DynamicResource AppAccentTextBrush}"
+                               FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+                    <TextBlock Text="Cadena de conexión de esta instalación" Foreground="{DynamicResource AppTextBrush}"
+                               Margin="0,0,0,7"/>
+                    <TextBox Text="{Binding ConnectionString, UpdateSourceTrigger=PropertyChanged}"
+                             Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
+                             BorderBrush="{DynamicResource AppInputBorderBrush}" CaretBrush="{DynamicResource AppTextBrush}"
+                             TextWrapping="Wrap" VerticalContentAlignment="Center" MinHeight="68" Padding="10"
+                             ToolTip="Server=SERVIDOR\SQLEXPRESS;Database=parking_db;Trusted_Connection=True;TrustServerCertificate=True;"/>
+                    <TextBlock Text="Ejemplo: Server=SERVIDOR\SQLEXPRESS;Database=parking_db;Trusted_Connection=True;TrustServerCertificate=True;"
+                               Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                    <TextBlock Text="Para autenticación SQL use User ID y Password en lugar de Trusted_Connection. La cadena se cifra al guardarla."
+                               Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                        <Button Content="Probar conexión" Command="{Binding TestConnectionCommand}"
+                                Background="#1769A8" Foreground="White" Height="46" MinWidth="180"
+                                VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                Padding="16,0" Margin="0,0,8,0"/>
+                        <Button Content="Guardar conexión" Command="{Binding SaveConnectionCommand}"
+                                Background="#2E7D32" Foreground="White" Height="46" MinWidth="195"
+                                VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                Padding="16,0" Margin="0,0,8,0"/>
+                        <Button Content="Reiniciar ahora" Command="{Binding RestartCommand}"
+                                Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppTextBrush}"
+                                Height="46" MinWidth="175" VerticalContentAlignment="Center"
+                                HorizontalContentAlignment="Center" Padding="16,0"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource AppTextBrush}"
+                               TextWrapping="Wrap" Margin="0,14,0,0"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+
