@@ -28,18 +28,28 @@ namespace Parking.UI.Windows.ViewModels
         private static readonly TimeSpan AutoDetectionInterval = TimeSpan.FromMilliseconds(900);
         private static readonly TimeSpan DetectionDisplayTime = TimeSpan.FromSeconds(3);
 
-        private readonly ICameraService _cameraService;
+        private readonly ICameraSourceCatalog _cameraSourceCatalog;
+        private readonly CameraSelectionStore _cameraSelectionStore;
+        private readonly CameraSelectionConfiguration? _savedCameraSelection;
         private readonly IPlateService _plateService;
         private readonly IEntryService _entryService;
         private readonly IParkingStatusNotifier _parkingStatusNotifier;
 
-        private CancellationTokenSource? _previewCancellation;
+        // Detector compartido: una lectura OCR a la vez protege el modelo nativo.
+        private readonly SemaphoreSlim _plateReaderGate = new(1, 1);
+        // Apertura y cierre se serializan para que una captura no se libere durante su inicio.
+        private readonly SemaphoreSlim _cameraOperationGate = new(1, 1);
+        private bool _isViewActive = true;
 
         private string _plateNumber = string.Empty;
         private string _statusMessage = "Listo para iniciar.";
         private decimal _amountToCharge = 0;
-        private BitmapSource? _cameraPreview;
-        private bool _isCameraRunning;
+        /// <summary>Fuentes disponibles para los dos visores.</summary>
+        public ObservableCollection<CameraSource> CameraSources { get; } = new();
+        /// <summary>Visor orientado a la zona de ingreso.</summary>
+        public CameraFeedViewModel EntranceFeed { get; }
+        /// <summary>Visor orientado a la zona de salida o lectura de tickets.</summary>
+        public CameraFeedViewModel ExitFeed { get; }
 
         // Propiedades para las tarjetas superiores
         private int _totalSlots;
@@ -50,12 +60,8 @@ namespace Parking.UI.Windows.ViewModels
         public int OccupiedSlots { get => _occupiedSlots; set => SetProperty(ref _occupiedSlots, value); }
         public int FreeSlots { get => _freeSlots; set => SetProperty(ref _freeSlots, value); }
 
-        private int _autoDetectionInProgress;
-        private DateTime _lastAutoDetectionUtc = DateTime.MinValue;
         private PlateDetectionResult? _currentDetection;
         private DateTime _lastDetectionTime = DateTime.MinValue;
-        private string _pendingPlate = string.Empty;
-        private DateTime _pendingPlateTime = DateTime.MinValue;
         // El mismo contexto de datos atiende entrada y salida; esta puerta evita operaciones simultáneas.
         private readonly SemaphoreSlim _sessionOperationGate = new(1, 1);
         private string _handledPlate = string.Empty;
@@ -68,9 +74,6 @@ namespace Parking.UI.Windows.ViewModels
         private static readonly TimeSpan ExitEntryCooldown = TimeSpan.FromSeconds(30);
 
         private readonly IQrService _qrService;
-        private int _qrDetectionInProgress;
-        private DateTime _lastQrDetectionUtc = DateTime.MinValue;
-        private DateTime _lastQrVisibleUtc = DateTime.MinValue;
         private string _lastScannedQr = string.Empty;
         private DateTime _lastQrScanTime = DateTime.MinValue;
         // Espaciado mínimo de lecturas QR para no procesar cada fotograma.
@@ -93,8 +96,8 @@ namespace Parking.UI.Windows.ViewModels
         }
         public string StatusMessage { get => _statusMessage; set => SetProperty(ref _statusMessage, value); }
         public decimal AmountToCharge { get => _amountToCharge; set => SetProperty(ref _amountToCharge, value); }
-        public BitmapSource? CameraPreview { get => _cameraPreview; set => SetProperty(ref _cameraPreview, value); }
-        public bool IsCameraRunning { get => _isCameraRunning; set => SetProperty(ref _isCameraRunning, value); }
+        /// <summary>Indica si al menos uno de los dos visores está capturando.</summary>
+        public bool IsCameraRunning => EntranceFeed.IsRunning || ExitFeed.IsRunning;
 
         public ObservableCollection<vehicle_type> VehicleTypes { get; } = new ObservableCollection<vehicle_type>();
         public ObservableCollection<parking_slot> AvailableSlots { get; } = new ObservableCollection<parking_slot>();
@@ -116,13 +119,20 @@ namespace Parking.UI.Windows.ViewModels
 
         public ICommand StartCameraCommand { get; }
         public ICommand StopCameraCommand { get; }
+        /// <summary>Inicia o cambia únicamente el visor indicado.</summary>
+        public ICommand StartFeedCommand { get; }
+        /// <summary>Detiene únicamente el visor indicado y libera su dispositivo.</summary>
+        public ICommand StopFeedCommand { get; }
+        public ICommand RefreshCamerasCommand { get; }
         public ICommand SavePlateCommand { get; }
         public ICommand RegisterExitCommand { get; }
         public ICommand SelectVehicleTypeCommand { get; }
         public ICommand UseAutomaticSlotCommand { get; }
 
         /// <summary>Conecta cámara, reconocimiento, sesiones y catálogos usados en la operación de entrada y salida.</summary>
-        /// <param name="cameraService">Captura los fotogramas del visor.</param>
+        /// <param name="cameraFactory">Crea una captura distinta para cada visor.</param>
+        /// <param name="cameraSourceCatalog">Busca cámaras conectadas a Windows.</param>
+        /// <param name="cameraSelectionStore">Recupera y protege las selecciones de fuentes.</param>
         /// <param name="plateService">Reconoce placas dentro del fotograma.</param>
         /// <param name="qrService">Lee los tickets QR mostrados a la cámara.</param>
         /// <param name="entryService">Registra y consulta las sesiones de estacionamiento.</param>
@@ -131,7 +141,9 @@ namespace Parking.UI.Windows.ViewModels
         /// <param name="parkingStatusNotifier">Notifica cambios de ocupación a otras vistas.</param>
         /// <param name="dialogService">Presenta avisos y errores al operador.</param>
         public PlateReaderViewModel(
-            ICameraService cameraService,
+            ICameraServiceFactory cameraFactory,
+            ICameraSourceCatalog cameraSourceCatalog,
+            CameraSelectionStore cameraSelectionStore,
             IPlateService plateService,
             IQrService qrService,
             IEntryService entryService,
@@ -141,7 +153,15 @@ namespace Parking.UI.Windows.ViewModels
             IDialogService dialogService) 
         {
             _dialogService = dialogService;
-            _cameraService = cameraService;
+            _cameraSourceCatalog = cameraSourceCatalog;
+            _cameraSelectionStore = cameraSelectionStore;
+            // La última URL se recupera antes de la enumeración de dispositivos.
+            _savedCameraSelection = _cameraSelectionStore.Load();
+            // Ambos paneles comparten opciones, pero cada uno posee un VideoCapture nuevo.
+            EntranceFeed = new CameraFeedViewModel("ENTRADA", CameraSources, cameraFactory);
+            ExitFeed = new CameraFeedViewModel("SALIDA / QR", CameraSources, cameraFactory);
+            EntranceFeed.NetworkUrl = _savedCameraSelection?.EntranceUrl ?? string.Empty;
+            ExitFeed.NetworkUrl = _savedCameraSelection?.ExitUrl ?? string.Empty;
             _plateService = plateService;
             _entryService = entryService;
             _qrService = qrService;
@@ -151,6 +171,11 @@ namespace Parking.UI.Windows.ViewModels
 
             StartCameraCommand = new AsyncRelayCommand(_ => StartCameraAsync());
             StopCameraCommand = new AsyncRelayCommand(_ => StopCameraAsync());
+            StartFeedCommand = new AsyncRelayCommand(parameter =>
+                parameter is CameraFeedViewModel feed ? StartSingleFeedAsync(feed) : Task.CompletedTask);
+            StopFeedCommand = new AsyncRelayCommand(parameter =>
+                parameter is CameraFeedViewModel feed ? StopSingleFeedAsync(feed) : Task.CompletedTask);
+            RefreshCamerasCommand = new AsyncRelayCommand(_ => RefreshCamerasAsync());
             SavePlateCommand = new AsyncRelayCommand(_ => SaveCorrectedPlateAsync());
             RegisterExitCommand = new AsyncRelayCommand(_ => RegisterExitAsync());
             SelectVehicleTypeCommand = new RelayCommand(param =>
@@ -162,15 +187,21 @@ namespace Parking.UI.Windows.ViewModels
             _ = InitializeAsync();
         }
 
-        /// <summary>Abre primero el visor y carga después los datos que comparten el contexto de base de datos.</summary>
+        /// <summary>Descubre fuentes y carga los catálogos sin encender una cámara en un visor no solicitado.</summary>
         /// <returns>Tarea de preparación inicial de la pantalla.</returns>
         private async Task InitializeAsync()
         {
             try
             {
-                await StartCameraAsync();
+                // Detectamos dispositivos sin abrirlos de forma permanente.
+                await RefreshCamerasAsync();
+                // La navegación puede retirar la vista mientras se buscan drivers.
+                if (!_isViewActive) return;
+                // Se espera la orden explícita del operador para cada cámara.
+                EntranceFeed.Status = "Seleccione una cámara y pulse Iniciar entrada.";
+                ExitFeed.Status = "Seleccione una cámara y pulse Iniciar salida.";
                 // Las consultas comparten el mismo DbContext; van en secuencia,
-                // pero no retrasan la apertura del visor.
+                // mientras el operador decide qué fuente iniciar en cada visor.
                 await LoadVehicleTypesAsync();
                 await LoadSlotStatsAsync();
             }
@@ -325,73 +356,386 @@ namespace Parking.UI.Windows.ViewModels
             await RegisterExitForIdentifierAsync(PlateNumber.Trim().ToUpperInvariant(), isQr: false, showMissingSession: true);
         }
 
+        /// <summary>Vuelve a buscar cámaras Windows y conserva las selecciones todavía disponibles.</summary>
+        /// <returns>Tarea que termina tras actualizar las opciones de ambos visores.</returns>
+        private async Task RefreshCamerasAsync()
+        {
+            // El bloqueo impide abrir una fuente mientras se están sondeando índices.
+            await _cameraOperationGate.WaitAsync();
+            try
+            {
+                // Un dispositivo abierto se libera antes de consultar el catálogo.
+                bool restartEntrance = EntranceFeed.IsRunning;
+                bool restartExit = ExitFeed.IsRunning;
+                await StopFeedAsync(EntranceFeed);
+                await StopFeedAsync(ExitFeed);
+                OnPropertyChanged(nameof(IsCameraRunning));
+                // La selección guardada se usa solo en la primera búsqueda de esta vista.
+                string? entranceId = EntranceFeed.SelectedSource?.Id ?? _savedCameraSelection?.EntranceSourceId;
+                string? exitId = ExitFeed.SelectedSource?.Id ?? _savedCameraSelection?.ExitSourceId;
+                try
+                {
+                    // El catálogo prueba los índices sin dejar cámaras ocupadas.
+                    var discovered = await _cameraSourceCatalog.DiscoverAsync();
+                    CameraSources.Clear();
+                    foreach (var source in discovered) CameraSources.Add(source);
+                    // La opción de red admite RTSP o HTTP aun sin webcam conectada.
+                    CameraSources.Add(new CameraSource("network", "Cámara de red (RTSP/HTTP)",
+                        CameraSourceKind.NetworkStream));
+
+                    // Las selecciones previas se recuperan por Id y no por objeto antiguo.
+                    EntranceFeed.SelectedSource = CameraSources.FirstOrDefault(x => x.Id == entranceId)
+                        ?? discovered.FirstOrDefault();
+                    ExitFeed.SelectedSource = CameraSources.FirstOrDefault(x => x.Id == exitId)
+                        ?? discovered.FirstOrDefault(x => x.Id != EntranceFeed.SelectedSource?.Id);
+
+                    // Un solo dispositivo deja libre el segundo panel para un flujo de red.
+                    if (discovered.Count == 0)
+                        StatusMessage = "No se detectaron cámaras Windows. Puede introducir una URL RTSP/HTTP.";
+                }
+                catch (Exception ex)
+                {
+                    // El fallo de enumeración no impide configurar una fuente de red.
+                    CameraSources.Clear();
+                    CameraSources.Add(new CameraSource("network", "Cámara de red (RTSP/HTTP)",
+                        CameraSourceKind.NetworkStream));
+                    StatusMessage = $"No se pudieron buscar cámaras: {ex.Message}";
+                }
+
+                // Se reabren únicamente los visores que estaban activos antes de Buscar.
+                if (_isViewActive)
+                {
+                    if (restartEntrance) await StartFeedAsync(EntranceFeed);
+                    if (restartExit) await StartFeedAsync(ExitFeed);
+                    OnPropertyChanged(nameof(IsCameraRunning));
+                }
+            }
+            finally { _cameraOperationGate.Release(); }
+        }
+
+        /// <summary>Detiene las capturas al abandonar la pantalla de operaciones.</summary>
+        /// <returns>Tarea que termina cuando ambas fuentes quedan liberadas.</returns>
+        public Task DeactivateAsync()
+        {
+            // Evita que una enumeración aún pendiente vuelva a abrir cámaras.
+            _isViewActive = false;
+            return StopCameraAsync();
+        }
+
+        /// <summary>Abre hasta dos fuentes seleccionadas y comienza sus bucles independientes.</summary>
+        /// <returns>Tarea que termina tras intentar conectar ambos visores.</returns>
         private async Task StartCameraAsync()
         {
-            if (IsCameraRunning) return;
-            bool started = await _cameraService.StartCameraAsync();
-            if (!started) { _dialogService.ShowError("Error", "No se pudo abrir la cámara."); return; }
-            IsCameraRunning = true;
-            _previewCancellation?.Cancel();
-            _previewCancellation = new CancellationTokenSource();
-            _ = RunPreviewLoopAsync(_previewCancellation.Token);
+            // Una vista retirada no debe conservar capturas en segundo plano.
+            if (!_isViewActive) return;
+            await _cameraOperationGate.WaitAsync();
+            try
+            {
+                // Reconfigurar primero libera los dispositivos asignados antes de abrir otros.
+                await StopFeedAsync(EntranceFeed);
+                await StopFeedAsync(ExitFeed);
+                await StartSelectedFeedsAsync();
+                // Una búsqueda sin fuente funcional no reemplaza la preferencia anterior.
+                if (IsCameraRunning)
+                    SaveCameraSelection();
+            }
+            finally { _cameraOperationGate.Release(); }
         }
 
+        /// <summary>Abre las dos selecciones evitando asignar el mismo dispositivo local dos veces.</summary>
+        /// <returns>Tarea que termina tras intentar conectar cada panel.</returns>
+        private async Task StartSelectedFeedsAsync()
+        {
+            // La primera selección se abre con independencia del estado de la segunda.
+            await StartFeedAsync(EntranceFeed);
+
+            // Una cámara local solo puede tener un propietario en esta pantalla.
+            bool sameDevice = EntranceFeed.IsRunning
+                && EntranceFeed.ActiveSource?.Kind == CameraSourceKind.WindowsDevice
+                && EntranceFeed.ActiveSource.Id == ExitFeed.SelectedSource?.Id;
+            if (sameDevice)
+                ExitFeed.Status = "La cámara está en Entrada. Pulse Iniciar aquí para trasladarla a Salida.";
+            else
+                await StartFeedAsync(ExitFeed);
+
+            OnPropertyChanged(nameof(IsCameraRunning));
+        }
+
+        /// <summary>Valida la fuente del panel y abre su captura sin afectar al otro panel.</summary>
+        /// <param name="feed">Visor que se va a iniciar.</param>
+        /// <returns>Tarea de apertura y preparación del bucle de imágenes.</returns>
+        private async Task StartFeedAsync(CameraFeedViewModel feed)
+        {
+            // Un panel sin elección permanece disponible para configuración posterior.
+            var selected = feed.SelectedSource;
+            if (selected == null)
+            {
+                feed.Status = "Seleccione una cámara.";
+                return;
+            }
+
+            // La IP abreviada de DroidCam se completa antes de entregarla a OpenCV.
+            CameraSource source = selected;
+            if (selected.Kind == CameraSourceKind.NetworkStream)
+            {
+                if (!CameraStreamAddress.TryNormalize(feed.NetworkUrl, out string url))
+                {
+                    feed.Status = "Escriba la IP de DroidCam o una URL RTSP/HTTP válida.";
+                    return;
+                }
+                // Mostramos la dirección completa que se intentará conectar.
+                feed.NetworkUrl = url;
+                source = selected with { StreamUrl = url };
+            }
+
+            try
+            {
+                // Cada captura pertenece exclusivamente a su panel.
+                bool started = await feed.Capture.StartCameraAsync(source);
+                if (!started)
+                {
+                    feed.Status = "No se pudo abrir esta fuente. Revise conexión y selección.";
+                    return;
+                }
+
+                // El bucle conserva su propia cancelación y sus propias estadísticas OCR/QR.
+                feed.Cancellation = new CancellationTokenSource();
+                feed.ActiveSource = source;
+                feed.IsRunning = true;
+                feed.Status = "Imagen en directo. Lee placas y QR.";
+                feed.PreviewTask = RunPreviewLoopAsync(feed, feed.Cancellation.Token);
+            }
+            catch (Exception)
+            {
+                // No se presenta la excepción: una URL podría incluir credenciales.
+                await feed.Capture.StopCameraAsync();
+                feed.ActiveSource = null;
+                feed.IsRunning = false;
+                feed.Status = "No se pudo conectar esta cámara. Revise la fuente.";
+            }
+        }
+
+        /// <summary>Abre un visor y traslada a él la cámara local si el otro la está usando.</summary>
+        /// <param name="feed">Visor de destino seleccionado por el operador.</param>
+        /// <returns>Tarea que termina cuando la captura anterior se libera y la nueva se abre.</returns>
+        private async Task StartSingleFeedAsync(CameraFeedViewModel feed)
+        {
+            // Una vista retirada no debe volver a encender el dispositivo.
+            if (!_isViewActive) return;
+            await _cameraOperationGate.WaitAsync();
+            try
+            {
+                // Detenemos la captura previa de este panel antes de aplicar su nueva selección.
+                await StopFeedAsync(feed);
+                if (feed.Capture.IsCameraRunning)
+                {
+                    // No se abre otra fuente sobre un driver que no confirmó el cierre.
+                    feed.Status = "La cámara sigue ocupada. Intente detenerla de nuevo.";
+                    OnPropertyChanged(nameof(IsCameraRunning));
+                    return;
+                }
+                var other = ReferenceEquals(feed, EntranceFeed) ? ExitFeed : EntranceFeed;
+                // La cámara física solo se traslada si el otro visor la mantiene abierta.
+                if (feed.SelectedSource?.Kind == CameraSourceKind.WindowsDevice
+                    && other.ActiveSource?.Kind == CameraSourceKind.WindowsDevice
+                    && other.ActiveSource.Id == feed.SelectedSource.Id)
+                {
+                    await StopFeedAsync(other);
+                    // Un controlador que continúa ocupado no debe recibir una segunda apertura.
+                    if (other.Capture.IsCameraRunning)
+                    {
+                        feed.Status = "La otra cámara sigue ocupada. Intente detenerla de nuevo.";
+                        OnPropertyChanged(nameof(IsCameraRunning));
+                        return;
+                    }
+                    other.Status = $"Cámara trasladada a {feed.Title}.";
+                }
+
+                // La apertura ocurre después del cierre nativo del dispositivo anterior.
+                await StartFeedAsync(feed);
+                OnPropertyChanged(nameof(IsCameraRunning));
+                if (feed.IsRunning) SaveCameraSelection();
+            }
+            finally { _cameraOperationGate.Release(); }
+        }
+
+        /// <summary>Cierra un visor sin interrumpir la captura del otro.</summary>
+        /// <param name="feed">Visor cuya cámara se debe liberar.</param>
+        /// <returns>Tarea que termina después del cierre del dispositivo.</returns>
+        private async Task StopSingleFeedAsync(CameraFeedViewModel feed)
+        {
+            await _cameraOperationGate.WaitAsync();
+            try
+            {
+                // El mismo bloqueo coordina este cierre con los inicios y búsquedas.
+                await StopFeedAsync(feed);
+                OnPropertyChanged(nameof(IsCameraRunning));
+            }
+            finally { _cameraOperationGate.Release(); }
+        }
+
+        /// <summary>Guarda las dos elecciones después de conectar un visor.</summary>
+        private void SaveCameraSelection()
+        {
+            try
+            {
+                // Persistimos índices y URLs para restaurarlos en la próxima apertura.
+                _cameraSelectionStore.Save(new CameraSelectionConfiguration(
+                    EntranceFeed.SelectedSource?.Id, EntranceFeed.NetworkUrl,
+                    ExitFeed.SelectedSource?.Id, ExitFeed.NetworkUrl));
+            }
+            catch (Exception)
+            {
+                // Un fallo de preferencias no debe cerrar la captura abierta.
+                StatusMessage = "Cámara abierta; no se pudo guardar su selección para el próximo inicio.";
+            }
+        }
+
+        /// <summary>Detiene ambos bucles y libera sus capturas.</summary>
+        /// <returns>Tarea que termina cuando los dispositivos quedan disponibles.</returns>
         private async Task StopCameraAsync()
         {
-            if (!IsCameraRunning) return;
-            _previewCancellation?.Cancel();
-            await _cameraService.StopCameraAsync();
-            CameraPreview = null;
-            IsCameraRunning = false;
+            await _cameraOperationGate.WaitAsync();
+            try
+            {
+                await StopFeedAsync(EntranceFeed);
+                await StopFeedAsync(ExitFeed);
+                OnPropertyChanged(nameof(IsCameraRunning));
+            }
+            finally { _cameraOperationGate.Release(); }
         }
 
-        /// <summary>Actualiza la imagen de cámara y distribuye cada fotograma al lector QR y al detector de placas.</summary>
+        /// <summary>Detiene un único visor antes de cerrar su captura OpenCV.</summary>
+        /// <param name="feed">Visor que se va a liberar.</param>
+        /// <returns>Tarea de cancelación y cierre.</returns>
+        private static async Task StopFeedAsync(CameraFeedViewModel feed)
+        {
+            // Se espera el fin del bucle para no leer a la vez que se libera el driver.
+            feed.Cancellation?.Cancel();
+            if (feed.PreviewTask != null)
+            {
+                try { await feed.PreviewTask; }
+                catch (Exception)
+                {
+                    // Se continúa con la liberación aunque el driver fallara al leer.
+                }
+            }
+            feed.PreviewTask = null;
+            feed.Cancellation?.Dispose();
+            feed.Cancellation = null;
+            try
+            {
+                await feed.Capture.StopCameraAsync();
+            }
+            catch (Exception)
+            {
+                // El estado nativo se consulta también si Release notificó un fallo.
+            }
+            bool released = !feed.Capture.IsCameraRunning;
+            feed.Status = released ? "Cámara detenida y liberada." : "La cámara sigue ocupada; intente detenerla de nuevo.";
+            feed.Preview = null;
+            if (released) feed.ActiveSource = null;
+            feed.IsRunning = !released;
+        }
+
+        /// <summary>Actualiza un visor y entrega sus fotogramas a los lectores QR y OCR.</summary>
+        /// <param name="feed">Panel propietario de la captura y de la imagen.</param>
         /// <param name="cancellationToken">Detiene el bucle cuando se cierra la cámara.</param>
         /// <returns>Tarea continua de visualización hasta la cancelación.</returns>
-        private async Task RunPreviewLoopAsync(CancellationToken cancellationToken)
+        private async Task RunPreviewLoopAsync(CameraFeedViewModel feed, CancellationToken cancellationToken)
         {
+            // Permite detectar una fuente abierta que deja de entregar imágenes.
+            DateTime lastFrameUtc = DateTime.UtcNow;
+            // El visor se limita a unas 15 actualizaciones por segundo por cámara.
+            DateTime lastPreviewUtc = DateTime.MinValue;
             try
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    byte[] currentFrame = await _cameraService.CaptureFrameAsync();
+                    // Cada bucle lee solo de la fuente asignada a su panel.
+                    // ConfigureAwait evita hacer decodificación y dibujo en el hilo de WPF.
+                    byte[] currentFrame = await feed.Capture.CaptureFrameAsync().ConfigureAwait(false);
                     if (currentFrame.Length > 0)
                     {
-                        var visibleDetection = DateTime.UtcNow - _lastDetectionTime < DetectionDisplayTime
-                            ? _currentDetection : null;
-                        byte[] frameToShow = DrawDetectionOnFrame(currentFrame, visibleDetection);
-
-                        var preview = BuildBitmapSource(frameToShow);
-                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => CameraPreview = preview);
-                        // Ambos lectores reciben la imagen original; la marca de QR visible regula el OCR.
-                        TryQueueQrDetection(currentFrame);
-                        TryQueuePlateDetection(currentFrame);
+                        DateTime now = DateTime.UtcNow;
+                        lastFrameUtc = now;
+                        if (now - lastPreviewUtc >= TimeSpan.FromMilliseconds(66))
+                        {
+                            // La caja OCR se dibuja únicamente en el visor que la detectó.
+                            var visibleDetection = now - feed.LastDetectionUtc < DetectionDisplayTime
+                                ? feed.CurrentDetection : null;
+                            byte[] frameToShow = DrawDetectionOnFrame(currentFrame, visibleDetection);
+                            // BitmapSource se congela para pasar con seguridad al hilo de WPF.
+                            var preview = BuildBitmapSource(frameToShow);
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => feed.Preview = preview);
+                            lastPreviewUtc = now;
+                        }
+                        // Los dos visores pueden leer ambas señales; sus límites son independientes.
+                        TryQueueQrDetection(feed, currentFrame);
+                        TryQueuePlateDetection(feed, currentFrame);
                     }
                     // Read() ya espera al siguiente fotograma. Solo hacemos una
                     // pausa breve si el dispositivo aún no entrega imágenes.
                     if (currentFrame.Length == 0)
+                    {
+                        // El operador puede buscar dispositivos y reiniciar la fuente perdida.
+                        if (DateTime.UtcNow - lastFrameUtc > TimeSpan.FromSeconds(5))
+                        {
+                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                                feed.Status = "Esta cámara dejó de entregar imagen. Pulse Buscar o Iniciar.");
+                            break;
+                        }
                         await Task.Delay(50, cancellationToken);
+                    }
                 }
             }
-            catch { }
+            catch (OperationCanceledException) { }
+            catch (Exception)
+            {
+                // Se conserva el otro visor en ejecución si esta fuente falla.
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    feed.Status = "Se interrumpió el vídeo de esta cámara.");
+            }
+            finally
+            {
+                // Una cancelación manual deja el cierre al método que espera este bucle.
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    // Si la fuente terminó por error, este mismo bucle libera su driver.
+                    try { await feed.Capture.StopCameraAsync(); }
+                    catch (Exception)
+                    {
+                        // La otra fuente sigue operativa aunque este driver falle.
+                    }
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        feed.Preview = null;
+                        feed.ActiveSource = null;
+                        feed.IsRunning = false;
+                        OnPropertyChanged(nameof(IsCameraRunning));
+                    });
+                }
+            }
         }
 
-        /// <summary>Programa una lectura QR cuando existe un fotograma y el lector está disponible.</summary>
+        /// <summary>Programa una lectura QR para un visor si su lector está disponible.</summary>
+        /// <param name="feed">Panel que entregó el fotograma.</param>
         /// <param name="currentFrame">Fotograma actual de la cámara.</param>
-        private void TryQueueQrDetection(byte[] currentFrame)
+        private void TryQueueQrDetection(CameraFeedViewModel feed, byte[] currentFrame)
         {
-            // El intervalo y la bandera impiden lecturas simultáneas del mismo ticket.
-            if (currentFrame.Length == 0 || DateTime.UtcNow - _lastQrDetectionUtc < QrDetectionInterval) return;
-            if (Interlocked.CompareExchange(ref _qrDetectionInProgress, 1, 0) != 0) return;
+            // El intervalo y la bandera corresponden al panel, no a las dos cámaras.
+            if (currentFrame.Length == 0 || DateTime.UtcNow - feed.LastQrDetectionUtc < QrDetectionInterval) return;
+            if (Interlocked.CompareExchange(ref feed.QrDetectionInProgress, 1, 0) != 0) return;
 
-            _lastQrDetectionUtc = DateTime.UtcNow;
-            _ = ProcessQrDetectionAsync(currentFrame);
+            feed.LastQrDetectionUtc = DateTime.UtcNow;
+            _ = ProcessQrDetectionAsync(feed, currentFrame);
         }
 
         /// <summary>Lee el QR, valida que identifique una sesión y registra su salida si corresponde.</summary>
+        /// <param name="feed">Panel donde apareció el ticket.</param>
         /// <param name="frame">Fotograma de cámara que contiene el posible código.</param>
         /// <returns>Tarea de lectura y, cuando procede, de cierre de la sesión.</returns>
-        private async Task ProcessQrDetectionAsync(byte[] frame)
+        private async Task ProcessQrDetectionAsync(CameraFeedViewModel feed, byte[] frame)
         {
             try
             {
@@ -400,7 +744,7 @@ namespace Parking.UI.Windows.ViewModels
                 {
                     DateTime now = DateTime.UtcNow;
                     // Mientras haya un QR visible, el OCR de placas cede prioridad al ticket.
-                    _lastQrVisibleUtc = now;
+                    feed.LastQrVisibleUtc = now;
                     if (string.Equals(_lastScannedQr, qrText, StringComparison.OrdinalIgnoreCase)
                         && now - _lastQrScanTime < TimeSpan.FromSeconds(5))
                     {
@@ -431,7 +775,7 @@ namespace Parking.UI.Windows.ViewModels
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     StatusMessage = $"Error al leer el QR: {ex.Message}");
             }
-            finally { Interlocked.Exchange(ref _qrDetectionInProgress, 0); }
+            finally { Interlocked.Exchange(ref feed.QrDetectionInProgress, 0); }
         }
 
         /// <summary>Cierra una estancia por placa o QR y presenta el importe resultante.</summary>
@@ -495,7 +839,9 @@ namespace Parking.UI.Windows.ViewModels
                     // trasera al salir no prepara otra entrada accidentalmente.
                     PlateNumber = string.Empty;
                     _currentDetection = null;
-                    _pendingPlate = string.Empty;
+                    // Ningún visor debe conservar una lectura previa a esta salida.
+                    EntranceFeed.PendingPlate = string.Empty;
+                    ExitFeed.PendingPlate = string.Empty;
                     // La marca se guardó al entrar: una edición posterior del plan
                     // no transforma esta salida mensual en cobro ocasional.
                     bool isMonthly = session.notes == MonthlyAccessPolicy.MonthlySessionNote;
@@ -518,27 +864,34 @@ namespace Parking.UI.Windows.ViewModels
             }
         }
 
-        /// <summary>Programa la detección de placa, con prioridad inferior a la lectura QR.</summary>
+        /// <summary>Programa OCR en un visor, con prioridad local para el QR de ese mismo visor.</summary>
+        /// <param name="feed">Panel que entregó el fotograma.</param>
         /// <param name="currentFrame">Fotograma actual de la cámara.</param>
-        private void TryQueuePlateDetection(byte[] currentFrame)
+        private void TryQueuePlateDetection(CameraFeedViewModel feed, byte[] currentFrame)
         {
-            if (currentFrame.Length == 0 || DateTime.UtcNow - _lastAutoDetectionUtc < AutoDetectionInterval) return;
-            // Un ticket ante la cámara tiene prioridad sobre el OCR de placas.
-            if (DateTime.UtcNow - _lastQrVisibleUtc < TimeSpan.FromSeconds(2)) return;
-            if (Interlocked.CompareExchange(ref _autoDetectionInProgress, 1, 0) != 0) return;
+            // Cada panel puede buscar placas a su propio ritmo.
+            if (currentFrame.Length == 0 || DateTime.UtcNow - feed.LastPlateDetectionUtc < AutoDetectionInterval) return;
+            // Un QR aquí no suspende la lectura de placa en la otra cámara.
+            if (DateTime.UtcNow - feed.LastQrVisibleUtc < TimeSpan.FromSeconds(2)) return;
+            if (Interlocked.CompareExchange(ref feed.PlateDetectionInProgress, 1, 0) != 0) return;
 
-            _lastAutoDetectionUtc = DateTime.UtcNow;
-            _ = ProcessAutomaticDetectionAsync(currentFrame);
+            feed.LastPlateDetectionUtc = DateTime.UtcNow;
+            _ = ProcessAutomaticDetectionAsync(feed, currentFrame);
         }
 
         /// <summary>Reconoce una placa estable y la muestra para que el operador registre la entrada.</summary>
+        /// <param name="feed">Panel responsable del fotograma y de la región dibujada.</param>
         /// <param name="frame">Fotograma sobre el que se ejecuta la detección y el OCR.</param>
         /// <returns>Tarea que actualiza el estado visible tras la lectura.</returns>
-        private async Task ProcessAutomaticDetectionAsync(byte[] frame)
+        private async Task ProcessAutomaticDetectionAsync(CameraFeedViewModel feed, byte[] frame)
         {
             try
             {
-                var detection = await ((PlateReaderService)_plateService).DetectPlateWithRegionsAsync(frame);
+                // El detector nativo se comparte y se usa de forma secuencial.
+                await _plateReaderGate.WaitAsync();
+                PlateDetectionResult detection;
+                try { detection = await ((PlateReaderService)_plateService).DetectPlateWithRegionsAsync(frame); }
+                finally { _plateReaderGate.Release(); }
                 if (detection.HasPlateCandidates && string.IsNullOrWhiteSpace(detection.PlateNumber)
                     && !string.IsNullOrEmpty(_handledPlate))
                 {
@@ -549,14 +902,17 @@ namespace Parking.UI.Windows.ViewModels
                 if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
                 {
                     // Dos lecturas iguales en frames distintos reducen las placas falsas por reflejos.
-                    if (detection.PlateNumber != _pendingPlate || DateTime.UtcNow - _pendingPlateTime > TimeSpan.FromSeconds(12))
+                    if (detection.PlateNumber != feed.PendingPlate || DateTime.UtcNow - feed.PendingPlateUtc > TimeSpan.FromSeconds(12))
                     {
-                        _pendingPlate = detection.PlateNumber;
-                        _pendingPlateTime = DateTime.UtcNow;
+                        feed.PendingPlate = detection.PlateNumber;
+                        feed.PendingPlateUtc = DateTime.UtcNow;
                         return;
                     }
+                    // Se conserva la imagen global para una entrada manual y la región para este panel.
                     _currentDetection = detection;
                     _lastDetectionTime = DateTime.UtcNow;
+                    feed.CurrentDetection = detection;
+                    feed.LastDetectionUtc = _lastDetectionTime;
                     if (ShouldIgnoreRepeatedPlate(detection.PlateNumber)) return;
 
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -576,7 +932,7 @@ namespace Parking.UI.Windows.ViewModels
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     StatusMessage = $"Error al reconocer la placa: {ex.Message}");
             }
-            finally { Interlocked.Exchange(ref _autoDetectionInProgress, 0); }
+            finally { Interlocked.Exchange(ref feed.PlateDetectionInProgress, 0); }
         }
 
         /// <summary>Marca una placa como atendida para evitar repetir el evento mientras siga visible.</summary>

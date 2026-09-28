@@ -59,7 +59,11 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<YoloPlateDetector>(sp =>
                 new RfdetrPlateDetector(@"C:\users\Dario Castillo\source\repos\Parking\Parking.Infreastructure.ExternalServices\Model\rfdetr_alpr.onnx"));
 
-            serviceCollection.AddSingleton<ICameraService, OpenCvCameraService>();
+            // Los visores reciben capturas independientes y el catálogo enumera las cámaras Windows.
+            serviceCollection.AddSingleton<ICameraServiceFactory, OpenCvCameraServiceFactory>();
+            serviceCollection.AddSingleton<ICameraSourceCatalog, OpenCvCameraSourceCatalog>();
+            // Las selecciones y URL RTSP se conservan cifradas para la cuenta de Windows.
+            serviceCollection.AddSingleton<CameraSelectionStore>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
             serviceCollection.AddSingleton<IEntryPhotoStore, LocalEntryPhotoStore>();
             serviceCollection.AddSingleton<IQrService, QrReaderService>();

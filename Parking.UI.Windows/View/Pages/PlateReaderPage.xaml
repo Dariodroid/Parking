@@ -7,12 +7,88 @@
              xmlns:local="clr-namespace:Parking.UI.Windows.Converters"
              mc:Ignorable="d" 
              Background="#121212"
-             d:DesignHeight="720" d:DesignWidth="1280">
+             d:DesignHeight="720" d:DesignWidth="1280"
+             Loaded="PlateReaderPage_Loaded"
+             Unloaded="PlateReaderPage_Unloaded"
+             SizeChanged="PlateReaderPage_SizeChanged">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <local:EqualityConverter x:Key="EqualityConverter"/>
         <local:VehicleNameToIconConverter x:Key="VehicleNameToIconConverter"/>
+
+        <!-- Los controles de cámara mantienen texto blanco en el tema oscuro. -->
+        <Style x:Key="CameraSourceItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#18232E"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="#1769A8"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1769A8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CameraSourceStyle" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#18232E"/>
+            <Setter Property="BorderBrush" Value="#6B8499"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource CameraSourceItemStyle}"/>
+            <!-- El tema global dibuja blanco el área seleccionada; esta plantilla fija el fondo oscuro. -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <!-- El botón ocupa todo el selector para abrirlo desde cualquier punto. -->
+                            <ToggleButton Style="{x:Null}" Focusable="False" ClickMode="Press"
+                                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="#18232E" BorderBrush="#6B8499" BorderThickness="1" CornerRadius="4">
+                                            <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18"
+                                                                     Foreground="White" HorizontalAlignment="Right"
+                                                                     VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <!-- La lista contiene CameraSource; mostramos su nombre legible, no el record completo. -->
+                            <TextBlock IsHitTestVisible="False" Margin="9,0,32,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Center"
+                                       Foreground="White" TextTrimming="CharacterEllipsis"
+                                       Text="{Binding SelectedItem.DisplayName, RelativeSource={RelativeSource TemplatedParent}}"/>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
+                                   Focusable="False" PopupAnimation="Fade"
+                                   IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border Background="#18232E" BorderBrush="#6B8499" BorderThickness="1"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="CameraUrlStyle" TargetType="TextBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="Background" Value="#18232E"/>
+            <Setter Property="BorderBrush" Value="#6B8499"/>
+        </Style>
+        <Style x:Key="CameraControlButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#1769A8"/>
+            <Setter Property="BorderBrush" Value="#459ACB"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,5"/>
+        </Style>
 
         <!-- ESPACIOS REDUCIDOS PARA EVITAR SCROLL -->
         <Style x:Key="SidebarSectionStyle" TargetType="Border">
@@ -45,7 +121,7 @@
             <ColumnDefinition Width="380"/>
         </Grid.ColumnDefinitions>
 
-        <!-- COLUMNA IZQUIERDA: TARJETAS + CÁMARA -->
+        <!-- COLUMNA IZQUIERDA: TARJETAS Y DOS FUENTES INDEPENDIENTES -->
         <Grid Grid.Column="0" Margin="0,0,10,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="90"/>
@@ -81,18 +157,93 @@
 
             </UniformGrid>
 
-            <!-- PANEL DE CÁMARA -->
-            <Border Grid.Row="1" Background="#000000" CornerRadius="8" BorderBrush="#2A2A2A" BorderThickness="1">
-                <Grid>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                Visibility="{Binding IsCameraRunning, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverted}">
-                        <TextBlock Text="CÁMARA DESACTIVADA" Foreground="#555555" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Inicie el visor desde el panel lateral" Foreground="#333333" FontSize="14" HorizontalAlignment="Center"/>
-                    </StackPanel>
+            <!-- Cada panel tiene su fuente y su imagen; ambos pueden reconocer placas y QR. -->
+            <Grid x:Name="CameraLayoutGrid" Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="0"/>
+                </Grid.RowDefinitions>
 
-                    <Image Source="{Binding CameraPreview}" Stretch="Uniform" />
-                </Grid>
-            </Border>
+                <!-- Cámara orientada a la entrada de vehículos. -->
+                <Border x:Name="EntranceCameraPanel" Grid.Column="0" DataContext="{Binding EntranceFeed}" Margin="0,0,5,0"
+                        Background="#101820" CornerRadius="8" BorderBrush="#2D4A63" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Margin="10,8">
+                            <TextBlock Text="{Binding Title}" Foreground="#4FC3F7" FontWeight="Bold"/>
+                            <ComboBox Style="{StaticResource CameraSourceStyle}" ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" Height="30" Margin="0,5,0,0"/>
+                            <TextBox Style="{StaticResource CameraUrlStyle}" Text="{Binding NetworkUrl, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                     ToolTip="IP de DroidCam o URL RTSP/HTTP; ejemplo: 192.168.0.100:4747" Margin="0,5,0,0" Height="30"/>
+                            <TextBlock Text="DroidCam: escriba IP o IP:puerto; se añade /video automáticamente."
+                                       Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap"
+                                       FontSize="11" Margin="0,5,0,0"/>
+                            <!-- Los controles de Entrada actúan solo sobre este panel. -->
+                            <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                <Button Style="{StaticResource CameraControlButtonStyle}" Content="Iniciar entrada" Margin="0,0,7,0"
+                                        Command="{Binding DataContext.StartFeedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                <Button Style="{StaticResource CameraControlButtonStyle}" Content="Detener entrada"
+                                        Command="{Binding DataContext.StopFeedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Grid Grid.Row="1" Background="Black">
+                            <TextBlock Text="Sin imagen de entrada" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Image Source="{Binding Preview}" Stretch="Uniform"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Cámara orientada a la salida; también admite placa o QR. -->
+                <Border x:Name="ExitCameraPanel" Grid.Column="1" DataContext="{Binding ExitFeed}" Margin="5,0,0,0"
+                        Background="#101820" CornerRadius="8" BorderBrush="#2D4A63" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Margin="10,8">
+                            <TextBlock Text="{Binding Title}" Foreground="#4FC3F7" FontWeight="Bold"/>
+                            <ComboBox Style="{StaticResource CameraSourceStyle}" ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" Height="30" Margin="0,5,0,0"/>
+                            <TextBox Style="{StaticResource CameraUrlStyle}" Text="{Binding NetworkUrl, UpdateSourceTrigger=PropertyChanged}"
+                                     Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                     ToolTip="IP de DroidCam o URL RTSP/HTTP; ejemplo: 192.168.0.100:4747" Margin="0,5,0,0" Height="30"/>
+                            <TextBlock Text="DroidCam: escriba IP o IP:puerto; se añade /video automáticamente."
+                                       Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap"
+                                       FontSize="11" Margin="0,5,0,0"/>
+                            <!-- Los controles de Salida permiten trasladar aquí una cámara liberada de Entrada. -->
+                            <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                <Button Style="{StaticResource CameraControlButtonStyle}" Content="Iniciar salida" Margin="0,0,7,0"
+                                        Command="{Binding DataContext.StartFeedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                <Button Style="{StaticResource CameraControlButtonStyle}" Content="Detener salida"
+                                        Command="{Binding DataContext.StopFeedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Grid Grid.Row="1" Background="Black">
+                            <TextBlock Text="Sin imagen de salida" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Image Source="{Binding Preview}" Stretch="Uniform"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
 
         <!-- COLUMNA DERECHA: PANEL LATERAL -->
@@ -261,33 +412,46 @@
                     </StackPanel>
                 </Border>
 
-                <!-- CONTROL DE CÁMARA -->
+                <!-- Las fuentes se inician solo al pulsar el control del visor correspondiente. -->
+                <TextBlock Text="USB/DroidCam: elija una cámara Windows. DroidCam por Wi-Fi: escriba la IP del teléfono en Red."
+                           Foreground="White" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
                 <Grid Margin="0,2,0,5">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- BOTÓN INICIAR CÁMARA CON ICONO -->
                     <Button Command="{Binding StartCameraCommand}" 
-                            Background="#333333" Foreground="#AAAAAA"
+                            Background="#333333" Foreground="White"
                             Padding="5" Margin="0,0,5,0" FontSize="12"
                             BorderThickness="0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <materialDesign:PackIcon Kind="Video" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Iniciar Cámara" VerticalAlignment="Center"/>
+                            <TextBlock Text="Iniciar ambas" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
-                    <!-- BOTÓN DETENER CON ICONO -->
+                    <!-- El control lateral cierra las dos capturas. -->
                     <Button Grid.Column="1"
                             Command="{Binding StopCameraCommand}" 
-                            Background="#333333" Foreground="#AAAAAA"
-                            Padding="5" Margin="5,0,0,0" FontSize="12"
+                            Background="#333333" Foreground="White"
+                            Padding="5" Margin="5,0,5,0" FontSize="12"
                             BorderThickness="0" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <materialDesign:PackIcon Kind="VideoOff" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Detener" VerticalAlignment="Center"/>
+                            <TextBlock Text="Detener ambas" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <!-- Permite descubrir una webcam conectada después de abrir la pantalla. -->
+                    <Button Grid.Column="2" Command="{Binding RefreshCamerasCommand}"
+                            Background="#333333" Foreground="White"
+                            Padding="5" Margin="5,0,0,0" FontSize="12"
+                            BorderThickness="0" Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16" Margin="0,0,5,0"/>
+                            <TextBlock Text="Buscar" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
