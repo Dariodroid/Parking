@@ -10,13 +10,15 @@ public class VehicleScheduleItemViewModel : BaseViewModel
     private TimeSpan _manualStartTime;
     private TimeSpan _manualEndTime;
 
-    /// <summary>Indica si el día permite entradas según su horario configurado.</summary>
+    /// <summary>Indica si el día permite entradas; al desactivarlo retira la marca 24H.</summary>
     public bool IsEnabled
     {
         get => _isEnabled;
         set
         {
             if (!SetProperty(ref _isEnabled, value)) return;
+            // Un día inactivo no debe conservar una opción 24H que no se aplica.
+            if (!value && IsFullDay) IsFullDay = false;
             OnPropertyChanged(nameof(CanEditHours));
         }
     }
@@ -29,6 +31,8 @@ public class VehicleScheduleItemViewModel : BaseViewModel
         get => _isFullDay;
         set
         {
+            // La jornada completa solo puede configurarse para un día activo.
+            if (value && !IsEnabled) return;
             if (_isFullDay == value) return;
             // Al activar 24H se conservan las horas manuales para poder recuperarlas.
             if (value)
