@@ -160,8 +160,10 @@ namespace Parking.UI.Windows.ViewModels
             // Ambos paneles comparten opciones, pero cada uno posee un VideoCapture nuevo.
             EntranceFeed = new CameraFeedViewModel("ENTRADA", CameraSources, cameraFactory);
             ExitFeed = new CameraFeedViewModel("SALIDA / QR", CameraSources, cameraFactory);
-            EntranceFeed.NetworkUrl = _savedCameraSelection?.EntranceUrl ?? string.Empty;
-            ExitFeed.NetworkUrl = _savedCameraSelection?.ExitUrl ?? string.Empty;
+            EntranceFeed.GenericNetworkUrl = _savedCameraSelection?.EntranceUrl ?? string.Empty;
+            ExitFeed.GenericNetworkUrl = _savedCameraSelection?.ExitUrl ?? string.Empty;
+            EntranceFeed.DroidCamNetworkUrl = _savedCameraSelection?.EntranceDroidCamUrl ?? string.Empty;
+            ExitFeed.DroidCamNetworkUrl = _savedCameraSelection?.ExitDroidCamUrl ?? string.Empty;
             _plateService = plateService;
             _entryService = entryService;
             _qrService = qrService;
@@ -379,9 +381,12 @@ namespace Parking.UI.Windows.ViewModels
                     var discovered = await _cameraSourceCatalog.DiscoverAsync();
                     CameraSources.Clear();
                     foreach (var source in discovered) CameraSources.Add(source);
-                    // La opción de red admite RTSP o HTTP aun sin webcam conectada.
-                    CameraSources.Add(new CameraSource("network", "Cámara de red (RTSP/HTTP)",
+                    // La opción genérica admite cualquier vídeo RTSP o HTTP compatible.
+                    CameraSources.Add(new CameraSource("network", "Cámara IP / red (RTSP/HTTP)",
                         CameraSourceKind.NetworkStream));
+                    // DroidCam conserva su abreviatura sin imponerla a otras cámaras.
+                    CameraSources.Add(new CameraSource("network:droidcam", "DroidCam Wi-Fi (opcional)",
+                        CameraSourceKind.NetworkStream, AddressProfile: CameraAddressProfile.DroidCam));
 
                     // Las selecciones previas se recuperan por Id y no por objeto antiguo.
                     EntranceFeed.SelectedSource = CameraSources.FirstOrDefault(x => x.Id == entranceId)
@@ -397,8 +402,10 @@ namespace Parking.UI.Windows.ViewModels
                 {
                     // El fallo de enumeración no impide configurar una fuente de red.
                     CameraSources.Clear();
-                    CameraSources.Add(new CameraSource("network", "Cámara de red (RTSP/HTTP)",
+                    CameraSources.Add(new CameraSource("network", "Cámara IP / red (RTSP/HTTP)",
                         CameraSourceKind.NetworkStream));
+                    CameraSources.Add(new CameraSource("network:droidcam", "DroidCam Wi-Fi (opcional)",
+                        CameraSourceKind.NetworkStream, AddressProfile: CameraAddressProfile.DroidCam));
                     StatusMessage = $"No se pudieron buscar cámaras: {ex.Message}";
                 }
 
@@ -474,13 +481,15 @@ namespace Parking.UI.Windows.ViewModels
                 return;
             }
 
-            // La IP abreviada de DroidCam se completa antes de entregarla a OpenCV.
+            // La URL genérica se conserva; solo el perfil opcional completa DroidCam.
             CameraSource source = selected;
             if (selected.Kind == CameraSourceKind.NetworkStream)
             {
-                if (!CameraStreamAddress.TryNormalize(feed.NetworkUrl, out string url))
+                if (!CameraStreamAddress.TryNormalize(feed.NetworkUrl, selected.AddressProfile, out string url))
                 {
-                    feed.Status = "Escriba la IP de DroidCam o una URL RTSP/HTTP válida.";
+                    feed.Status = selected.AddressProfile == CameraAddressProfile.DroidCam
+                        ? "Escriba la IP del teléfono o una URL de vídeo válida."
+                        : "Escriba la URL completa RTSP/HTTP de la cámara.";
                     return;
                 }
                 // Mostramos la dirección completa que se intentará conectar.
@@ -581,8 +590,9 @@ namespace Parking.UI.Windows.ViewModels
             {
                 // Persistimos índices y URLs para restaurarlos en la próxima apertura.
                 _cameraSelectionStore.Save(new CameraSelectionConfiguration(
-                    EntranceFeed.SelectedSource?.Id, EntranceFeed.NetworkUrl,
-                    ExitFeed.SelectedSource?.Id, ExitFeed.NetworkUrl));
+                    EntranceFeed.SelectedSource?.Id, EntranceFeed.GenericNetworkUrl,
+                    ExitFeed.SelectedSource?.Id, ExitFeed.GenericNetworkUrl,
+                    EntranceFeed.DroidCamNetworkUrl, ExitFeed.DroidCamNetworkUrl));
             }
             catch (Exception)
             {

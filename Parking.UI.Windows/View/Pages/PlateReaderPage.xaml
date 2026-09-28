@@ -182,9 +182,12 @@
                                       DisplayMemberPath="DisplayName" Height="30" Margin="0,5,0,0"/>
                             <TextBox Style="{StaticResource CameraUrlStyle}" Text="{Binding NetworkUrl, UpdateSourceTrigger=PropertyChanged}"
                                      Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
-                                     ToolTip="IP de DroidCam o URL RTSP/HTTP; ejemplo: 192.168.0.100:4747" Margin="0,5,0,0" Height="30"/>
+                                     ToolTip="URL de vídeo RTSP/HTTP; en el perfil DroidCam también se admite solo la IP" Margin="0,5,0,0" Height="30"/>
+                            <TextBlock Text="Introduzca la URL completa del vídeo RTSP/HTTP de la cámara IP o ANPR."
+                                       Visibility="{Binding IsGenericNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="DroidCam: escriba IP o IP:puerto; se añade /video automáticamente."
-                                       Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Visibility="{Binding IsDroidCamSelected, Converter={StaticResource BoolToVisibilityConverter}}"
                                        Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap"
                                        FontSize="11" Margin="0,5,0,0"/>
@@ -220,9 +223,12 @@
                                       DisplayMemberPath="DisplayName" Height="30" Margin="0,5,0,0"/>
                             <TextBox Style="{StaticResource CameraUrlStyle}" Text="{Binding NetworkUrl, UpdateSourceTrigger=PropertyChanged}"
                                      Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
-                                     ToolTip="IP de DroidCam o URL RTSP/HTTP; ejemplo: 192.168.0.100:4747" Margin="0,5,0,0" Height="30"/>
+                                     ToolTip="URL de vídeo RTSP/HTTP; en el perfil DroidCam también se admite solo la IP" Margin="0,5,0,0" Height="30"/>
+                            <TextBlock Text="Introduzca la URL completa del vídeo RTSP/HTTP de la cámara IP o ANPR."
+                                       Visibility="{Binding IsGenericNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="DroidCam: escriba IP o IP:puerto; se añade /video automáticamente."
-                                       Visibility="{Binding IsNetworkSelected, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Visibility="{Binding IsDroidCamSelected, Converter={StaticResource BoolToVisibilityConverter}}"
                                        Foreground="White" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="{Binding Status}" Foreground="White" TextWrapping="Wrap"
                                        FontSize="11" Margin="0,5,0,0"/>
@@ -413,7 +419,7 @@
                 </Border>
 
                 <!-- Las fuentes se inician solo al pulsar el control del visor correspondiente. -->
-                <TextBlock Text="USB/DroidCam: elija una cámara Windows. DroidCam por Wi-Fi: escriba la IP del teléfono en Red."
+                <TextBlock Text="Webcam USB o virtual: elija Cámara Windows. Cámara IP o ANPR: configure su URL de vídeo en Cámara IP / red."
                            Foreground="White" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
                 <Grid Margin="0,2,0,5">
                     <Grid.ColumnDefinitions>

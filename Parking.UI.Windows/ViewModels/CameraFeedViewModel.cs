@@ -10,7 +10,8 @@ namespace Parking.UI.Windows.ViewModels;
 public sealed class CameraFeedViewModel : BaseViewModel
 {
     private CameraSource? _selectedSource;
-    private string _networkUrl = string.Empty;
+    private string _genericNetworkUrl = string.Empty;
+    private string _droidCamNetworkUrl = string.Empty;
     private string _status = "Seleccione una cámara.";
     private BitmapSource? _preview;
     private bool _isRunning;
@@ -30,25 +31,61 @@ public sealed class CameraFeedViewModel : BaseViewModel
             // El cambio de fuente actualiza también la visibilidad de la URL.
             if (!SetProperty(ref _selectedSource, value)) return;
             OnPropertyChanged(nameof(IsNetworkSelected));
+            OnPropertyChanged(nameof(IsDroidCamSelected));
+            OnPropertyChanged(nameof(IsGenericNetworkSelected));
+            // Al alternar perfiles se presenta la dirección guardada para cada uno.
+            OnPropertyChanged(nameof(NetworkUrl));
             // El vídeo abierto conserva la fuente anterior hasta pulsar Iniciar.
             if (IsRunning) Status = "Selección modificada: pulse Iniciar para aplicar.";
         }
     }
 
-    /// <summary>Dirección RTSP/HTTP utilizada solo cuando se selecciona Red.</summary>
+    /// <summary>Dirección de vídeo del perfil de red seleccionado.</summary>
     public string NetworkUrl
     {
-        get => _networkUrl;
+        get => IsDroidCamSelected ? _droidCamNetworkUrl : _genericNetworkUrl;
         set
         {
+            // El campo visible modifica únicamente la dirección de este perfil.
+            bool changed = IsDroidCamSelected
+                ? SetProperty(ref _droidCamNetworkUrl, value)
+                : SetProperty(ref _genericNetworkUrl, value);
             // La URL se aplica al volver a abrir la fuente, no durante una lectura.
-            if (SetProperty(ref _networkUrl, value) && IsRunning && IsNetworkSelected)
+            if (changed && IsRunning && IsNetworkSelected)
                 Status = "URL modificada: pulse Iniciar para aplicar.";
+        }
+    }
+
+    /// <summary>URL de la cámara IP genérica, aunque se muestre otro perfil.</summary>
+    public string GenericNetworkUrl
+    {
+        get => _genericNetworkUrl;
+        set
+        {
+            if (SetProperty(ref _genericNetworkUrl, value) && !IsDroidCamSelected)
+                OnPropertyChanged(nameof(NetworkUrl));
+        }
+    }
+
+    /// <summary>IP o URL del perfil DroidCam, aunque se muestre otro perfil.</summary>
+    public string DroidCamNetworkUrl
+    {
+        get => _droidCamNetworkUrl;
+        set
+        {
+            if (SetProperty(ref _droidCamNetworkUrl, value) && IsDroidCamSelected)
+                OnPropertyChanged(nameof(NetworkUrl));
         }
     }
 
     /// <summary>Determina si se muestra la entrada de URL para esta fuente.</summary>
     public bool IsNetworkSelected => SelectedSource?.Kind == CameraSourceKind.NetworkStream;
+
+    /// <summary>Indica que se eligió el acceso abreviado opcional de DroidCam.</summary>
+    public bool IsDroidCamSelected => SelectedSource?.AddressProfile == CameraAddressProfile.DroidCam;
+
+    /// <summary>Indica que se debe introducir una URL completa de cualquier cámara IP.</summary>
+    public bool IsGenericNetworkSelected => IsNetworkSelected && !IsDroidCamSelected;
 
     /// <summary>Describe la conexión o el último error sin incluir credenciales de la URL.</summary>
     public string Status
