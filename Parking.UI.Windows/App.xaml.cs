@@ -28,12 +28,15 @@ namespace Parking.UI.Windows
 
         /// <summary>Carga preferencias locales, registra servicios y abre configuración o login.</summary>
         /// <param name="e">Argumentos de inicio proporcionados por WPF.</param>
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
             // El tema y la conexión pertenecen al usuario actual de esta instalación.
             var settingsStore = new ApplicationSettingsStore();
+            // El signo se restaura antes de construir cualquier pantalla o exportación.
+            var storedCurrencySymbol = settingsStore.Load().CurrencySymbol;
+            CurrencyDisplay.SetSymbol(CurrencyDisplay.IsValidSymbol(storedCurrencySymbol) ? storedCurrencySymbol : "$");
             var themeService = new ThemeService(settingsStore);
             themeService.ApplyStored();
             var serviceCollection = new ServiceCollection();
@@ -48,10 +51,8 @@ namespace Parking.UI.Windows
                     .Load().ConnectionString;
                 if (string.IsNullOrWhiteSpace(connectionString))
                     throw new InvalidOperationException("Configure la conexión SQL antes de iniciar sesión.");
-                options.UseSqlServer(
-                    connectionString,
-                    sql => sql.MigrationsAssembly("Parking.Infrastructure.DataAccess")
-                );
+                // El contexto principal se obtuvo por ingeniería inversa; no hay migraciones EF.
+                options.UseSqlServer(connectionString);
             });
 
             // ====================== 2. REPOSITORIOS ======================
@@ -59,16 +60,20 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<Ivehicle_typeRepository, vehicle_typeRepository>();
             serviceCollection.AddScoped<IuserRepository, userRepository>();
             serviceCollection.AddScoped<IBaseRepository<vehicle_type>, BaseRepository<vehicle_type>>();
+            serviceCollection.AddScoped<IBaseRepository<payment>, BaseRepository<payment>>();
             serviceCollection.AddScoped<IRegisteredVehicle, RegisteredVehicleRepository>();
             serviceCollection.AddScoped<IParkingSlotRepository, ParkingSlotRepository>();
             serviceCollection.AddScoped<IParkingDashboard, ParkingDashboardRepository>();
             serviceCollection.AddScoped<ICashRepository, CashRepository>();
             serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
+            serviceCollection.AddScoped<IParkingPerformanceRepository, ParkingPerformanceRepository>();
             serviceCollection.AddScoped<Application.Dto.Interfaces.IVehicleReportRepository,VehicleReportRepository>();
             serviceCollection.AddScoped<IPasswordHasher,PasswordHasher>();
 
             serviceCollection.AddScoped<IAuthenticationService, AuthenticationService>();
             serviceCollection.AddScoped<IPasswordHasher, PasswordHasher>();
+            // La primera cuenta se crea solo tras comprobar la tabla users de la base configurada.
+            serviceCollection.AddScoped<InitialAdministratorService>();
             // ====================== 3. SERVICIOS EXTERNOS ======================
             serviceCollection.AddSingleton<YoloPlateDetector>(_ =>
                 new RfdetrPlateDetector(System.IO.Path.Combine(
@@ -79,6 +84,10 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<ICameraSourceCatalog, OpenCvCameraSourceCatalog>();
             // Las selecciones y URL RTSP se conservan cifradas para la cuenta de Windows.
             serviceCollection.AddSingleton<CameraSelectionStore>();
+            serviceCollection.AddSingleton<CameraHealthMonitor>();
+            // El libro mensual comparte la base SQL y conserva un asiento por cuota cobrada.
+            serviceCollection.AddSingleton<MonthlyFeeLedgerService>();
+            serviceCollection.AddTransient<OperationsControlService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
             serviceCollection.AddSingleton<IEntryPhotoStore, LocalEntryPhotoStore>();
             serviceCollection.AddSingleton<IQrService, QrReaderService>();
@@ -103,6 +112,8 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<DashboardViewModel>();
             serviceCollection.AddTransient<CashViewModel>();
             serviceCollection.AddTransient<OperatorReportViewModel>();
+            serviceCollection.AddTransient<ParkingPerformanceViewModel>();
+            serviceCollection.AddTransient<OperationsControlViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();
             serviceCollection.AddTransient<LoginViewModel>();
@@ -114,12 +125,41 @@ namespace Parking.UI.Windows
             // ====================== BUILD ======================
             ServiceProvider = serviceCollection.BuildServiceProvider();
 
+            // Los asistentes cierran sus ventanas antes de abrir el login; la aplicación sigue viva entre pasos.
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             // La instalación inicial pide el servidor antes de construir el login.
             if (string.IsNullOrWhiteSpace(settingsStore.Load().ConnectionString))
             {
-                ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 var settingsVm = ServiceProvider.GetRequiredService<ApplicationSettingsViewModel>();
                 if (new ConnectionSetupWindow(settingsVm).ShowDialog() != true)
+                {
+                    Shutdown();
+                    return;
+                }
+            }
+
+            // Una base sin usuarios necesita crear el administrador antes del primer acceso.
+            // Si SQL no responde o falta la tabla, no se ofrece un alta alternativa que eluda el control.
+            using (var scope = ServiceProvider.CreateScope())
+            {
+                var initialAdmin = scope.ServiceProvider.GetRequiredService<InitialAdministratorService>();
+                bool isRequired;
+                try
+                {
+                    // Esperar de forma asíncrona deja libre el hilo WPF para que SQL termine y se dibuje la ventana.
+                    isRequired = await initialAdmin.IsRequiredAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error comprobando usuarios iniciales: {ex}");
+                    MessageBox.Show("No se pudo verificar la base de datos. Revise la conexión y la tabla de usuarios.",
+                        "Inicio del sistema", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Shutdown();
+                    return;
+                }
+
+                if (isRequired && new InitialAdministratorWindow(initialAdmin).ShowDialog() != true)
                 {
                     Shutdown();
                     return;
@@ -134,6 +174,8 @@ namespace Parking.UI.Windows
             ShutdownMode = ShutdownMode.OnLastWindowClose;
         }
 
+        /// <summary>Libera los servicios compartidos cuando WPF termina la aplicación.</summary>
+        /// <param name="e">Datos del cierre proporcionados por WPF.</param>
         protected override void OnExit(ExitEventArgs e)
         {
             if (ServiceProvider is IDisposable disposable)

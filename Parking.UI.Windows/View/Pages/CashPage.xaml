@@ -76,6 +76,7 @@
             <RowDefinition Height="110"/>
             <RowDefinition Height="85"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- MÉTRICAS -->
@@ -96,7 +97,7 @@
                     <TextBlock Text="INGRESOS HOY"
                                Foreground="#9CA3AF"/>
 
-                    <TextBlock Text="{Binding TodayIncome,StringFormat=C}"
+                    <TextBlock Text="{Binding TodayIncome, Converter={StaticResource CurrencyConverter}}"
                                Foreground="#10B981"
                                FontWeight="Bold"
                                FontSize="26"/>
@@ -118,7 +119,7 @@
                     <TextBlock Text="TOTAL DEL PERÍODO"
                                Foreground="#9CA3AF"/>
 
-                    <TextBlock Text="{Binding MonthIncome,StringFormat=C}"
+                    <TextBlock Text="{Binding MonthIncome, Converter={StaticResource CurrencyConverter}}"
                                Foreground="#60A5FA"
                                FontWeight="Bold"
                                FontSize="26"/>
@@ -139,7 +140,7 @@
                     <TextBlock Text="EFECTIVO"
                                Foreground="#9CA3AF"/>
 
-                    <TextBlock Text="{Binding CashIncome,StringFormat=C}"
+                    <TextBlock Text="{Binding CashIncome, Converter={StaticResource CurrencyConverter}}"
                                Foreground="#FBBF24"
                                FontWeight="Bold"
                                FontSize="26"/>
@@ -289,32 +290,34 @@
 
                 <DataGrid.Columns>
 
+                    <DataGridTextColumn Header="ORIGEN" Binding="{Binding Origin}" Width="120"/>
+
                     <DataGridTextColumn Header="PLACA"
-                            Binding="{Binding session.plate}"
+                            Binding="{Binding Plate}"
                             Width="120"/>
 
                     <DataGridTextColumn Header="OPERADOR"
-                            Binding="{Binding collected_byNavigation.full_name}"
+                            Binding="{Binding OperatorName}"
                             Width="220"/>
 
                     <DataGridTextColumn Header="MONTO"
-                            Binding="{Binding amount_paid,StringFormat={}{0:N2}}"
+                            Binding="{Binding Amount, Converter={StaticResource CurrencyConverter}}"
                             Width="120"/>
 
                     <DataGridTextColumn Header="MÉTODO"
-                            Binding="{Binding payment_method}"
+                            Binding="{Binding PaymentMethod}"
                             Width="120"/>
 
                     <DataGridTextColumn Header="REFERENCIA"
-                            Binding="{Binding payment_reference}"
+                            Binding="{Binding Reference}"
                             Width="180"/>
 
                     <DataGridTextColumn Header="FECHA COBRO"
-                            Binding="{Binding collected_at,StringFormat=dd/MM/yyyy HH:mm}"
+                            Binding="{Binding CollectedAt,StringFormat=dd/MM/yyyy HH:mm}"
                             Width="170"/>
 
                     <DataGridTextColumn Header="OBSERVACIÓN"
-                            Binding="{Binding notes}"
+                            Binding="{Binding Notes}"
                             Width="300"/>
 
                 </DataGrid.Columns>
@@ -322,6 +325,9 @@
             </DataGrid>
 
         </Border>
+
+        <TextBlock Grid.Row="3" Text="{Binding Status}" Foreground="#EF5350"
+                   TextWrapping="Wrap" Margin="6,6,6,0"/>
 
     </Grid>
 

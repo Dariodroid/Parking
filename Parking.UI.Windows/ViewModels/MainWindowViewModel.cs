@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Parking.Domain.Model.Models;
+using Parking.Application.Services;
+using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Windows.Input;
 
@@ -35,14 +37,21 @@ namespace Parking.UI.Windows.ViewModels
 
         public ICommand NavigateCommand { get; }
 
+        /// <summary>Indica si el usuario puede consultar informes y administrar el sistema.</summary>
+        public bool CanManageSystem { get; }
+
         /// <summary>Libera las cámaras al cerrar la ventana principal.</summary>
         /// <returns>Tarea que finaliza tras detener las capturas activas.</returns>
         public Task ShutdownCamerasAsync() => _operationViewModel?.DeactivateAsync() ?? Task.CompletedTask;
 
+        /// <summary>Prepara la navegación y conserva el controlador de cámaras durante toda la ventana.</summary>
+        /// <param name="serviceProvider">Resuelve cada vista y sus servicios al navegar.</param>
         public MainWindowViewModel(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider
                 ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+            CanManageSystem = MenuAccessPolicy.IsAdministrator(CurrentUser.Role);
 
             NavigateCommand = new RelayCommand(async param =>
                 await NavigateAsync(param?.ToString()));
@@ -50,9 +59,12 @@ namespace Parking.UI.Windows.ViewModels
             //_ = NavigateAsync("Operaciones");
         }
 
+        /// <summary>Comprueba los permisos del rol y muestra la sección solicitada.</summary>
+        /// <param name="destination">Nombre del menú solicitado; puede ser nulo.</param>
+        /// <returns>Tarea que termina cuando se carga la sección seleccionada.</returns>
         private async Task NavigateAsync(string? destination)
         {
-            if (string.IsNullOrWhiteSpace(destination))
+            if (!CurrentUser.IsAuthenticated || !MenuAccessPolicy.CanNavigate(CurrentUser.Role, destination))
                 return;
 
             // Actualizamos la clave del menú inmediatamente para iluminar el botón
@@ -98,6 +110,13 @@ namespace Parking.UI.Windows.ViewModels
                     PageTitle = "Caja";
                     break;
 
+                case "Centro de control":
+                    var controlVm = _serviceProvider.GetRequiredService<OperationsControlViewModel>();
+                    CurrentView = controlVm;
+                    PageTitle = "Centro de control";
+                    await controlVm.LoadAsync();
+                    break;
+
                 case "Tipos Vehículo":
                     var vehicleVm = _serviceProvider.GetRequiredService<vehicle_typeViewModel>();
                     CurrentView = vehicleVm;
@@ -130,6 +149,13 @@ namespace Parking.UI.Windows.ViewModels
                     CurrentView = vh;
                     PageTitle = "Vehículos";
                     await vh.LoadData();
+                    break;
+
+                case "Reporte Rendimiento":
+                    var performance = _serviceProvider.GetRequiredService<ParkingPerformanceViewModel>();
+                    CurrentView = performance;
+                    PageTitle = "Ocupación y recaudación";
+                    await performance.LoadAsync();
                     break;
 
                 default:

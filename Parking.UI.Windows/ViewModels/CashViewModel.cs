@@ -11,6 +11,15 @@ namespace Parking.UI.Windows.ViewModels;
 public class CashViewModel : BaseViewModel
 {
     private readonly ExcelExportService _excelExportService;
+    private readonly MonthlyFeeLedgerService _monthlyLedger;
+    private string _status = string.Empty;
+
+    /// <summary>Informa si alguna fuente de cobros no pudo cargarse.</summary>
+    public string Status
+    {
+        get => _status;
+        private set => SetProperty(ref _status, value);
+    }
     private decimal _todayIncome;
     public decimal TodayIncome
     {
@@ -70,7 +79,7 @@ public class CashViewModel : BaseViewModel
         set => SetProperty(ref _toDate, value);
     }
 
-    public ObservableCollection<payment> Payments { get; }
+    public ObservableCollection<CashMovement> Payments { get; }
         = new();
 
     private readonly ICashRepository _cashRepository;
@@ -79,10 +88,16 @@ public class CashViewModel : BaseViewModel
     public ICommand RefreshCommand { get; }
     public ICommand ExportExcelCommand { get; }
 
-    public CashViewModel(ICashRepository cashRepository, ExcelExportService excelExportService)
+    /// <summary>Prepara Caja para consultar salidas y cuotas mensuales y exportar la misma lista visible.</summary>
+    /// <param name="cashRepository">Consulta los cobros de salidas guardados en payments.</param>
+    /// <param name="excelExportService">Genera el libro Excel con las filas mostradas.</param>
+    /// <param name="monthlyLedger">Consulta los asientos de cuotas mensuales.</param>
+    public CashViewModel(ICashRepository cashRepository, ExcelExportService excelExportService,
+        MonthlyFeeLedgerService monthlyLedger)
     {
         _cashRepository = cashRepository;
         _excelExportService = excelExportService;
+        _monthlyLedger = monthlyLedger;
 
         RefreshCommand =
             new AsyncRelayCommand(async _ =>
@@ -96,60 +111,54 @@ public class CashViewModel : BaseViewModel
     /// <returns>Tarea que completa la carga de pagos y totales.</returns>
     private async Task LoadAsync()
     {
-        // Se reemplaza el listado anterior antes de presentar el nuevo resultado.
-        Payments.Clear();
-
-        // El repositorio usa fin exclusivo; sumar un día incluye el último día seleccionado.
-        var payments =
-            await _cashRepository
-                .GetPaymentsAsync(
-                    FromDate.Date,
-                    ToDate.Date.AddDays(1));
-
-        foreach (var item in payments)
+        try
         {
-            Payments.Add(item);
+            // Primero se consultan ambas fuentes: nunca se muestra un total incompleto como si fuera final.
+            DateTime from = FromDate.Date;
+            DateTime to = ToDate.Date.AddDays(1);
+            var departures = await _cashRepository.GetPaymentsAsync(from, to);
+            var monthly = await _monthlyLedger.GetReceiptsAsync(from, to);
+            var payments = departures.Select(p => new CashMovement(
+                    p.session?.plate ?? string.Empty,
+                    p.collected_byNavigation?.full_name ?? string.Empty,
+                    p.amount_paid, p.payment_method ?? string.Empty, p.payment_reference ?? string.Empty,
+                    p.collected_at, p.notes ?? string.Empty, "Salida"))
+                .Concat(monthly.Select(r => new CashMovement(r.Plate, r.OperatorName,
+                    r.Amount, r.PaymentMethod, $"MENSUAL-{r.Id}", r.CollectedAt,
+                    $"Cuota vencida al {r.PeriodEndDate:dd/MM/yyyy}", "Mensualidad")))
+                .OrderByDescending(p => p.CollectedAt).ToList();
+
+            Payments.Clear();
+            foreach (var item in payments) Payments.Add(item);
+            _appliedFromDate = FromDate;
+            _appliedToDate = ToDate;
+            TotalPayments = payments.Count;
+            TodayIncome = payments.Where(x => x.CollectedAt.Date == DateTime.Today).Sum(x => x.Amount);
+            MonthIncome = payments.Sum(x => x.Amount);
+            CashIncome = payments.Where(x => x.PaymentMethod == "cash").Sum(x => x.Amount);
+            TransferIncome = payments.Where(x => x.PaymentMethod == "transfer").Sum(x => x.Amount);
+            CardIncome = payments.Where(x => x.PaymentMethod == "card").Sum(x => x.Amount);
+            Status = string.Empty;
         }
-        // Se guardan los criterios efectivos una vez cargados los datos.
-        _appliedFromDate = FromDate;
-        _appliedToDate = ToDate;
-
-        TotalPayments =
-            payments.Count;
-
-        TodayIncome =
-            payments
-                .Where(x =>
-                    x.collected_at.Date ==
-                    DateTime.Today)
-                .Sum(x => x.amount_paid);
-
-        MonthIncome =
-            payments.Sum(x => x.amount_paid);
-
-        CashIncome =
-            payments
-                .Where(x =>
-                    x.payment_method == "cash")
-                .Sum(x => x.amount_paid);
-
-        TransferIncome =
-            payments
-                .Where(x =>
-                    x.payment_method == "transfer")
-                .Sum(x => x.amount_paid);
-
-        CardIncome =
-            payments
-                .Where(x =>
-                    x.payment_method == "card")
-                .Sum(x => x.amount_paid);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Caja: {ex}");
+            Status = "No se pudo cargar Caja completa. Revise la conexión y el libro de cuotas mensuales; no exporte hasta actualizar correctamente.";
+            Payments.Clear();
+            TodayIncome = MonthIncome = CashIncome = TransferIncome = CardIncome = 0;
+            TotalPayments = 0;
+        }
     }
 
 
 /// <summary>Exporta los pagos actualmente mostrados con las fechas de su última consulta.</summary>
 private void ExportExcel()
 {
+    if (!string.IsNullOrEmpty(Status))
+    {
+        MessageBox.Show(Status, "Caja", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
     // El operador escoge la ubicación del archivo de Excel.
     SaveFileDialog dialog = new()
     {

@@ -24,6 +24,7 @@ namespace Parking.Application.UseCases
         // Permiten consultar contrato/horarios y la tarifa del tipo de vehículo.
         private readonly IRegisteredVehicle _registeredVehicles;
         private readonly Ivehicle_typeRepository _vehicleTypes;
+        private readonly IBaseRepository<payment> _paymentRepo;
 
         /// <summary>Recibe los repositorios y almacenes usados al abrir y cerrar sesiones.</summary>
         /// <param name="sessionRepo">Consulta y persiste las sesiones de estacionamiento.</param>
@@ -32,13 +33,15 @@ namespace Parking.Application.UseCases
         /// <param name="qrTicketStore">Genera o elimina el QR de entradas ocasionales.</param>
         /// <param name="registeredVehicles">Busca clientes con plan y horarios completos.</param>
         /// <param name="vehicleTypes">Consulta la tarifa por hora del tipo de vehículo.</param>
+        /// <param name="paymentRepo">Agrega el pago al mismo contexto de la sesión y el puesto.</param>
         public EntryService(
             Iparking_sessionRepository sessionRepo,
             IParkingSlotRepository slotRepo,
             IEntryPhotoStore photoStore,
             IQrTicketStore qrTicketStore,
             IRegisteredVehicle registeredVehicles,
-            Ivehicle_typeRepository vehicleTypes)
+            Ivehicle_typeRepository vehicleTypes,
+            IBaseRepository<payment> paymentRepo)
         {
             // Se conservan las dependencias para usarlas en toda la operación.
             _sessionRepo = sessionRepo;
@@ -47,6 +50,7 @@ namespace Parking.Application.UseCases
             _qrTicketStore = qrTicketStore;
             _registeredVehicles = registeredVehicles;
             _vehicleTypes = vehicleTypes;
+            _paymentRepo = paymentRepo;
         }
 
         /// <summary>Obtiene la estancia abierta de una placa normalizada.</summary>
@@ -192,29 +196,32 @@ namespace Parking.Application.UseCases
 
         /// <summary>Cierra la sesión encontrada por placa; permite salir sin ticket al mensualizado.</summary>
         /// <param name="plateNumber">Placa leída o introducida al salir.</param>
+        /// <param name="paymentMethod">Medio elegido por el operador.</param>
         /// <returns>Verdadero cuando el cierre y la liberación del puesto quedan guardados.</returns>
-        public async Task<bool> RegisterExitByPlateAsync(string plateNumber)
+        public async Task<bool> RegisterExitByPlateAsync(string plateNumber, string paymentMethod = "other")
         {
             // La búsqueda usa el mismo formato normalizado que el ingreso.
             var session = await _sessionRepo.GetActiveSessionByPlateAsync(plateNumber.Trim().ToUpperInvariant());
             // Ambas vías de salida comparten la misma regla de cobro.
-            return await FinalizeSession(session);
+            return await FinalizeSession(session, paymentMethod);
         }
 
         /// <summary>Cierra una sesión ocasional localizada con el identificador del ticket QR.</summary>
         /// <param name="qrCode">Contenido SESSION leído del QR.</param>
+        /// <param name="paymentMethod">Medio elegido por el operador.</param>
         /// <returns>Verdadero cuando el cierre y la liberación del puesto quedan guardados.</returns>
-        public async Task<bool> RegisterExitByQrAsync(string qrCode)
+        public async Task<bool> RegisterExitByQrAsync(string qrCode, string paymentMethod = "other")
         {
             // Un cliente mensual nuevo no tiene qr_data y sale mediante su placa.
             var session = await _sessionRepo.GetActiveSessionByQrAsync(qrCode.Trim());
-            return await FinalizeSession(session);
+            return await FinalizeSession(session, paymentMethod);
         }
 
         /// <summary>Calcula el importe según la modalidad fijada al entrar y libera el puesto.</summary>
         /// <param name="session">Sesión abierta hallada por placa o QR; puede ser nula.</param>
+        /// <param name="paymentMethod">Medio informado para el pago ocasional.</param>
         /// <returns>Falso si no hay sesión o si la base no confirmó el guardado.</returns>
-        private async Task<bool> FinalizeSession(parking_session? session)
+        private async Task<bool> FinalizeSession(parking_session? session, string paymentMethod)
         {
             // No hay salida que registrar si la búsqueda no encontró sesión.
             if (session == null) return false;
@@ -260,11 +267,13 @@ namespace Parking.Application.UseCases
                 if (vehicleType == null || vehicleType.is_deleted)
                     throw new InvalidOperationException("No se encontró la tarifa del tipo de vehículo.");
                 // El importe ocasional resulta de horas iniciadas por tarifa/hora.
-                session.amount_due = hoursToCharge * vehicleType.hourly_rate;
+                // La tarifa y el producto deben caber exactamente en decimal(10,2).
+                // Rechazar un dato inválido evita que SQL redondee o desborde al guardar.
+                decimal hourlyRate = MoneyAmount.RequireValid(vehicleType.hourly_rate, "La tarifa por hora");
+                session.amount_due = MoneyAmount.RequireValid(hoursToCharge * hourlyRate, "El cobro de salida");
             }
 
-            // Se conserva el estado histórico paid usado por este flujo; este
-            // método no inserta por sí mismo una fila de cobro en payments.
+            // El cierre pagado y el asiento contable se confirman juntos.
             session.status = "paid";
             // La fecha y el operador identifican quién efectuó el cierre.
             session.updated_at = exitTime;
@@ -272,6 +281,32 @@ namespace Parking.Application.UseCases
 
             // EF registra los cambios en la sesión antes de guardar el contexto.
             await _sessionRepo.UpdateAsync(session);
+
+            if (session.amount_due is > 0)
+            {
+                // Si el operador no indicó un medio, se registra como desconocido
+                // en lugar de atribuir el dinero incorrectamente a efectivo.
+                string method = paymentMethod?.Trim().ToLowerInvariant() switch
+                {
+                    "cash" => "cash",
+                    "transfer" => "transfer",
+                    "card" => "card",
+                    _ => "other"
+                };
+                await _paymentRepo.AddAsync(new payment
+                {
+                    session_id = session.id,
+                    amount_paid = session.amount_due.Value,
+                    payment_method = method,
+                    notes = method == "other"
+                        ? "Salida registrada sin indicar el medio de pago."
+                        : "Cobro registrado al cerrar la sesión.",
+                    collected_by = CurrentUser.Id,
+                    collected_at = exitTime,
+                    created_at = exitTime,
+                    is_deleted = false
+                });
+            }
 
             // 5. LIBERAR EL PUESTO DE ESTACIONAMIENTO
             // La sesión conserva su parking_slot_id aunque current_session_id no se haya sincronizado.
@@ -291,7 +326,7 @@ namespace Parking.Application.UseCases
                 await _slotRepo.UpdateAsync(occupiedSlot);
             }
 
-            // Una confirmación persiste el cierre y la disponibilidad del puesto.
+            // Un único SaveChanges persiste sesión, pago y puesto en la misma transacción de EF.
             return await _sessionRepo.SaveChangesAsync();
         }
 

@@ -28,13 +28,15 @@ namespace Parking.Application.EntityService
 
         /// <summary>Busca la sesión abierta por placa y registra su salida.</summary>
         /// <param name="plateNumber">Placa cuya estancia debe cerrarse.</param>
+        /// <param name="paymentMethod">Medio de pago elegido; sin especificar si no se indicó.</param>
         /// <returns>Verdadero si se guardó el cierre de la sesión.</returns>
-        Task<bool> RegisterExitByPlateAsync(string plateNumber);
+        Task<bool> RegisterExitByPlateAsync(string plateNumber, string paymentMethod = "other");
 
         /// <summary>Busca una sesión ocasional abierta mediante el contenido de su ticket QR.</summary>
         /// <param name="qrCode">Identificador SESSION codificado en el ticket.</param>
+        /// <param name="paymentMethod">Medio de pago elegido; sin especificar si no se indicó.</param>
         /// <returns>Verdadero si se guardó el cierre de la sesión.</returns>
-        Task<bool> RegisterExitByQrAsync(string qrCode);
+        Task<bool> RegisterExitByQrAsync(string qrCode, string paymentMethod = "other");
 
         /// <summary>Consulta una estancia aún abierta mediante su placa.</summary>
         /// <param name="plateNumber">Placa del vehículo.</param>

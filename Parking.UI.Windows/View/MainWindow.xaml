@@ -27,6 +27,7 @@
         <local:EqualityConverter x:Key="EqualityConverter"/>
         <local:MenuWidthConverter x:Key="MenuWidthConverter"/>
         <local:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="RoleVisibilityConverter"/>
 
         <!-- VISTAS -->
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
@@ -39,6 +40,10 @@
 
         <DataTemplate DataType="{x:Type vm:userViewModel}">
             <views:userPage/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:OperationsControlViewModel}">
+            <views:OperationsControlPage/>
         </DataTemplate>
 
         <!-- ESTILO MENÚ MODERNO -->
@@ -221,6 +226,14 @@
                             </StackPanel>
                         </Button>
 
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Centro de control" Style="{StaticResource ModernMenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="ShieldCheck" Width="24" Height="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Centro de control" VerticalAlignment="Center" Margin="15,0,0,0"
+                                           Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                            </StackPanel>
+                        </Button>
+
                         <Button Command="{Binding NavigateCommand}" CommandParameter="Clientes" Style="{StaticResource ModernMenuButtonStyle}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="AccountGroup" Width="24" Height="24" VerticalAlignment="Center"/>
@@ -229,7 +242,8 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Command="{Binding NavigateCommand}" CommandParameter="Usuarios" Style="{StaticResource ModernMenuButtonStyle}">
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Usuarios" Style="{StaticResource ModernMenuButtonStyle}"
+                                Visibility="{Binding CanManageSystem, Converter={StaticResource RoleVisibilityConverter}}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <materialDesign:PackIcon Kind="AccountCircle" Width="24" Height="24" VerticalAlignment="Center"/>
                                 <TextBlock Text="Usuarios" VerticalAlignment="Center" Margin="15,0,0,0"
@@ -238,7 +252,8 @@
                         </Button>
 
                         <!-- EXPANDER REPORTES -->
-                        <Expander x:Name="ExpanderReportes" Foreground="{DynamicResource AppMutedTextBrush}" Background="Transparent" Margin="8,3" Padding="15,10" FontSize="14">
+                        <Expander x:Name="ExpanderReportes" Foreground="{DynamicResource AppMutedTextBrush}" Background="Transparent" Margin="8,3" Padding="15,10" FontSize="14"
+                                  Visibility="{Binding CanManageSystem, Converter={StaticResource RoleVisibilityConverter}}">
                             <Expander.Header>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="-10,0,0,0">
                                     <materialDesign:PackIcon Kind="ChartBar" Width="24" Height="24" VerticalAlignment="Center"/>
@@ -262,6 +277,13 @@
                                                    Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
                                     </StackPanel>
                                 </Button>
+                                <Button Command="{Binding NavigateCommand}" CommandParameter="Reporte Rendimiento" Style="{StaticResource ModernMenuButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="ChartLine" Width="24" Height="24" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Rendimiento" VerticalAlignment="Center" Margin="15,0,0,0"
+                                                   Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </Expander>
 
@@ -275,14 +297,16 @@
                             </Expander.Header>
 
                             <StackPanel Margin="15,5,0,5">
-                                <Button Command="{Binding NavigateCommand}" CommandParameter="Config" Style="{StaticResource ModernMenuButtonStyle}">
+                                <Button Command="{Binding NavigateCommand}" CommandParameter="Config" Style="{StaticResource ModernMenuButtonStyle}"
+                                        Visibility="{Binding CanManageSystem, Converter={StaticResource RoleVisibilityConverter}}">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="Parking" Width="24" Height="24" VerticalAlignment="Center"/>
                                         <TextBlock Text="Puestos" VerticalAlignment="Center" Margin="15,0,0,0"
                                                    Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
                                     </StackPanel>
                                 </Button>
-                                <Button Command="{Binding NavigateCommand}" CommandParameter="Tipos Vehículo" Style="{StaticResource ModernMenuButtonStyle}">
+                                <Button Command="{Binding NavigateCommand}" CommandParameter="Tipos Vehículo" Style="{StaticResource ModernMenuButtonStyle}"
+                                        Visibility="{Binding CanManageSystem, Converter={StaticResource RoleVisibilityConverter}}">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="CarInfo" Width="24" Height="24" VerticalAlignment="Center"/>
                                         <TextBlock Text="Tipos Vehículo" VerticalAlignment="Center" Margin="15,0,0,0"
@@ -292,7 +316,7 @@
                                 <Button Command="{Binding NavigateCommand}" CommandParameter="Apariencia y conexión" Style="{StaticResource ModernMenuButtonStyle}">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="ThemeLightDark" Width="24" Height="24" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Apariencia y conexión" VerticalAlignment="Center" Margin="15,0,0,0"
+                                        <TextBlock Text="Apariencia" VerticalAlignment="Center" Margin="15,0,0,0"
                                                    Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
                                     </StackPanel>
                                 </Button>

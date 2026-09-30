@@ -30,6 +30,7 @@ namespace Parking.UI.Windows.ViewModels
 
         private readonly ICameraSourceCatalog _cameraSourceCatalog;
         private readonly CameraSelectionStore _cameraSelectionStore;
+        private readonly CameraHealthMonitor _cameraHealth;
         private readonly CameraSelectionConfiguration? _savedCameraSelection;
         private readonly IPlateService _plateService;
         private readonly IEntryService _entryService;
@@ -44,6 +45,8 @@ namespace Parking.UI.Windows.ViewModels
         private string _plateNumber = string.Empty;
         private string _statusMessage = "Listo para iniciar.";
         private decimal _amountToCharge = 0;
+        // Efectivo es el medio habitual; el operador puede cambiarlo para la próxima salida.
+        private string _selectedPaymentMethod = "cash";
         /// <summary>Fuentes disponibles para los dos visores.</summary>
         public ObservableCollection<CameraSource> CameraSources { get; } = new();
         /// <summary>Visor orientado a la zona de ingreso.</summary>
@@ -96,6 +99,12 @@ namespace Parking.UI.Windows.ViewModels
         }
         public string StatusMessage { get => _statusMessage; set => SetProperty(ref _statusMessage, value); }
         public decimal AmountToCharge { get => _amountToCharge; set => SetProperty(ref _amountToCharge, value); }
+        /// <summary>Medio de pago aplicado a la próxima salida con importe.</summary>
+        public string SelectedPaymentMethod
+        {
+            get => _selectedPaymentMethod;
+            set => SetProperty(ref _selectedPaymentMethod, value);
+        }
         /// <summary>Indica si al menos uno de los dos visores está capturando.</summary>
         public bool IsCameraRunning => EntranceFeed.IsRunning || ExitFeed.IsRunning;
 
@@ -127,12 +136,15 @@ namespace Parking.UI.Windows.ViewModels
         public ICommand SavePlateCommand { get; }
         public ICommand RegisterExitCommand { get; }
         public ICommand SelectVehicleTypeCommand { get; }
+        /// <summary>Selecciona el medio que se guardará con el próximo cobro.</summary>
+        public ICommand SelectPaymentMethodCommand { get; }
         public ICommand UseAutomaticSlotCommand { get; }
 
         /// <summary>Conecta cámara, reconocimiento, sesiones y catálogos usados en la operación de entrada y salida.</summary>
         /// <param name="cameraFactory">Crea una captura distinta para cada visor.</param>
         /// <param name="cameraSourceCatalog">Busca cámaras conectadas a Windows.</param>
         /// <param name="cameraSelectionStore">Recupera y protege las selecciones de fuentes.</param>
+        /// <param name="cameraHealth">Registra fallos activos de vídeo para el centro de control.</param>
         /// <param name="plateService">Reconoce placas dentro del fotograma.</param>
         /// <param name="qrService">Lee los tickets QR mostrados a la cámara.</param>
         /// <param name="entryService">Registra y consulta las sesiones de estacionamiento.</param>
@@ -144,6 +156,7 @@ namespace Parking.UI.Windows.ViewModels
             ICameraServiceFactory cameraFactory,
             ICameraSourceCatalog cameraSourceCatalog,
             CameraSelectionStore cameraSelectionStore,
+            CameraHealthMonitor cameraHealth,
             IPlateService plateService,
             IQrService qrService,
             IEntryService entryService,
@@ -155,6 +168,7 @@ namespace Parking.UI.Windows.ViewModels
             _dialogService = dialogService;
             _cameraSourceCatalog = cameraSourceCatalog;
             _cameraSelectionStore = cameraSelectionStore;
+            _cameraHealth = cameraHealth;
             // La última URL se recupera antes de la enumeración de dispositivos.
             _savedCameraSelection = _cameraSelectionStore.Load();
             // Ambos paneles comparten opciones, pero cada uno posee un VideoCapture nuevo.
@@ -183,6 +197,12 @@ namespace Parking.UI.Windows.ViewModels
             SelectVehicleTypeCommand = new RelayCommand(param =>
             {
                 if (param is vehicle_type selectedType) SelectedVehicleType = selectedType;
+            });
+            SelectPaymentMethodCommand = new RelayCommand(param =>
+            {
+                // Las opciones coinciden con los valores admitidos por payments en SQL.
+                if (param is string method && method is "cash" or "transfer" or "card" or "other")
+                    SelectedPaymentMethod = method;
             });
             UseAutomaticSlotCommand = new RelayCommand(_ => SelectedSlot = null);
 
@@ -213,6 +233,7 @@ namespace Parking.UI.Windows.ViewModels
             }
         }
 
+        /// <summary>Actualiza total, ocupados y puestos disponibles conservando la selección actual.</summary>
         private async Task LoadSlotStatsAsync()
         {
             var slots = (await _slotRepo.GetAllAsync()).ToList();
@@ -244,6 +265,7 @@ namespace Parking.UI.Windows.ViewModels
             }
         }
 
+        /// <summary>Carga solo tipos activos para registrar entradas desde Operaciones.</summary>
         private async Task LoadVehicleTypesAsync()
         {
             VehicleTypes.Clear();
@@ -324,7 +346,7 @@ namespace Parking.UI.Windows.ViewModels
                     };
                     // La cuota vencida se muestra aparte del cobro ocasional.
                     if (entry.Access.PendingFee > 0)
-                        accessMessage += $" Cuota mensual pendiente: {entry.Access.PendingFee:C2}.";
+                        accessMessage += $" Cuota mensual pendiente: {CurrencyDisplay.Format(entry.Access.PendingFee)}.";
                     // El puesto y la regla aplicada quedan visibles en pantalla.
                     StatusMessage = $"ENTRADA: {plate} asignado al puesto {entry.SlotNumber}. {accessMessage}";
                     ScannerAudioFeedback.PlayEntry();
@@ -504,6 +526,7 @@ namespace Parking.UI.Windows.ViewModels
                 if (!started)
                 {
                     feed.Status = "No se pudo abrir esta fuente. Revise conexión y selección.";
+                    _cameraHealth.ReportFailure(feed.Title, feed.Status);
                     return;
                 }
 
@@ -511,6 +534,7 @@ namespace Parking.UI.Windows.ViewModels
                 feed.Cancellation = new CancellationTokenSource();
                 feed.ActiveSource = source;
                 feed.IsRunning = true;
+                _cameraHealth.Clear(feed.Title);
                 feed.Status = "Imagen en directo. Lee placas y QR.";
                 feed.PreviewTask = RunPreviewLoopAsync(feed, feed.Cancellation.Token);
             }
@@ -521,6 +545,7 @@ namespace Parking.UI.Windows.ViewModels
                 feed.ActiveSource = null;
                 feed.IsRunning = false;
                 feed.Status = "No se pudo conectar esta cámara. Revise la fuente.";
+                _cameraHealth.ReportFailure(feed.Title, feed.Status);
             }
         }
 
@@ -618,7 +643,7 @@ namespace Parking.UI.Windows.ViewModels
         /// <summary>Detiene un único visor antes de cerrar su captura OpenCV.</summary>
         /// <param name="feed">Visor que se va a liberar.</param>
         /// <returns>Tarea de cancelación y cierre.</returns>
-        private static async Task StopFeedAsync(CameraFeedViewModel feed)
+        private async Task StopFeedAsync(CameraFeedViewModel feed)
         {
             // Se espera el fin del bucle para no leer a la vez que se libera el driver.
             feed.Cancellation?.Cancel();
@@ -646,6 +671,7 @@ namespace Parking.UI.Windows.ViewModels
             feed.Preview = null;
             if (released) feed.ActiveSource = null;
             feed.IsRunning = !released;
+            if (released) _cameraHealth.Clear(feed.Title);
         }
 
         /// <summary>Actualiza un visor y entrega sus fotogramas a los lectores QR y OCR.</summary>
@@ -669,6 +695,7 @@ namespace Parking.UI.Windows.ViewModels
                     {
                         DateTime now = DateTime.UtcNow;
                         lastFrameUtc = now;
+                        _cameraHealth.Clear(feed.Title);
                         if (now - lastPreviewUtc >= TimeSpan.FromMilliseconds(66))
                         {
                             // La caja OCR se dibuja únicamente en el visor que la detectó.
@@ -693,6 +720,7 @@ namespace Parking.UI.Windows.ViewModels
                         {
                             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                                 feed.Status = "Esta cámara dejó de entregar imagen. Pulse Buscar o Iniciar.");
+                            _cameraHealth.ReportFailure(feed.Title, feed.Status);
                             break;
                         }
                         await Task.Delay(50, cancellationToken);
@@ -705,6 +733,7 @@ namespace Parking.UI.Windows.ViewModels
                 // Se conserva el otro visor en ejecución si esta fuente falla.
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     feed.Status = "Se interrumpió el vídeo de esta cámara.");
+                _cameraHealth.ReportFailure(feed.Title, feed.Status);
             }
             finally
             {
@@ -807,8 +836,8 @@ namespace Parking.UI.Windows.ViewModels
                         : await _entryService.GetActiveSessionByPlateAsync(identifier);
 
                     success = session != null && (isQr
-                        ? await _entryService.RegisterExitByQrAsync(identifier)
-                        : await _entryService.RegisterExitByPlateAsync(identifier));
+                        ? await _entryService.RegisterExitByQrAsync(identifier, SelectedPaymentMethod)
+                        : await _entryService.RegisterExitByPlateAsync(identifier, SelectedPaymentMethod));
 
                     if (success)
                     {
@@ -845,6 +874,8 @@ namespace Parking.UI.Windows.ViewModels
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     AmountToCharge = session.amount_due ?? 0;
+                    // La selección pertenece a esta salida; no se arrastra a otro vehículo.
+                    SelectedPaymentMethod = "cash";
                     // El campo de entrada queda vacío. Una lectura de la placa
                     // trasera al salir no prepara otra entrada accidentalmente.
                     PlateNumber = string.Empty;
@@ -859,7 +890,7 @@ namespace Parking.UI.Windows.ViewModels
                     // muestra el total calculado al cerrar la sesión.
                     StatusMessage = isMonthly
                         ? $"SALIDA POR PLACA: {session.plate} | Cliente mensualizado, sin cobro."
-                        : $"SALIDA POR {(isQr ? "QR" : "PLACA")}: {session.plate} | Total: {AmountToCharge:C2}";
+                        : $"SALIDA POR {(isQr ? "QR" : "PLACA")}: {session.plate} | Total: {CurrencyDisplay.Format(AmountToCharge)}";
                     ScannerAudioFeedback.PlayExit();
                     _dialogService.ShowSuccess("¡Éxito!", StatusMessage);
                 });
@@ -996,6 +1027,9 @@ namespace Parking.UI.Windows.ViewModels
         }
 
 
+        /// <summary>Convierte un cuadro codificado en una imagen WPF segura para otro hilo.</summary>
+        /// <param name="frameBytes">Bytes de la imagen que entregó la cámara.</param>
+        /// <returns>Imagen cargada y congelada para mostrarla en el visor.</returns>
         private static BitmapSource BuildBitmapSource(byte[] frameBytes)
         {
             using var ms = new MemoryStream(frameBytes);

@@ -1,0 +1,180 @@
+<UserControl x:Class="Parking.UI.Windows.View.Pages.OperationsControlPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="{DynamicResource AppPageBrush}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolVisibility"/>
+        <Style x:Key="ControlCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+        <Style x:Key="ControlButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#1769A8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="38"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="CENTRO DE CONTROL" Foreground="{DynamicResource AppAccentTextBrush}" FontWeight="Bold" FontSize="13"/>
+                <TextBlock Text="Incidencias y cierre de turno" Foreground="{DynamicResource AppTextBrush}" FontSize="24" FontWeight="Bold"/>
+                <TextBlock Text="Detecta diferencias; cada revisión conserva usuario, fecha y motivo."
+                           Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12"/>
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding RefreshCommand}" Style="{StaticResource ControlButton}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Width="17" Height="17" Margin="0,0,6,0"/>
+                    <TextBlock Text="Actualizar"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,14">
+            <Border Style="{StaticResource ControlCard}">
+                <StackPanel><TextBlock Text="PENDIENTES" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding IncidentCount}" Foreground="{DynamicResource AppTextBrush}" FontSize="29" FontWeight="Bold"/></StackPanel>
+            </Border>
+            <Border Style="{StaticResource ControlCard}">
+                <StackPanel><TextBlock Text="DIFERENCIAS DE COBRO" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PaymentDifferenceCount}" Foreground="#EF5350" FontSize="29" FontWeight="Bold"/></StackPanel>
+            </Border>
+            <Border Style="{StaticResource ControlCard}">
+                <StackPanel><TextBlock Text="CÁMARAS CON FALLO" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CameraFailureCount}" Foreground="#FFB74D" FontSize="29" FontWeight="Bold"/></StackPanel>
+            </Border>
+            <Border Style="{StaticResource ControlCard}" Margin="0">
+                <StackPanel><TextBlock Text="EFECTIVO DE SALIDAS" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CurrentShift.Cash, Converter={StaticResource CurrencyConverter}}" Foreground="#81C784" FontSize="25" FontWeight="Bold"/></StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <TabControl Grid.Row="2" Background="{DynamicResource AppSurfaceBrush}" Foreground="{DynamicResource AppTextBrush}">
+            <TabItem Header="Incidencias" Visibility="{Binding IsAdministrator, Converter={StaticResource BoolVisibility}}">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Incidents}" SelectedItem="{Binding SelectedIncident, Mode=TwoWay}"
+                              AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                              Background="{DynamicResource AppSurfaceBrush}" Foreground="{DynamicResource AppTextBrush}"
+                              BorderBrush="{DynamicResource AppBorderBrush}" GridLinesVisibility="Horizontal">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TIPO" Binding="{Binding Category}" Width="150"/>
+                            <DataGridTextColumn Header="PLACA / FUENTE" Binding="{Binding Plate}" Width="125"/>
+                            <DataGridTextColumn Header="FECHA" Binding="{Binding OccurredAt, StringFormat=dd/MM/yyyy HH:mm}" Width="140"/>
+                            <DataGridTextColumn Header="OPERADOR" Binding="{Binding Operator}" Width="120"/>
+                            <DataGridTextColumn Header="DETALLE" Binding="{Binding Detail}" Width="270"/>
+                            <DataGridTextColumn Header="DIFERENCIA" Binding="{Binding Difference, Converter={StaticResource CurrencyConverter}}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Border Grid.Row="1" Padding="8" Margin="0,8,0,0" BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1" CornerRadius="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedIncident.HasPhoto}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding SelectedIncident.PhotoPath}" Width="140" Height="88" Stretch="Uniform"/>
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="FOTO DE ENTRADA" Foreground="{DynamicResource AppAccentTextBrush}" FontWeight="Bold"/>
+                                <TextBlock Text="Imagen guardada al registrar la sesión." Foreground="{DynamicResource AppMutedTextBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <Grid Grid.Row="2" Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="MOTIVO DE REVISIÓN" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBox Text="{Binding ReviewReason, UpdateSourceTrigger=PropertyChanged}" MaxLength="500"
+                                     ToolTip="Describa qué verificó y cómo resolvió la incidencia."
+                                     Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
+                                     BorderBrush="{DynamicResource AppInputBorderBrush}" MinHeight="38"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding ReviewCommand}" Style="{StaticResource ControlButton}"
+                                Margin="10,17,0,0" VerticalAlignment="Bottom" Content="Marcar revisada"/>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Cierre de cobros">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="COBROS DEL TURNO" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource AppAccentTextBrush}"/>
+                        <TextBlock Text="{Binding CurrentShift.StartedAt, StringFormat=Desde {0:dd/MM/yyyy HH:mm}}" Margin="0,8,0,12" Foreground="{DynamicResource AppMutedTextBrush}"/>
+                        <TextBlock Text="{Binding CurrentShift.PaymentCount, StringFormat=Pagos registrados: {0}}" Foreground="{DynamicResource AppTextBrush}"/>
+                        <TextBlock Text="{Binding CurrentShift.Cash, Converter={StaticResource CurrencyConverter}, ConverterParameter='Efectivo esperado: '}" Foreground="{DynamicResource AppTextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding CurrentShift.Transfer, Converter={StaticResource CurrencyConverter}, ConverterParameter='Transferencias: '}" Foreground="{DynamicResource AppTextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding CurrentShift.Card, Converter={StaticResource CurrencyConverter}, ConverterParameter='Tarjetas: '}" Foreground="{DynamicResource AppTextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding CurrentShift.Other, Converter={StaticResource CurrencyConverter}, ConverterParameter='Otros medios: '}" Foreground="{DynamicResource AppTextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding CurrentShift.Total, Converter={StaticResource CurrencyConverter}, ConverterParameter='TOTAL: '}" FontSize="20" FontWeight="Bold" Foreground="#81C784" Margin="0,14,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="EFECTIVO CONTADO" Foreground="{DynamicResource AppMutedTextBrush}" FontWeight="Bold" FontSize="11"/>
+                        <TextBox Text="{Binding CountedCash, UpdateSourceTrigger=PropertyChanged}" Height="38" Margin="0,4,0,12"
+                                 Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}" BorderBrush="{DynamicResource AppInputBorderBrush}"/>
+                        <TextBlock Text="OBSERVACIÓN (OBLIGATORIA SI HAY DIFERENCIA)" Foreground="{DynamicResource AppMutedTextBrush}" FontWeight="Bold" FontSize="11"/>
+                        <TextBox Text="{Binding ClosingNote, UpdateSourceTrigger=PropertyChanged}" MaxLength="500" Height="70"
+                                 TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,12"
+                                 Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}" BorderBrush="{DynamicResource AppInputBorderBrush}"/>
+                        <Button Command="{Binding CloseShiftCommand}" Style="{StaticResource ControlButton}"
+                                Content="Cerrar cobros de salidas"/>
+                        <TextBlock Text="Incluye salidas en payments y cuotas vencidas cobradas en el libro mensual. El cierre conserva intactos ambos asientos." TextWrapping="Wrap"
+                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Historial">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <GroupBox Header="REVISIONES" Foreground="{DynamicResource AppTextBrush}" Margin="0,0,0,8" Height="180"
+                              Visibility="{Binding IsAdministrator, Converter={StaticResource BoolVisibility}}">
+                        <DataGrid ItemsSource="{Binding Reviews}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="INCIDENCIA" Binding="{Binding IncidentKey}" Width="170"/>
+                                <DataGridTextColumn Header="FECHA" Binding="{Binding ReviewedAt, StringFormat=dd/MM/yyyy HH:mm}" Width="145"/>
+                                <DataGridTextColumn Header="REVISÓ" Binding="{Binding Reviewer}" Width="150"/>
+                                <DataGridTextColumn Header="MOTIVO" Binding="{Binding Reason}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                    <GroupBox Grid.Row="1" Header="CIERRES DE TURNO" Foreground="{DynamicResource AppTextBrush}">
+                        <DataGrid ItemsSource="{Binding Closures}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="OPERADOR" Binding="{Binding Operator}" Width="145"/>
+                                <DataGridTextColumn Header="CIERRE" Binding="{Binding ClosedAt, StringFormat=dd/MM/yyyy HH:mm}" Width="145"/>
+                                <DataGridTextColumn Header="ESPERADO" Binding="{Binding ExpectedCash, Converter={StaticResource CurrencyConverter}}" Width="95"/>
+                                <DataGridTextColumn Header="CONTADO" Binding="{Binding CountedCash, Converter={StaticResource CurrencyConverter}}" Width="95"/>
+                                <DataGridTextColumn Header="DIFERENCIA" Binding="{Binding Difference, Converter={StaticResource CurrencyConverter}}" Width="95"/>
+                                <DataGridTextColumn Header="NOTA" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <TextBlock Grid.Row="3" Text="{Binding Status}" Foreground="{DynamicResource AppMutedTextBrush}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+    </Grid>
+</UserControl>

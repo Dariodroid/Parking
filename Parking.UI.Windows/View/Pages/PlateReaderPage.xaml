@@ -76,6 +76,36 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- Los cuatro medios muestran inmediatamente cuál se usará en la próxima salida. -->
+        <Style x:Key="PaymentMethodButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="3,2"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppSidebarBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentTextBrush}"/>
+                </Trigger>
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <MultiBinding Converter="{StaticResource EqualityConverter}">
+                            <Binding Path="CommandParameter" RelativeSource="{RelativeSource Self}"/>
+                            <Binding Path="DataContext.SelectedPaymentMethod" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        </MultiBinding>
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
+                    <Setter Property="BorderBrush" Value="#00BFFF"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AppAccentTextBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="CameraUrlStyle" TargetType="TextBox">
             <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
             <Setter Property="CaretBrush" Value="{DynamicResource AppTextBrush}"/>
@@ -96,17 +126,17 @@
             <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="12"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,7"/>
         </Style>
 
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
             <Style.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="6"/>
@@ -259,15 +289,15 @@
                 <!-- DETECCIÓN DE PLACA -->
                 <Border Style="{StaticResource SidebarSectionStyle}">
                     <StackPanel>
-                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="DETECCIÓN DE PLACA" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,5"/>
                         <TextBox Text="{Binding PlateNumber, UpdateSourceTrigger=PropertyChanged}"
                                  MaxLength="8"
-                                 FontSize="28" FontWeight="Bold" Height="50"
+                                 FontSize="25" FontWeight="Bold" Height="43"
+                                 ToolTip="Escriba letras y números; el guion se agrega solo."
                                  Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
                                  BorderBrush="{DynamicResource AppInputBorderBrush}" BorderThickness="1"
                                  HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                  CaretBrush="{DynamicResource AppTextBrush}"/>
-                        <TextBlock Text="Escriba letras y números; el guion se agrega solo" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="10" Margin="0,4,0,0" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
@@ -275,10 +305,43 @@
                 <Border Style="{StaticResource SidebarSectionStyle}" Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}">
                     <StackPanel>
                         <TextBlock Text="RESUMEN DE COBRO" Foreground="#4A90E2" FontSize="11" FontWeight="Bold" Margin="0,0,0,4"/>
-                        <Viewbox Height="40">
-                            <TextBlock Text="{Binding AmountToCharge, StringFormat={}{0:C2}}"
+                        <Viewbox Height="33">
+                            <TextBlock Text="{Binding AmountToCharge, Converter={StaticResource CurrencyConverter}}"
                                        FontWeight="Black" Foreground="{DynamicResource AppTextBrush}" />
                         </Viewbox>
+                        <TextBlock Text="MEDIO DE PAGO · PRÓXIMA SALIDA"
+                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11"
+                                   FontWeight="SemiBold" Margin="0,6,0,3"/>
+                        <UniformGrid Columns="4">
+                            <Button Style="{StaticResource PaymentMethodButtonStyle}" Command="{Binding SelectPaymentMethodCommand}"
+                                    CommandParameter="cash" ToolTip="Efectivo">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="CashMultiple" Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="Efectivo" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PaymentMethodButtonStyle}" Command="{Binding SelectPaymentMethodCommand}"
+                                    CommandParameter="transfer" ToolTip="Transferencia">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="Bank" Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="Transfer." VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PaymentMethodButtonStyle}" Command="{Binding SelectPaymentMethodCommand}"
+                                    CommandParameter="card" ToolTip="Tarjeta">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="CreditCard" Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="Tarjeta" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource PaymentMethodButtonStyle}" Command="{Binding SelectPaymentMethodCommand}"
+                                    CommandParameter="other" ToolTip="Otro medio o sin especificar">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="DotsHorizontal" Width="15" Height="15" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                    <TextBlock Text="Otro" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </UniformGrid>
                     </StackPanel>
                 </Border>
 
@@ -286,7 +349,7 @@
                 <Border Style="{StaticResource SidebarSectionStyle}">
                     <StackPanel>
 
-                        <TextBlock Text="TIPO DE VEHÍCULO" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <TextBlock Text="TIPO DE VEHÍCULO" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,5"/>
 
                         <ItemsControl ItemsSource="{Binding VehicleTypes}">
                             <ItemsControl.ItemsPanel>
@@ -297,8 +360,8 @@
 
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Margin="3"
-                                            Height="72"
+                                    <Button Margin="2"
+                                            Height="58"
                                             Padding="0"
                                             BorderThickness="0"
                                             Background="Transparent"
@@ -336,18 +399,18 @@
 
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <materialDesign:PackIcon Kind="{Binding name, Converter={StaticResource VehicleNameToIconConverter}}"
-                                                                     Width="26"
-                                                                     Height="26"
+                                                                     Width="20"
+                                                                     Height="20"
                                                                      Foreground="{DynamicResource AppAccentTextBrush}"
                                                                      HorizontalAlignment="Center"/>
-                                            <TextBlock Margin="0,4,0,0"
+                                            <TextBlock Margin="0,1,0,0"
                                                        Text="{Binding name}"
                                                        FontWeight="Bold"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource AppTextBrush}"
                                                        HorizontalAlignment="Center"/>
-                                            <TextBlock Margin="0,2,0,0"
-                                                       Text="{Binding hourly_rate, StringFormat=$ {0:F2}/h}"
+                                            <TextBlock Margin="0,0,0,0"
+                                                       Text="{Binding hourly_rate, Converter={StaticResource CurrencyConverter}, ConverterParameter=/h}"
                                                        FontSize="10"
                                                        Foreground="#81C784"
                                                        HorizontalAlignment="Center"/>
@@ -357,15 +420,9 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Margin="0,10,0,12"
-                                   Text="Seleccione el tipo con un clic."
-                                   HorizontalAlignment="Center"
-                                   Foreground="{DynamicResource AppMutedTextBrush}"
-                                   FontSize="11"/>
-
                         <TextBlock Text="PUESTO LIBRE (OPCIONAL)" Foreground="{DynamicResource AppMutedTextBrush}"
-                                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,7"/>
-                        <Grid Margin="0,0,0,4">
+                                   FontSize="12" FontWeight="SemiBold" Margin="0,7,0,4"/>
+                        <Grid Margin="0,0,0,9">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -373,6 +430,7 @@
                             <ComboBox ItemsSource="{Binding AvailableSlots}"
                                       SelectedItem="{Binding SelectedSlot, Mode=TwoWay}"
                                       DisplayMemberPath="slot_number"
+                                      ToolTip="Sin elegir un puesto, se asigna automáticamente."
                                       Height="36" VerticalContentAlignment="Center"
                                       Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
                                       BorderBrush="{DynamicResource AppInputBorderBrush}"/>
@@ -382,9 +440,6 @@
                                     Background="{DynamicResource AppRaisedBrush}" Foreground="{DynamicResource AppTextBrush}"
                                     BorderBrush="{DynamicResource AppInputBorderBrush}" Cursor="Hand"/>
                         </Grid>
-                        <TextBlock Text="Sin elegir un puesto, se asigna automáticamente."
-                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" Margin="0,0,0,12"/>
-
                         <!-- BOTÓN REGISTRAR ENTRADA CON ICONO -->
                         <Button Command="{Binding SavePlateCommand}"
                                 Style="{StaticResource ActionButtonStyle}"
@@ -409,18 +464,16 @@
                 </Border>
 
                 <!-- RESULTADO DE LA OPERACIÓN -->
-                <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="60">
+                <Border Style="{StaticResource SidebarSectionStyle}" MinHeight="48">
                     <StackPanel>
-                        <TextBlock Text="ESTADO DE OPERACIÓN" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <TextBlock Text="ESTADO DE OPERACIÓN" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" FontWeight="Bold" Margin="0,0,0,3"/>
                         <TextBlock Text="{Binding StatusMessage}"
-                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="13"
+                                   Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12"
                                    TextWrapping="Wrap" Opacity="0.8"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Las fuentes se inician solo al pulsar el control del visor correspondiente. -->
-                <TextBlock Text="Webcam USB o virtual: elija Cámara Windows. Cámara IP o ANPR: configure su URL de vídeo en Cámara IP / red."
-                           Foreground="{DynamicResource AppTextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
                 <Grid Margin="0,2,0,5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

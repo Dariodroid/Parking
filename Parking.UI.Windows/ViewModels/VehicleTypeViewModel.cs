@@ -25,6 +25,9 @@ public class vehicle_typeViewModel : BaseViewModel
     public ICommand NewCommand { get; }
     public ICommand DeleteCommand { get; }
 
+    /// <summary>Prepara la edición de tipos de vehículo y sus tarifas.</summary>
+    /// <param name="repository">Consulta y guarda los tipos de vehículo.</param>
+    /// <param name="dialogService">Muestra validaciones y resultados al operador.</param>
     public vehicle_typeViewModel(Ivehicle_typeRepository repository, IDialogService dialogService)
     {
         _repository = repository;
@@ -66,7 +69,8 @@ public class vehicle_typeViewModel : BaseViewModel
             if (value < 0)
                 value = 0;
 
-            SetProperty(ref _hourlyRate, Math.Round(value, 2));
+            // Conservar el dato escrito permite rechazar fracciones de centavo antes de guardar.
+            SetProperty(ref _hourlyRate, value);
         }
     }
 
@@ -105,7 +109,7 @@ public class vehicle_typeViewModel : BaseViewModel
             if (value < 0)
                 value = 0;
 
-            SetProperty(ref _fractionRate, Math.Round(value, 2));
+            SetProperty(ref _fractionRate, value);
         }
     }
 
@@ -131,6 +135,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
     private bool _isLoaded;
 
+    /// <summary>Carga la lista de tipos una sola vez al abrir el formulario.</summary>
     public async Task InitializeAsync()
     {
         if (_isLoaded)
@@ -141,6 +146,7 @@ public class vehicle_typeViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    /// <summary>Recarga la lista de tipos de vehículo desde la base.</summary>
     private async Task LoadAsync()
     {
         vehicle_types.Clear();
@@ -153,6 +159,8 @@ public class vehicle_typeViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Copia la tarifa y los datos del tipo seleccionado al formulario.</summary>
+    /// <param name="item">Tipo de vehículo elegido en la lista.</param>
     private void LoadSelected(vehicle_type item)
     {
         Id = item.id;
@@ -171,6 +179,8 @@ public class vehicle_typeViewModel : BaseViewModel
         IsActive = item.is_active;
     }
 
+    /// <summary>Valida nombres, tarifas exactas y límites antes de guardar.</summary>
+    /// <returns>Verdadero si el tipo puede persistirse sin redondeo monetario.</returns>
     private bool Validate()
     {
         if (string.IsNullOrWhiteSpace(Name))
@@ -185,6 +195,13 @@ public class vehicle_typeViewModel : BaseViewModel
             return false;
         }
 
+        if (!Parking.Application.UseCases.MoneyAmount.IsValid(HourlyRate)
+            || !Parking.Application.UseCases.MoneyAmount.IsValid(FractionRate))
+        {
+            _dialogService.ShowWarning("Atención", "Las tarifas deben tener como máximo dos decimales y caber en la base de datos. No se redondearán automáticamente.");
+            return false;
+        }
+
         if (FractionMinutes <= 0)
         {
             _dialogService.ShowWarning("Atención", "Los minutos por fracción deben ser mayores a cero.");
@@ -194,6 +211,7 @@ public class vehicle_typeViewModel : BaseViewModel
         return true;
     }
 
+    /// <summary>Crea un tipo de vehículo y actualiza la lista visible.</summary>
     private async Task SaveAsync()
     {
         try
@@ -242,6 +260,7 @@ public class vehicle_typeViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Guarda los cambios del tipo seleccionado sin crear un duplicado.</summary>
     private async Task UpdateAsync()
     {
         try
@@ -293,6 +312,7 @@ public class vehicle_typeViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Elimina el tipo seleccionado tras las validaciones del repositorio.</summary>
     private async Task DeleteAsync()
     {
         try
@@ -337,6 +357,7 @@ public class vehicle_typeViewModel : BaseViewModel
             _dialogService.ShowError("Error", ex.Message);
         }
     }
+    /// <summary>Restablece el formulario y sus tarifas predeterminadas.</summary>
     private void ClearForm()
     {
         Id = 0;

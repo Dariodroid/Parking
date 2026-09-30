@@ -8,7 +8,7 @@ namespace Parking.UI.Windows.Services;
 /// <param name="Vehicle">Datos consultados con los filtros aplicados.</param>
 public sealed record VehicleReportRow(int Number, VehicleReportDto Vehicle)
 {
-    private static readonly CultureInfo CurrencyCulture = CultureInfo.GetCultureInfo("en-US");
+    private static CultureInfo CurrencyCulture => CurrencyDisplay.Culture;
     /// <summary>Tipo y categoría mostrados en dos líneas de una misma celda.</summary>
     public string TypeAndCategory => $"{Vehicle.VehicleType}\n{Vehicle.Category}";
     /// <summary>Estado y cuota del plan, o raya para una placa ocasional.</summary>

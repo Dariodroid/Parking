@@ -33,6 +33,11 @@ namespace Parking.UI.Windows.View.Pages
         /// <param name="e">Tamaño anterior y nuevo de la página.</param>
         private void PlateReaderPage_SizeChanged(object sender, SizeChangedEventArgs e)
         {
+            // El diseñador puede disparar SizeChanged mientras InitializeComponent aún construye la cuadrícula.
+            if (CameraLayoutGrid is null || EntranceCameraPanel is null || ExitCameraPanel is null ||
+                CameraLayoutGrid.ColumnDefinitions.Count < 2 || CameraLayoutGrid.RowDefinitions.Count < 2)
+                return;
+
             // El panel lateral ocupa ancho fijo; bajo este umbral cada cámara necesita todo el ancho restante.
             bool stacked = e.NewSize.Width < 1300;
             CameraLayoutGrid.ColumnDefinitions[1].Width = stacked ? new GridLength(0) : new GridLength(1, GridUnitType.Star);

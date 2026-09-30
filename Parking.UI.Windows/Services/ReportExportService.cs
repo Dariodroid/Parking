@@ -15,8 +15,8 @@ public sealed class ReportExportService
     private const string Blue = "245A81";
     private const string Pale = "EAF1F6";
     private const string Muted = "596B7A";
-    private const string CurrencyFormat = "$ #,##0.00";
-    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("en-US");
+    private static string CurrencyFormat => CurrencyDisplay.ExcelNumberFormat;
+    private static CultureInfo Culture => CurrencyDisplay.Culture;
 
     /// <summary>Genera la hoja de operadores con período, cobros y total recaudado.</summary>
     /// <param name="path">Ruta completa del archivo XLSX que se guardará.</param>
@@ -210,6 +210,93 @@ public sealed class ReportExportService
         WordFooter(body);
         // La tabla completa y el pie se persisten como documento OpenXML.
         document.MainDocumentPart!.Document.Save();
+    }
+
+    /// <summary>Escribe los indicadores diarios y sus totales en una hoja Excel filtrable.</summary>
+    /// <param name="path">Destino XLSX.</param>
+    /// <param name="report">Misma instantánea mostrada en pantalla.</param>
+    /// <param name="from">Primer día aplicado.</param>
+    /// <param name="to">Último día aplicado.</param>
+    public void ExportPerformanceExcel(string path, ParkingPerformanceReport report, DateTime from, DateTime to)
+    {
+        using var book = new XLWorkbook();
+        var sheet = book.Worksheets.Add("Rendimiento");
+        ExcelHeading(sheet, "OCUPACIÓN Y RECAUDACIÓN", 7, report.GeneratedAt);
+        sheet.Cell(4, 1).Value = "PERÍODO";
+        sheet.Cell(4, 2).Value = $"{from:dd/MM/yyyy} al {to:dd/MM/yyyy}";
+        sheet.Cell(5, 1).Value = "CAPACIDAD ACTUAL";
+        sheet.Cell(5, 2).Value = report.Capacity;
+        sheet.Cell(6, 1).Value = "RESUMEN";
+        sheet.Cell(6, 2).Value = $"{report.TotalEntries:N0} entradas · {report.TotalExits:N0} salidas · "
+            + $"{report.OccupancyPercent:N1}% ocupación · {report.TotalCollected.ToString("C", Culture)} cobrados";
+        sheet.Range(6, 2, 6, 7).Merge();
+        ExcelHeader(sheet, 8, "Día", "Entradas", "Salidas", "Ocupación", "Permanencia media",
+            "Mayor demanda de entrada", "Cobrado");
+        int row = 9;
+        foreach (var day in report.Days)
+        {
+            sheet.Cell(row, 1).Value = day.Date;
+            sheet.Cell(row, 2).Value = day.Entries;
+            sheet.Cell(row, 3).Value = day.Exits;
+            sheet.Cell(row, 4).Value = day.OccupancyPercent / 100;
+            sheet.Cell(row, 5).Value = day.AverageStayMinutes;
+            sheet.Cell(row, 6).Value = day.PeakEntryLabel;
+            sheet.Cell(row, 7).Value = day.Collected;
+            ExcelBodyRow(sheet, row, 7);
+            row++;
+        }
+        if (report.Days.Count == 0) ExcelEmpty(sheet, row, 7);
+        int totalRow = Math.Max(row, 10) + 1;
+        sheet.Cell(totalRow, 1).Value = "TOTAL / PROMEDIO";
+        sheet.Cell(totalRow, 2).Value = report.TotalEntries;
+        sheet.Cell(totalRow, 3).Value = report.TotalExits;
+        sheet.Cell(totalRow, 4).Value = report.OccupancyPercent / 100;
+        sheet.Cell(totalRow, 7).Value = report.TotalCollected;
+        ExcelTotal(sheet, totalRow, 7);
+        sheet.Column(1).Width = 18;
+        sheet.Columns(2, 3).Width = 15;
+        sheet.Column(4).Width = 18;
+        sheet.Column(5).Width = 23;
+        sheet.Column(6).Width = 29;
+        sheet.Column(7).Width = 21;
+        sheet.Range(9, 1, Math.Max(row - 1, 9), 1).Style.DateFormat.Format = "dd/mm/yyyy";
+        sheet.Range(9, 4, totalRow, 4).Style.NumberFormat.Format = "0.0%";
+        sheet.Range(9, 7, totalRow, 7).Style.NumberFormat.Format = CurrencyFormat;
+        ExcelFinish(sheet, 8, Math.Max(row - 1, 8), 7);
+        sheet.Cell(totalRow + 2, 1).Value =
+            "Actividad y ocupación: sesiones. Cobrado: únicamente payments por fecha de cobro. Se incluye cada día del período, aunque no haya pagos.";
+        sheet.Range(totalRow + 2, 1, totalRow + 2, 7).Merge();
+        book.SaveAs(path);
+    }
+
+    /// <summary>Genera un documento Word con el mismo resumen y detalle diario de la pantalla.</summary>
+    /// <param name="path">Destino DOCX.</param>
+    /// <param name="report">Instantánea aplicada.</param>
+    /// <param name="from">Primer día aplicado.</param>
+    /// <param name="to">Último día aplicado.</param>
+    public void ExportPerformanceWord(string path, ParkingPerformanceReport report, DateTime from, DateTime to)
+    {
+        using var document = NewWord(path);
+        var body = document.MainDocumentPart!.Document.Body!;
+        WordHeading(body, "OCUPACIÓN Y RECAUDACIÓN", report.GeneratedAt);
+        WordText(body, $"Período: {from:dd/MM/yyyy} al {to:dd/MM/yyyy}  |  Capacidad actual: {report.Capacity}", true);
+        WordText(body, $"{report.TotalEntries:N0} entradas  |  {report.TotalExits:N0} salidas  |  "
+            + $"{report.OccupancyPercent:N1}% ocupación  |  {report.TotalCollected.ToString("C", Culture)} cobrados", true);
+        WordText(body, "Actividad y ocupación: sesiones. Cobrado: únicamente payments por fecha de cobro. Se incluye cada día del período, aunque no haya pagos.");
+        WordSection(body, "EVOLUCIÓN DIARIA");
+        var table = WordTable("Día", "Entradas", "Salidas", "Ocupación",
+            "Estancia media", "Hora pico", "Cobrado");
+        foreach (var day in report.Days)
+            WordRow(table, day.Date.ToString("dd/MM/yyyy"), day.Entries.ToString("N0", Culture),
+                day.Exits.ToString("N0", Culture), $"{day.OccupancyPercent:N1}%",
+                $"{day.AverageStayMinutes:N0} min", day.PeakEntryLabel, day.Collected.ToString("C", Culture));
+        if (report.Days.Count == 0) WordRow(table, "Sin resultados", "", "", "", "", "", "");
+        WordTotalRow(table, "TOTAL / PROM.", report.TotalEntries.ToString("N0", Culture),
+            report.TotalExits.ToString("N0", Culture), $"{report.OccupancyPercent:N1}%", "", "",
+            report.TotalCollected.ToString("C", Culture));
+        body.Append(table);
+        WordFooter(body);
+        document.MainDocumentPart.Document.Save();
     }
 
     /// <summary>Describe el rango de fechas aplicado al informe de vehículos.</summary>

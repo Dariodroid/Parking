@@ -4,6 +4,7 @@ using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
 using Parking.UI.Windows.Helpers;
+using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -16,6 +17,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
 {
     private readonly IDialogService _dialogService;
     private readonly IRegisteredVehicle _repository;
+    private readonly MonthlyFeeLedgerService _monthlyLedger;
     bool confirmed;
 
     private readonly IBaseRepository<vehicle_type> _vehicleTypeRepository;
@@ -38,6 +40,17 @@ public class RegisteredVehicleViewModel : BaseViewModel
     /// <summary>Comando que registra como pagada la cuota vencida del cliente seleccionado.</summary>
     public ICommand MarkMonthlyFeePaidCommand { get; }
 
+    /// <summary>Elige el medio real de cobro para la próxima cuota mensual.</summary>
+    public ICommand SelectMonthlyPaymentMethodCommand { get; }
+
+    private string _selectedMonthlyPaymentMethod = "cash";
+    /// <summary>Medio seleccionado; efectivo se propone inicialmente.</summary>
+    public string SelectedMonthlyPaymentMethod
+    {
+        get => _selectedMonthlyPaymentMethod;
+        set => SetProperty(ref _selectedMonthlyPaymentMethod, value);
+    }
+
     private decimal _pendingMonthlyFee;
     /// <summary>Cuota vencida que se muestra en la ficha; cero si no hay saldo pendiente.</summary>
     public decimal PendingMonthlyFee
@@ -50,10 +63,13 @@ public class RegisteredVehicleViewModel : BaseViewModel
     /// <param name="repository">Consulta y guarda vehículo, plan y horarios.</param>
     /// <param name="dialogService">Muestra confirmaciones, avisos y errores al operador.</param>
     /// <param name="vehicleTypeRepository">Carga los tipos de vehículo disponibles en el formulario.</param>
-    public RegisteredVehicleViewModel(IRegisteredVehicle repository, IDialogService dialogService, IBaseRepository<vehicle_type> vehicleTypeRepository)
+    /// <param name="monthlyLedger">Confirma el pago y guarda su asiento sin alterar la vigencia.</param>
+    public RegisteredVehicleViewModel(IRegisteredVehicle repository, IDialogService dialogService,
+        IBaseRepository<vehicle_type> vehicleTypeRepository, MonthlyFeeLedgerService monthlyLedger)
     {
         _dialogService = dialogService;
         _repository = repository;
+        _monthlyLedger = monthlyLedger;
 
         _vehicleTypeRepository = vehicleTypeRepository;
 
@@ -66,6 +82,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
         NewCommand = new RelayCommand(_ => ClearForm());
         // La acción de pago espera el guardado antes de poder ejecutarse otra vez.
         MarkMonthlyFeePaidCommand = new AsyncRelayCommand(_ => MarkMonthlyFeePaidAsync());
+        SelectMonthlyPaymentMethodCommand = new RelayCommand(value =>
+        {
+            if (value is string method && method is "cash" or "transfer" or "card")
+                SelectedMonthlyPaymentMethod = method;
+        });
 
         InitializeSchedules();
     }
@@ -211,6 +232,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
     private bool _isLoaded;
 
+    /// <summary>Prepara los siete días editables con su estado y horas iniciales.</summary>
     private void InitializeSchedules()
     {
         VehicleSchedules.Clear();
@@ -286,6 +308,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         });
     }
 
+    /// <summary>Carga una sola vez los tipos, clientes y horarios necesarios para el formulario.</summary>
     public async Task InitializeAsync()
     {
         if (_isLoaded)
@@ -300,6 +323,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         await LoadAsync();
     }
 
+    /// <summary>Consulta los tipos de vehículo disponibles y omite los eliminados.</summary>
     private async Task LoadVehicleTypesAsync()
     {
         VehicleTypes.Clear();
@@ -315,6 +339,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Recarga los clientes con planes y horarios desde la base de datos.</summary>
     private async Task LoadAsync()
     {
         RegisteredVehicles.Clear();
@@ -422,6 +447,8 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Comprueba la ficha y las fechas antes de crear o actualizar un contrato.</summary>
+    /// <returns>Verdadero cuando los datos son aptos para guardarse sin redondear importes.</returns>
     private bool Validate()
     {
         if (string.IsNullOrWhiteSpace(Plate))
@@ -437,6 +464,12 @@ public class RegisteredVehicleViewModel : BaseViewModel
         if (MonthlyFee == null || MonthlyFee <= 0)
         {
             _dialogService.ShowWarning("Atención", "Ingrese el valor mensual."); return false;
+        }
+
+        if (!MoneyAmount.IsValid(MonthlyFee.Value))
+        {
+            _dialogService.ShowWarning("Atención", "La mensualidad debe tener como máximo dos decimales y caber en la base de datos. No se redondeará automáticamente.");
+            return false;
         }
 
         if (MonthlyStartDate == null)
@@ -457,6 +490,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         return true;
     }
 
+    /// <summary>Crea vehículo, plan y horarios; deja pendiente la cuota de un contrato creado ya vencido.</summary>
     private async Task SaveAsync()
     {
         try
@@ -510,6 +544,12 @@ public class RegisteredVehicleViewModel : BaseViewModel
             // YA TENEMOS EL ID
             int registeredVehicleId = vehicle.id;
 
+            // Un contrato histórico que se crea ya vencido debe conservar una cuota pendiente.
+            // Usamos su inicio como última fecha conocida del período anterior; no declaramos un cobro nuevo.
+            DateTime startDate = MonthlyStartDate!.Value;
+            DateTime endDate = MonthlyEndDate!.Value;
+            bool createdAlreadyExpired = endDate.Date < DateTime.Today;
+
             // =========================
             // 2. GUARDAR PLAN
             // =========================
@@ -522,15 +562,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 monthly_fee =
                     MonthlyFee ?? 0,
 
-                start_date =
-                    MonthlyStartDate ??
-                    DateTime.Today,
+                start_date = startDate,
 
-                end_date =
-                    MonthlyEndDate ??
-                    DateTime.Today.AddMonths(1),
+                end_date = endDate,
 
-                payment_date = DateTime.Now,
+                payment_date = createdAlreadyExpired ? startDate : DateTime.Now,
 
                 is_active = IsActive,
 
@@ -546,7 +582,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                     ? "active"
                     : "cancelled",
 
-                collected_by = _currentUserId
+                collected_by = createdAlreadyExpired ? null : _currentUserId
             };
 
             await _repository
@@ -598,8 +634,9 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
             await _repository.SaveChangesAsync();
 
-            StatusMessage =
-                "Cliente mensualizado registrado.";
+            StatusMessage = createdAlreadyExpired
+                ? "Cliente registrado con contrato vencido. Seleccione su ficha para registrar la cuota pendiente."
+                : "Cliente mensualizado registrado.";
 
             await LoadAsync();
 
@@ -611,6 +648,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Actualiza la ficha, el estado, las fechas y los horarios sin registrar un cobro nuevo.</summary>
     private async Task UpdateAsync()
     {
         try
@@ -812,28 +850,34 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            // El operador confirma explícitamente que ya recibió el dinero indicado.
+            // Antes de confirmar, se muestra el medio elegido y se aclara que la vigencia no cambia.
+            string methodLabel = SelectedMonthlyPaymentMethod switch
+            {
+                "transfer" => "transferencia",
+                "card" => "tarjeta",
+                _ => "efectivo"
+            };
             if (!_dialogService.ShowConfirmation("Registrar pago mensual",
-                $"¿Confirmas que se recibió la cuota vencida de {pending:C2} para {vehicle.plate}?"))
+                $"¿Confirmas que recibiste {CurrencyDisplay.Format(pending)} de {vehicle.plate} por {methodLabel}? El cobro quedará en Caja. La fecha final y el estado del contrato no cambiarán."))
                 return;
 
-            // payment_date salda la cuota calculada; collected_by y updated_by
-            // conservan el usuario que efectuó esta actualización del plan.
-            var plan = vehicle.vehicle_monthly_plan;
-            plan.payment_date = DateTime.Now;
-            plan.collected_by = _currentUserId;
-            plan.updated_at = DateTime.Now;
-            plan.updated_by = _currentUserId;
-            // Se registra el cambio mediante el repositorio y se exige confirmación.
-            await _repository.UpdateAsync(vehicle);
-            if (!await _repository.SaveChangesAsync())
-                throw new InvalidOperationException("No se pudo registrar el pago.");
+            // El asiento y la fecha de pago se confirman juntos; ni estado ni fechas de vigencia cambian.
+            MonthlyFeeReceipt receipt = await _monthlyLedger.RecordOverdueAsync(
+                vehicle.vehicle_monthly_plan.id, _currentUserId, SelectedMonthlyPaymentMethod);
 
-            // La lista y el formulario se limpian para no mostrar deuda obsoleta.
+            // Se confirma de inmediato: un fallo posterior de refresco no debe parecer un cobro fallido.
             PendingMonthlyFee = 0;
-            await LoadAsync();
-            ClearForm();
-            _dialogService.ShowSuccess("Mensualidad", $"Cuota de {pending:C2} registrada como pagada. El contrato conserva su fecha de fin; renuévelo por separado si corresponde.");
+            _dialogService.ShowSuccess("Mensualidad", $"Cobro #{receipt.Id} por {CurrencyDisplay.Format(receipt.Amount)} guardado en Caja. El contrato conserva su fecha de fin: amplíela manualmente si el cliente continuará, o desactívelo si no renovará.");
+            try
+            {
+                // La lista y el formulario se renuevan después de informar el cobro confirmado.
+                await LoadAsync();
+                ClearForm();
+            }
+            catch (Exception refreshError)
+            {
+                _dialogService.ShowWarning("Mensualidad", $"El cobro #{receipt.Id} sí se guardó. No se pudo actualizar la lista: {refreshError.Message}");
+            }
         }
         catch (Exception ex)
         {
@@ -841,6 +885,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>Elimina lógicamente el cliente seleccionado después de confirmar la operación.</summary>
     private async Task DeleteAsync()
     {
         try
@@ -906,6 +951,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         OwnerCedula = string.Empty;
 
         MonthlyFee = 0;
+        SelectedMonthlyPaymentMethod = "cash";
 
         MonthlyStartDate = DateTime.Today;
 

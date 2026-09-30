@@ -7,7 +7,7 @@
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
-            <TextBlock Text="Apariencia y conexión" FontSize="25" FontWeight="Bold"
+            <TextBlock Text="Apariencia, moneda y conexión" FontSize="25" FontWeight="Bold"
                        Foreground="{DynamicResource AppTextBrush}" Margin="0,0,0,6"/>
             <TextBlock Text="Estas preferencias pertenecen a este equipo y a tu usuario de Windows."
                        Foreground="{DynamicResource AppMutedTextBrush}" Margin="0,0,0,20"/>
@@ -25,6 +25,30 @@
                     </StackPanel>
                     <TextBlock Text="El cambio de tema se aplica y guarda al momento."
                                Foreground="{DynamicResource AppMutedTextBrush}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1" CornerRadius="10" Padding="20" Margin="0,0,0,16"
+                    Visibility="{Binding CanManageCurrency, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="MONEDA" Foreground="{DynamicResource AppAccentTextBrush}"
+                               FontWeight="Bold" FontSize="15" Margin="0,0,0,12"/>
+                    <TextBlock Text="Signo mostrado en cobros e informes" Foreground="{DynamicResource AppTextBrush}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBox Text="{Binding CurrencySymbol, UpdateSourceTrigger=PropertyChanged}" MaxLength="8"
+                                 Width="105" Height="42" Padding="9,0" VerticalContentAlignment="Center"
+                                 Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
+                                 BorderBrush="{DynamicResource AppInputBorderBrush}" CaretBrush="{DynamicResource AppTextBrush}"/>
+                        <Button Content="Guardar signo" Command="{Binding SaveCurrencyCommand}"
+                                Background="#2E7D32" Foreground="White" Height="42" MinWidth="165"
+                                VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                Padding="14,0" Margin="10,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding CurrencyPreview, StringFormat=Ejemplo: {0}}"
+                               Foreground="{DynamicResource AppTextBrush}" Margin="0,10,0,0"/>
+                    <TextBlock Text="Solo cambia la presentación en este perfil de Windows. Las cantidades y los pagos guardados no se convierten."
+                               Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" Margin="0,5,0,0"/>
                 </StackPanel>
             </Border>
 
@@ -59,10 +83,10 @@
                                 Height="46" MinWidth="175" VerticalContentAlignment="Center"
                                 HorizontalContentAlignment="Center" Padding="16,0"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource AppTextBrush}"
-                               TextWrapping="Wrap" Margin="0,14,0,0"/>
                 </StackPanel>
             </Border>
+            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource AppTextBrush}"
+                       TextWrapping="Wrap" Margin="0,12,0,0"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

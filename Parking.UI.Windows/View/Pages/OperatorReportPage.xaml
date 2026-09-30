@@ -110,7 +110,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="OPERADOR" Binding="{Binding OperatorName}" Width="*"/>
                             <DataGridTextColumn Header="COBROS" Binding="{Binding TotalPayments}" Width="180"/>
-                            <DataGridTextColumn Header="TOTAL RECAUDADO" Binding="{Binding TotalAmount, StringFormat=C}" Width="220"/>
+                            <DataGridTextColumn Header="TOTAL RECAUDADO" Binding="{Binding TotalAmount, Converter={StaticResource CurrencyConverter}}" Width="220"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <Border Background="#EAF1F6" BorderBrush="#D4DFE7" BorderThickness="1"
@@ -118,7 +118,7 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <TextBlock Text="TOTAL GENERAL" Foreground="#17324D"
                                        FontSize="16" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding TotalGeneral, StringFormat=C}"
+                            <TextBlock Text="{Binding TotalGeneral, Converter={StaticResource CurrencyConverter}}"
                                        Foreground="#245A81" FontSize="20" FontWeight="Bold" Margin="25,0,0,0"/>
                         </StackPanel>
                     </Border>

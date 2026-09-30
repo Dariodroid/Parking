@@ -4,7 +4,8 @@
              xmlns:local="clr-namespace:Parking.UI.Windows"
              xmlns:vm="clr-namespace:Parking.UI.Windows.ViewModels"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             xmlns:views="clr-namespace:Parking.UI.Windows.View.Pages">
+             xmlns:views="clr-namespace:Parking.UI.Windows.View.Pages"
+             xmlns:converters="clr-namespace:Parking.UI.Windows.Converters">
 
     <Application.Resources>
 
@@ -21,6 +22,8 @@
                 Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml"/>
 
             </ResourceDictionary.MergedDictionaries>
+
+            <converters:CurrencyConverter x:Key="CurrencyConverter"/>
 
             <!-- Pinceles semánticos que ThemeService actualiza sin recrear las vistas. -->
             <SolidColorBrush x:Key="AppPageBrush" Color="#121212"/>
@@ -80,6 +83,11 @@
             <!-- REPORTE VEHÍCULOS -->
             <DataTemplate DataType="{x:Type vm:VehicleReportViewModel}">
                 <views:VehicleReportPage/>
+            </DataTemplate>
+
+            <!-- RENDIMIENTO DIARIO DEL PARQUEADERO -->
+            <DataTemplate DataType="{x:Type vm:ParkingPerformanceViewModel}">
+                <views:ParkingPerformancePage/>
             </DataTemplate>
 
             <DataTemplate DataType="{x:Type vm:ApplicationSettingsViewModel}">

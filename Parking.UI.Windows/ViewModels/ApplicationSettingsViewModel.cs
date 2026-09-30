@@ -15,6 +15,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     private readonly ApplicationSettingsStore _store;
     private readonly ThemeService _themeService;
     private string _connectionString;
+    private string _currencySymbol;
     private string _status = string.Empty;
     private bool _isBusy;
 
@@ -24,6 +25,20 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             && string.Equals(CurrentUser.Role, "Administrador", StringComparison.OrdinalIgnoreCase))
         || (!CurrentUser.IsAuthenticated
             && string.IsNullOrWhiteSpace(_store.Load().ConnectionString));
+
+    /// <summary>Solo el administrador autenticado puede cambiar el signo visible del dinero.</summary>
+    public bool CanManageCurrency => CurrentUser.IsAuthenticated
+        && string.Equals(CurrentUser.Role, "Administrador", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Signo visual que se aplicará a la instalación actual.</summary>
+    public string CurrencySymbol
+    {
+        get => _currencySymbol;
+        set => SetProperty(ref _currencySymbol, value);
+    }
+
+    /// <summary>Ejemplo actualizado tras guardar el signo.</summary>
+    public string CurrencyPreview => CurrencyDisplay.Format(1234.56m);
 
     /// <summary>Se dispara después de guardar una conexión válida.</summary>
     public event EventHandler? ConnectionSaved;
@@ -72,6 +87,9 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     /// <summary>Reinicia la aplicación después de cambiar de servidor.</summary>
     public ICommand RestartCommand { get; }
 
+    /// <summary>Valida y guarda el signo de moneda sin cambiar importes.</summary>
+    public ICommand SaveCurrencyCommand { get; }
+
     /// <summary>Prepara preferencias y comandos sin abrir todavía SQL.</summary>
     /// <param name="store">Almacén cifrado local.</param>
     /// <param name="themeService">Control del tema global.</param>
@@ -79,11 +97,39 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     {
         _store = store;
         _themeService = themeService;
+        _currencySymbol = store.Load().CurrencySymbol;
         // Los operadores no reciben la cadena, que podría contener una contraseña SQL.
         _connectionString = CanManageConnection ? store.Load().ConnectionString : string.Empty;
         TestConnectionCommand = new AsyncRelayCommand(_ => TestConnectionAsync());
         SaveConnectionCommand = new RelayCommand(_ => SaveConnection());
         RestartCommand = new RelayCommand(_ => Restart());
+        SaveCurrencyCommand = new RelayCommand(_ => SaveCurrency());
+    }
+
+    /// <summary>Guarda el signo para este perfil Windows y actualiza las nuevas vistas y exportaciones.</summary>
+    private void SaveCurrency()
+    {
+        if (!CanManageCurrency)
+        {
+            Status = "Solo un administrador puede cambiar el signo de moneda.";
+            return;
+        }
+        if (!CurrencyDisplay.IsValidSymbol(CurrencySymbol))
+        {
+            Status = "Use un signo de hasta ocho caracteres, sin cifras ni separadores decimales.";
+            return;
+        }
+        try
+        {
+            _store.Save(_store.Load() with { CurrencySymbol = CurrencySymbol });
+            CurrencyDisplay.SetSymbol(CurrencySymbol);
+            OnPropertyChanged(nameof(CurrencyPreview));
+            Status = "Signo guardado. Las próximas vistas e informes usarán este signo; los importes de la base no cambian.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"No se pudo guardar el signo: {ex.Message}";
+        }
     }
 
     /// <summary>Aplica y guarda el tema sin alterar la configuración SQL.</summary>

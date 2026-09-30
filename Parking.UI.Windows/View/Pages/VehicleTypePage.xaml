@@ -285,7 +285,7 @@
                                         Width="120"/>
 
                     <DataGridTextColumn Header="Tarifa Hora"
-                                        Binding="{Binding hourly_rate, StringFormat={}{0:N2}}"
+                                        Binding="{Binding hourly_rate, Converter={StaticResource CurrencyConverter}}"
                                         Width="120"/>
 
                     <DataGridTemplateColumn Header="Activo"

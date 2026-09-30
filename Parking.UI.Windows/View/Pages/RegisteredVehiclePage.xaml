@@ -14,6 +14,29 @@
     <UserControl.Resources>
 
         <conv:BooleanToCheckConverter x:Key="BooleanToCheckConverter"/>
+        <conv:EqualityConverter x:Key="MonthlyPaymentEquality"/>
+        <Style x:Key="MonthlyPaymentButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="5,2"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppRaisedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Style.Triggers>
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <MultiBinding Converter="{StaticResource MonthlyPaymentEquality}">
+                            <Binding Path="CommandParameter" RelativeSource="{RelativeSource Self}"/>
+                            <Binding Path="DataContext.SelectedMonthlyPaymentMethod" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        </MultiBinding>
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="{DynamicResource AppSelectedBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource AppAccentTextBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AppAccentTextBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
         <!-- ========================================================== -->
         <!-- 🟢 COMBOBOX DEFINITIVO: IGUAL DE SIMPLE QUE EL DE userPage -->
@@ -517,9 +540,20 @@
                 <Border Style="{StaticResource SectionStyle}">
                     <StackPanel>
                         <TextBlock Text="CUOTA MENSUAL VENCIDA" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Text="{Binding PendingMonthlyFee, StringFormat={}{0:C2}}" Foreground="{DynamicResource AppTextBrush}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding PendingMonthlyFee, Converter={StaticResource CurrencyConverter}}" Foreground="{DynamicResource AppTextBrush}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Text="MEDIO DE PAGO" Style="{StaticResource LabelStyle}"/>
+                        <UniformGrid Columns="3" Margin="0,4,0,8">
+                            <Button Content="Efectivo" Style="{StaticResource MonthlyPaymentButtonStyle}"
+                                    Command="{Binding SelectMonthlyPaymentMethodCommand}" CommandParameter="cash"/>
+                            <Button Content="Transferencia" Style="{StaticResource MonthlyPaymentButtonStyle}"
+                                    Command="{Binding SelectMonthlyPaymentMethodCommand}" CommandParameter="transfer"/>
+                            <Button Content="Tarjeta" Style="{StaticResource MonthlyPaymentButtonStyle}"
+                                    Command="{Binding SelectMonthlyPaymentMethodCommand}" CommandParameter="card"/>
+                        </UniformGrid>
                         <Button Command="{Binding MarkMonthlyFeePaidCommand}" Content="MARCAR CUOTA COMO PAGADA"
                                 Background="#2E7D32" Foreground="White" Style="{StaticResource ActionButtonStyle}"/>
+                        <TextBlock Text="El pago queda en Caja. Para continuar, amplíe la fecha final manualmente; si el cliente no renueva, desactive el contrato."
+                                   Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" FontSize="11" Margin="0,7,0,0"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -576,7 +610,7 @@
                         <DataGridTextColumn Header="Placa" Binding="{Binding plate}" Width="90"/>
                         <DataGridTextColumn Header="Propietario" Binding="{Binding owner_name}" Width="*"/>
                         <DataGridTextColumn Header="Teléfono" Binding="{Binding owner_phone}" Width="110"/>
-                        <DataGridTextColumn Header="Mensualidad" Binding="{Binding vehicle_monthly_plan.monthly_fee}" Width="100"/>
+                        <DataGridTextColumn Header="Mensualidad" Binding="{Binding vehicle_monthly_plan.monthly_fee, Converter={StaticResource CurrencyConverter}}" Width="110"/>
                         <DataGridTextColumn Header="Inicio" Binding="{Binding vehicle_monthly_plan.start_date, StringFormat=dd/MM/yyyy}" Width="90"/>
                         <DataGridTextColumn Header="Fin" Binding="{Binding vehicle_monthly_plan.end_date, StringFormat=dd/MM/yyyy}" Width="90"/>
                     </DataGrid.Columns>
