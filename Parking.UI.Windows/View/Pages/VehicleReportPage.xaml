@@ -220,10 +220,17 @@
                             <TextBlock Text="EXCEL" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource BtnWord}" Command="{Binding ExportWordCommand}" MinWidth="100">
+                    <Button Style="{StaticResource BtnWord}" Command="{Binding ExportWordCommand}" MinWidth="100" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <materialDesign:PackIcon Kind="FileWord" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <TextBlock Text="WORD" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource BtnWord}" Command="{Binding PrintCommand}"
+                            CommandParameter="{Binding ElementName=ReportSheet}" MinWidth="115">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Printer" Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="IMPRIMIR" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -238,7 +245,7 @@
                       HorizontalScrollBarVisibility="Auto"
                       Padding="20">
 
-            <Border Width="1200"
+            <Border x:Name="ReportSheet" Width="1200"
                     MinHeight="850"
                     Background="White"
                     Padding="60,50"

@@ -14,6 +14,7 @@ public class VehicleReportViewModel : BaseViewModel
 {
     private readonly IVehicleReportRepository _repository;
     private readonly ReportExportService _exportService = new();
+    private readonly ReportPrintService _printService = new();
     private ObservableCollection<VehicleReportDto> _vehicles = new();
     private IReadOnlyList<VehicleReportRow> _reportRows = [];
     private decimal _totalCollected;
@@ -70,6 +71,7 @@ public class VehicleReportViewModel : BaseViewModel
     public ICommand SearchCommand { get; }
     public ICommand ExportExcelCommand { get; }
     public ICommand ExportWordCommand { get; }
+    public ICommand PrintCommand { get; }
 
     /// <summary>Configura búsqueda y exportaciones sobre el mismo repositorio.</summary>
     /// <param name="repository">Consulta vehículos según los filtros elegidos.</param>
@@ -79,6 +81,7 @@ public class VehicleReportViewModel : BaseViewModel
         SearchCommand = new AsyncRelayCommand(async _ => await LoadData());
         ExportExcelCommand = new AsyncRelayCommand(async _ => await Export(false));
         ExportWordCommand = new AsyncRelayCommand(async _ => await Export(true));
+        PrintCommand = new AsyncRelayCommand(async sheet => await Print(sheet as FrameworkElement));
     }
 
     /// <summary>Aplica los filtros, carga la tabla y conserva su instantánea.</summary>
@@ -150,6 +153,31 @@ public class VehicleReportViewModel : BaseViewModel
         catch (Exception ex)
         {
             MessageBox.Show($"No se pudo exportar el informe: {ex.Message}", "Reportes", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>Imprime las filas filtradas después de aplicar cambios pendientes en la búsqueda.</summary>
+    /// <returns>Tarea que termina al cancelar o enviar el trabajo a Windows.</returns>
+    /// <param name="sheet">Hoja visual del informe filtrado.</param>
+    private async Task Print(FrameworkElement? sheet)
+    {
+        // Se usan los mismos criterios y filas que reciben Word y Excel.
+        if (Filter.FromDate > Filter.ToDate)
+        {
+            MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
+            return;
+        }
+        try
+        {
+            if (!FiltersMatch(Filter, AppliedFilter))
+                await LoadData();
+            if (sheet is null) throw new InvalidOperationException("No se encontró la hoja del informe.");
+            _printService.Print(sheet, "Informe de vehículos");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"No se pudo imprimir el informe: {ex.Message}", "Reportes",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

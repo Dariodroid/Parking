@@ -58,12 +58,19 @@
                         <TextBlock Text="WORD"/>
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding PrintCommand}" CommandParameter="{Binding ElementName=ReportSheet}"
+                        Background="#245A81" Style="{StaticResource ActionButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Printer" Width="18" Height="18" Margin="0,0,8,0"/>
+                        <TextBlock Text="IMPRIMIR"/>
+                    </StackPanel>
+                </Button>
             </WrapPanel>
         </Border>
         <!-- La hoja crece con los registros; el desplazamiento pertenece al visor exterior. -->
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto" Padding="18">
-            <Border Width="1000" MinHeight="650" HorizontalAlignment="Center"
+            <Border x:Name="ReportSheet" Width="1000" MinHeight="650" HorizontalAlignment="Center"
                     VerticalAlignment="Top" Background="White" Padding="55"
                     BorderBrush="#D4DFE7" BorderThickness="1">
                 <Border.Effect>
@@ -101,6 +108,7 @@
                     </Grid>
                     <DataGrid ItemsSource="{Binding ReportItems}" AutoGenerateColumns="False"
                               IsReadOnly="True" CanUserAddRows="False" MinHeight="210"
+                              EnableRowVirtualization="False" ScrollViewer.VerticalScrollBarVisibility="Disabled"
                               Background="White" Foreground="#17324D"
                               RowBackground="White" AlternatingRowBackground="#F1F5F8"
                               BorderBrush="#D4DFE7" BorderThickness="1"

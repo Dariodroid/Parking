@@ -14,6 +14,7 @@ public class OperatorReportViewModel : BaseViewModel
 {
     private readonly IOperatorReportRepository _repository;
     private readonly ReportExportService _exportService = new();
+    private readonly ReportPrintService _printService = new();
     private ObservableCollection<OperatorReportItem> _reportItems = new();
     private DateTime _fromDate = DateTime.Today.AddMonths(-1);
     private DateTime _toDate = DateTime.Today;
@@ -69,6 +70,7 @@ public class OperatorReportViewModel : BaseViewModel
     public ICommand RefreshCommand { get; }
     public ICommand ExportExcelCommand { get; }
     public ICommand ExportWordCommand { get; }
+    public ICommand PrintCommand { get; }
 
     /// <summary>Conecta la consulta y los comandos de actualización/exportación.</summary>
     /// <param name="repository">Consulta cobros agrupados por operador.</param>
@@ -78,6 +80,7 @@ public class OperatorReportViewModel : BaseViewModel
         RefreshCommand = new AsyncRelayCommand(async _ => await LoadReport());
         ExportExcelCommand = new RelayCommand(_ => Export(false));
         ExportWordCommand = new RelayCommand(_ => Export(true));
+        PrintCommand = new RelayCommand(sheet => Print(sheet as FrameworkElement));
     }
 
     /// <summary>Consulta el período elegido y conserva una instantánea para exportar.</summary>
@@ -130,6 +133,23 @@ public class OperatorReportViewModel : BaseViewModel
         catch (Exception ex)
         {
             MessageBox.Show($"No se pudo exportar el informe: {ex.Message}", "Reportes", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>Envía las filas y fechas actualmente mostradas a la impresora Windows elegida.</summary>
+    /// <param name="sheet">Hoja visual que muestra tarjetas, tabla y total.</param>
+    private void Print(FrameworkElement? sheet)
+    {
+        // Los controles de fecha pueden estar editados; se imprime la última consulta visible.
+        try
+        {
+            if (sheet is null) throw new InvalidOperationException("No se encontró la hoja del informe.");
+            _printService.Print(sheet, "Informe de operadores");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"No se pudo imprimir el informe: {ex.Message}", "Reportes",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }
