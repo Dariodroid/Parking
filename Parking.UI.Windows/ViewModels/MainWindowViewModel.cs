@@ -97,7 +97,7 @@ namespace Parking.UI.Windows.ViewModels
 
                 case "Apariencia y conexión":
                     CurrentView = _serviceProvider.GetRequiredService<ApplicationSettingsViewModel>();
-                    PageTitle = "Apariencia y conexión";
+                    PageTitle = "Preferencias del sistema";
                     break;
 
                 case "Seguridad":

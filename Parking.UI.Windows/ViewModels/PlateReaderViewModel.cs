@@ -35,6 +35,12 @@ namespace Parking.UI.Windows.ViewModels
         private readonly IPlateService _plateService;
         private readonly IEntryService _entryService;
         private readonly IParkingStatusNotifier _parkingStatusNotifier;
+        private readonly ThermalTicketPrinter _ticketPrinter;
+        private readonly ApplicationSettingsStore _settingsStore;
+        private EntryTicketData? _lastTicket;
+
+        /// <summary>Habilita reimpresión después de una entrada ocasional confirmada.</summary>
+        public bool CanReprintLastTicket => _lastTicket is not null;
 
         // Detector compartido: una lectura OCR a la vez protege el modelo nativo.
         private readonly SemaphoreSlim _plateReaderGate = new(1, 1);
@@ -139,6 +145,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <summary>Selecciona el medio que se guardará con el próximo cobro.</summary>
         public ICommand SelectPaymentMethodCommand { get; }
         public ICommand UseAutomaticSlotCommand { get; }
+        /// <summary>Envía de nuevo el último ticket sin crear otra sesión.</summary>
+        public ICommand ReprintLastTicketCommand { get; }
 
         /// <summary>Conecta cámara, reconocimiento, sesiones y catálogos usados en la operación de entrada y salida.</summary>
         /// <param name="cameraFactory">Crea una captura distinta para cada visor.</param>
@@ -152,6 +160,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <param name="slotRepo">Consulta la ocupación y los puestos libres.</param>
         /// <param name="parkingStatusNotifier">Notifica cambios de ocupación a otras vistas.</param>
         /// <param name="dialogService">Presenta avisos y errores al operador.</param>
+        /// <param name="ticketPrinter">Envía tickets a una cola de impresión Windows.</param>
+        /// <param name="settingsStore">Lee la impresora y el ancho elegidos para este equipo.</param>
         public PlateReaderViewModel(
             ICameraServiceFactory cameraFactory,
             ICameraSourceCatalog cameraSourceCatalog,
@@ -163,9 +173,13 @@ namespace Parking.UI.Windows.ViewModels
             Ivehicle_typeRepository vehicleTypeRepository,
             IParkingSlotRepository slotRepo,
             IParkingStatusNotifier parkingStatusNotifier,
-            IDialogService dialogService) 
+            IDialogService dialogService,
+            ThermalTicketPrinter ticketPrinter,
+            ApplicationSettingsStore settingsStore)
         {
             _dialogService = dialogService;
+            _ticketPrinter = ticketPrinter;
+            _settingsStore = settingsStore;
             _cameraSourceCatalog = cameraSourceCatalog;
             _cameraSelectionStore = cameraSelectionStore;
             _cameraHealth = cameraHealth;
@@ -194,6 +208,7 @@ namespace Parking.UI.Windows.ViewModels
             RefreshCamerasCommand = new AsyncRelayCommand(_ => RefreshCamerasAsync());
             SavePlateCommand = new AsyncRelayCommand(_ => SaveCorrectedPlateAsync());
             RegisterExitCommand = new AsyncRelayCommand(_ => RegisterExitAsync());
+            ReprintLastTicketCommand = new RelayCommand(_ => ReprintLastTicket());
             SelectVehicleTypeCommand = new RelayCommand(param =>
             {
                 if (param is vehicle_type selectedType) SelectedVehicleType = selectedType;
@@ -333,6 +348,27 @@ namespace Parking.UI.Windows.ViewModels
                 }
                 else if (!string.IsNullOrEmpty(entry.SlotNumber))
                 {
+                    // El ticket se conserva para reimprimir incluso si falla el spooler.
+                    string? printingWarning = null;
+                    if (entry.Ticket is not null)
+                    {
+                        _lastTicket = entry.Ticket;
+                        OnPropertyChanged(nameof(CanReprintLastTicket));
+                        var printerSettings = _settingsStore.Load();
+                        if (printerSettings.AutoPrintTickets)
+                        {
+                            try
+                            {
+                                // La sesión ya está confirmada: imprimir nunca cambia el registro.
+                                _ticketPrinter.Print(entry.Ticket, printerSettings.TicketPrinterName,
+                                    printerSettings.TicketPaperWidthMm);
+                            }
+                            catch (Exception printError)
+                            {
+                                printingWarning = $"Entrada guardada, pero no se pudo enviar el ticket a la impresora: {printError.Message} Use Reimprimir último ticket.";
+                            }
+                        }
+                    }
                     // Cada clasificación explica al operador si hubo ticket o
                     // si se respetó el acceso mensual sin cargo por estancia.
                     string accessMessage = entry.Access.Kind switch
@@ -347,12 +383,15 @@ namespace Parking.UI.Windows.ViewModels
                     // La cuota vencida se muestra aparte del cobro ocasional.
                     if (entry.Access.PendingFee > 0)
                         accessMessage += $" Cuota mensual pendiente: {CurrencyDisplay.Format(entry.Access.PendingFee)}.";
+                    if (printingWarning is not null) accessMessage += $" {printingWarning}";
                     // El puesto y la regla aplicada quedan visibles en pantalla.
                     StatusMessage = $"ENTRADA: {plate} asignado al puesto {entry.SlotNumber}. {accessMessage}";
                     ScannerAudioFeedback.PlayEntry();
                     // Una deuda se destaca como aviso aun cuando la entrada se guardó.
-                    if (entry.Access.PendingFee > 0)
-                        _dialogService.ShowWarning("Entrada registrada: cuota pendiente", StatusMessage);
+                    if (entry.Access.PendingFee > 0 || printingWarning is not null)
+                        _dialogService.ShowWarning(printingWarning is not null
+                            ? "Entrada guardada: revise la impresión"
+                            : "Entrada registrada: cuota pendiente", StatusMessage);
                     else
                         _dialogService.ShowSuccess("Entrada registrada", StatusMessage);
                     _parkingStatusNotifier.NotifyParkingStatusChanged();
@@ -440,6 +479,23 @@ namespace Parking.UI.Windows.ViewModels
                 }
             }
             finally { _cameraOperationGate.Release(); }
+        }
+
+        /// <summary>Reimprime el último ticket ocasional sin volver a registrar el vehículo.</summary>
+        private void ReprintLastTicket()
+        {
+            if (_lastTicket is null) return;
+            try
+            {
+                // Se leen ajustes actuales para permitir cambiar de impresora tras un fallo.
+                var settings = _settingsStore.Load();
+                _ticketPrinter.Print(_lastTicket, settings.TicketPrinterName, settings.TicketPaperWidthMm);
+                _dialogService.ShowSuccess("Ticket enviado", "El ticket se envió a la cola de impresión de Windows.");
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowWarning("Ticket pendiente", $"No se pudo enviar el ticket: {ex.Message}");
+            }
         }
 
         /// <summary>Detiene las capturas al cerrar la ventana principal.</summary>

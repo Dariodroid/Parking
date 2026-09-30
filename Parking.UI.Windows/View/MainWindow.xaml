@@ -316,7 +316,7 @@
                                 <Button Command="{Binding NavigateCommand}" CommandParameter="Apariencia y conexión" Style="{StaticResource ModernMenuButtonStyle}">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="ThemeLightDark" Width="24" Height="24" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Apariencia" VerticalAlignment="Center" Margin="15,0,0,0"
+                                        <TextBlock Text="Preferencias" VerticalAlignment="Center" Margin="15,0,0,0"
                                                    Visibility="{Binding ElementName=SidebarGrid, Path=ActualWidth, Converter={StaticResource DoubleToVisibilityConverter}}"/>
                                     </StackPanel>
                                 </Button>

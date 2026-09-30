@@ -181,8 +181,11 @@ namespace Parking.Application.UseCases
                 if (!success)
                     throw new InvalidOperationException("La base de datos no confirmó el registro de la entrada.");
 
-                // La UI usa el puesto y el motivo para informar ticket o mensualidad.
-                return new(availableSlot.slot_number, access);
+                // El ticket se expone únicamente después de confirmar la sesión y el puesto.
+                EntryTicketData? ticket = qrPath is null ? null : new EntryTicketData(
+                    session.session_code, session.plate, availableSlot.slot_number, entryTime, qrPath);
+                // La UI recibe los datos de impresión sin volver a buscar una sesión mutable.
+                return new(availableSlot.slot_number, access, ticket);
             }
             catch
             {

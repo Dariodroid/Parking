@@ -94,6 +94,8 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<IQrTicketStore, LocalQrTicketStore>();
             serviceCollection.AddSingleton<IParkingStatusNotifier, ParkingStatusNotifier>();
             serviceCollection.AddSingleton<ExcelExportService>();
+            // La cola térmica se consulta en Windows y el ticket sale tras confirmar SQL.
+            serviceCollection.AddSingleton<ThermalTicketPrinter>();
 
             // ====================== 4. SERVICIOS DE APLICACIÓN ======================
             // EntryService usa repositorios DbContext scoped: comparte una sola

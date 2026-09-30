@@ -460,6 +460,17 @@
                                 <TextBlock Text="REGISTRAR SALIDA" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button Command="{Binding ReprintLastTicketCommand}"
+                                IsEnabled="{Binding CanReprintLastTicket}"
+                                Background="{DynamicResource AppRaisedBrush}"
+                                Foreground="{DynamicResource AppTextBrush}"
+                                BorderBrush="{DynamicResource AppInputBorderBrush}"
+                                Height="38" Margin="0,7,0,0" Cursor="Hand">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Printer" Width="18" Height="18" Margin="0,0,7,0"/>
+                                <TextBlock Text="REIMPRIMIR ÚLTIMO TICKET" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
 
