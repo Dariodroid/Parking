@@ -142,8 +142,12 @@ namespace Parking.Application.UseCases
                     // La ficha del cliente sigue vinculada incluso si paga como ocasional.
                     vehicle_type_id = resolvedVehicleTypeId,
                     registered_vehicle_id = registered?.id,
-                    // La marca fija la modalidad para que no cambie durante la estancia.
-                    notes = access.IsMonthly ? MonthlyAccessPolicy.MonthlySessionNote : null,
+                    // Se conserva la modalidad y, si corresponde tarifa ocasional a un cliente,
+                    // el motivo exacto evaluado al entrar para permitir auditorías posteriores.
+                    notes = access.IsMonthly ? MonthlyAccessPolicy.MonthlySessionNote
+                        : registered is not null
+                            ? ParkingSessionNotes.OccasionalReasonPrefix + access.Kind
+                            : null,
                     // Se atribuye la apertura al operador actual.
                     entry_operator_id = CurrentUser.Id,
                     created_by = CurrentUser.Id,

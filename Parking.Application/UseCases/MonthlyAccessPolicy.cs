@@ -6,7 +6,7 @@ namespace Parking.Application.UseCases;
 public static class MonthlyAccessPolicy
 {
     /// <summary>Marca persistida en la sesión para conservar la modalidad mensual hasta la salida.</summary>
-    public const string MonthlySessionNote = "PLAN_MENSUAL";
+    public const string MonthlySessionNote = ParkingSessionNotes.MonthlyPlan;
 
     /// <summary>
     /// Clasifica el ingreso usando el contrato y el horario del día correspondiente.

@@ -2,6 +2,7 @@
 using Parking.Application.Dto;
 using Parking.Application.Dto.Interfaces;
 using Parking.Infrastructure.DataAccess;
+using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 
@@ -10,12 +11,17 @@ public class VehicleReportRepository
 {
     private readonly parking_dbContext _context;
 
+    /// <summary>Prepara el acceso a las fichas, estancias y pagos del informe.</summary>
+    /// <param name="context">Contexto de la base de datos del parqueadero.</param>
     public VehicleReportRepository(
         parking_dbContext context)
     {
         _context = context;
     }
 
+    /// <summary>Consulta vehículos y calcula su actividad según placa, período y demás criterios seleccionados.</summary>
+    /// <param name="filter">Criterios de búsqueda que limitan las filas y los movimientos contabilizados.</param>
+    /// <returns>Filas del informe ordenadas por placa.</returns>
     public async Task<List<VehicleReportDto>>
         GetReportAsync(VehicleReportFilterDto filter)
     {
@@ -106,7 +112,7 @@ public class VehicleReportRepository
                 filter.ToDate.HasValue)
             {
                 var fromDate =
-                    filter.FromDate ??
+                    filter.FromDate?.Date ??
                     DateTime.MinValue;
 
                 var toDate =
@@ -115,91 +121,47 @@ public class VehicleReportRepository
 
                 query =
                     query.Where(x =>
-                        !x.parking_sessions.Any()
-                        ||
                         x.parking_sessions.Any(s =>
+                            !s.is_deleted &&
+                            s.plate == x.plate &&
                             s.entry_time >= fromDate &&
                             s.entry_time < toDate));
             }
 
-            var monthly =
-                await query
-                .Select(x =>
-                    new VehicleReportDto
-                    {
-                        Plate = x.plate,
-
-                        OwnerName =
-                            x.owner_name,
-
-                        VehicleType =
-                            x.vehicle_type.name,
-
-                        Category =
-                            "Mensual",
-
-                        PlanStatus =
-                            x.vehicle_monthly_plan != null
-                                ? x.vehicle_monthly_plan.status
-                                : "Sin Plan",
-
-                        MonthlyFee =
-                            x.vehicle_monthly_plan != null
-                                ? x.vehicle_monthly_plan.monthly_fee
-                                : 0,
-
-                        PlanStartDate =
-                            x.vehicle_monthly_plan != null
-                                ? x.vehicle_monthly_plan.start_date
-                                : null,
-
-                        PlanEndDate =
-                            x.vehicle_monthly_plan != null
-                                ? x.vehicle_monthly_plan.end_date
-                                : null,
-
-                        TotalEntries =
-                            x.parking_sessions.Count(),
-
-                        LastEntryDate =
-                            x.parking_sessions
-                            .OrderByDescending(s =>
-                                s.entry_time)
-                            .Select(s =>
-                                (DateTime?)s.entry_time)
-                            .FirstOrDefault(),
-
-                        LastExitDate =
-                            x.parking_sessions
-                            .OrderByDescending(s =>
-                                s.exit_time)
-                            .Select(s =>
-                                s.exit_time)
-                            .FirstOrDefault(),
-
-                        TotalMinutesParked =
-                            x.parking_sessions
-                            .Sum(s =>
-                                s.duration_minutes ?? 0),
-
-                        TotalCollected =
-                            x.parking_sessions
-                            .SelectMany(s =>
-                                s.payments)
-                            .Sum(p =>
-                                (decimal?)p.amount_paid)
-                            ?? 0,
-
-                        CurrentStatus =
-                            x.parking_sessions
-                            .Any(s =>
-                                s.exit_time == null)
-                                ? "Dentro"
-                                : "Fuera"
-                    })
+            // La ficha puede conservar sesiones de otra placa anterior; la actividad se filtra por la placa actual.
+            var from = filter.FromDate?.Date ?? DateTime.MinValue;
+            var until = filter.ToDate?.Date.AddDays(1) ?? DateTime.MaxValue;
+            var monthlyVehicles = await query.AsNoTracking()
+                .Include(x => x.vehicle_type)
+                .Include(x => x.vehicle_monthly_plan)
+                .Include(x => x.parking_sessions.Where(s =>
+                    !s.is_deleted && s.entry_time >= from && s.entry_time < until))
+                .ThenInclude(s => s.payments.Where(p => !p.is_deleted))
+                .AsSplitQuery()
                 .ToListAsync();
 
-            result.AddRange(monthly);
+            foreach (var vehicle in monthlyVehicles)
+            {
+                // Los importes pertenecen únicamente a pagos de estancias de esta placa y este período.
+                var sessions = vehicle.parking_sessions.Where(s =>
+                    string.Equals(s.plate, vehicle.plate, StringComparison.OrdinalIgnoreCase)).ToList();
+                var row = new VehicleReportDto
+                {
+                    Plate = vehicle.plate,
+                    OwnerName = vehicle.owner_name,
+                    VehicleType = vehicle.vehicle_type.name,
+                    Category = "Mensual",
+                    AccessSummary = GetAccessSummary(sessions),
+                    PlanStatus = vehicle.vehicle_monthly_plan?.status ?? "Sin Plan",
+                    VehicleIsActive = vehicle.is_active,
+                    PlanIsActive = vehicle.vehicle_monthly_plan?.is_active ?? false,
+                    MonthlyFee = vehicle.vehicle_monthly_plan?.monthly_fee ?? 0,
+                    PlanStartDate = vehicle.vehicle_monthly_plan?.start_date,
+                    PlanEndDate = vehicle.vehicle_monthly_plan?.end_date
+                };
+                FillActivity(row, sessions);
+                result.Add(row);
+            }
         }
 
         // ==================================================
@@ -265,67 +227,26 @@ public class VehicleReportRepository
                         filter.VehicleTypeId.Value);
             }
 
-            var occasional =
-                await query
-                .GroupBy(x =>
-                    new
-                    {
-                        x.plate,
-                        VehicleType =
-                            x.vehicle_type.name
-                    })
-                .Select(g =>
-                    new VehicleReportDto
-                    {
-                        Plate =
-                            g.Key.plate,
-
-                        OwnerName =
-                            "Ocasional",
-
-                        VehicleType =
-                            g.Key.VehicleType,
-
-                        Category =
-                            "Ocasional",
-
-                        PlanStatus =
-                            "-",
-
-                        MonthlyFee =
-                            0,
-
-                        TotalEntries =
-                            g.Count(),
-
-                        LastEntryDate =
-                            g.Max(x =>
-                                x.entry_time),
-
-                        LastExitDate =
-                            g.Max(x =>
-                                x.exit_time),
-
-                        TotalMinutesParked =
-                            g.Sum(x =>
-                                x.duration_minutes ?? 0),
-
-                        TotalCollected =
-                            g.SelectMany(x =>
-                                x.payments)
-                            .Sum(x =>
-                                (decimal?)x.amount_paid)
-                            ?? 0,
-
-                        CurrentStatus =
-                            g.Any(x =>
-                                x.exit_time == null)
-                                ? "Dentro"
-                                : "Fuera"
-                    })
+            // La misma regla de cobros y movimientos se aplica a cada placa ocasional.
+            var occasionalSessions = await query.AsNoTracking()
+                .Include(s => s.vehicle_type)
+                .Include(s => s.payments.Where(p => !p.is_deleted))
+                .AsSplitQuery()
                 .ToListAsync();
 
-            result.AddRange(occasional);
+            foreach (var group in occasionalSessions.GroupBy(s => new { s.plate, s.vehicle_type.name }))
+            {
+                var row = new VehicleReportDto
+                {
+                    Plate = group.Key.plate,
+                    OwnerName = "Ocasional",
+                    VehicleType = group.Key.name,
+                    Category = "Ocasional",
+                    PlanStatus = "-"
+                };
+                FillActivity(row, group);
+                result.Add(row);
+            }
         }
 
         // ==================================================
@@ -358,5 +279,58 @@ public class VehicleReportRepository
         return result
             .OrderBy(x => x.Plate)
             .ToList();
+    }
+
+    /// <summary>Describe la modalidad registrada en las estancias de un cliente mensual.</summary>
+    /// <param name="sessions">Estancias ya filtradas por placa y período.</param>
+    /// <returns>Modalidad del período y, cuando quedó guardado, motivo de la tarifa ocasional.</returns>
+    private static string GetAccessSummary(IReadOnlyList<parking_session> sessions)
+    {
+        // Las estancias anteriores al registro del motivo siguen mostrándose sin inventar una causa.
+        if (sessions.Count == 0) return "Sin ingresos";
+        var monthlyCount = sessions.Count(s => s.notes == ParkingSessionNotes.MonthlyPlan);
+        if (monthlyCount == sessions.Count) return "Acceso mensual";
+        if (monthlyCount > 0) return "Accesos mixtos";
+
+        // Solo se presenta un motivo concreto si todas las estancias comparten uno registrado.
+        var reasons = sessions.Select(s => s.notes)
+            .Where(note => note?.StartsWith(ParkingSessionNotes.OccasionalReasonPrefix,
+                StringComparison.Ordinal) == true)
+            .Select(note => note![ParkingSessionNotes.OccasionalReasonPrefix.Length..])
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (reasons.Count != 1 || sessions.Any(s => s.notes is null ||
+            !s.notes.StartsWith(ParkingSessionNotes.OccasionalReasonPrefix, StringComparison.Ordinal)))
+            return "Tarifa ocasional";
+
+        // Los códigos persistidos se traducen sin perder la razón original en la base de datos.
+        return reasons[0] switch
+        {
+            "OutsideSchedule" => "Ocasional: fuera de horario",
+            "Expired" => "Ocasional: contrato vencido",
+            "Inactive" => "Ocasional: plan inactivo",
+            "NotStarted" => "Ocasional: plan sin iniciar",
+            _ => "Tarifa ocasional"
+        };
+    }
+
+    /// <summary>Calcula ingresos, tiempo y pagos de las estancias ya filtradas y toma ambos movimientos de la última estancia.</summary>
+    /// <param name="row">Fila del informe que recibirá los totales y el estado.</param>
+    /// <param name="sessions">Estancias de una sola placa dentro del período solicitado.</param>
+    private static void FillActivity(VehicleReportDto row, IEnumerable<parking_session> sessions)
+    {
+        // Se materializa una vez para que totales y último movimiento usen el mismo conjunto.
+        var activity = sessions.ToList();
+        var latest = activity.MaxBy(s => s.entry_time);
+
+        // Los minutos son la suma de las duraciones reales persistidas, no los minutos facturables.
+        row.TotalEntries = activity.Count;
+        row.TotalMinutesParked = activity.Sum(s => s.duration_minutes ?? 0);
+        row.TotalCollected = activity.SelectMany(s => s.payments).Sum(p => p.amount_paid);
+
+        // Entrada y salida corresponden a una misma estancia, incluso si otra terminó después.
+        row.LastEntryDate = latest?.entry_time;
+        row.LastExitDate = latest?.exit_time;
+        row.CurrentStatus = activity.Any(s => s.exit_time == null) ? "Dentro" : "Fuera";
     }
 }

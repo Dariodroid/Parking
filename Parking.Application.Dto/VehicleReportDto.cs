@@ -16,7 +16,16 @@ namespace Parking.Application.Dto
 
         public string Category { get; set; } = "";
 
+        /// <summary>Modalidad de cobro aplicada a las estancias incluidas en esta fila.</summary>
+        public string AccessSummary { get; set; } = "";
+
         public string PlanStatus { get; set; } = "";
+
+        /// <summary>Indica si la ficha del cliente permite usar el plan actualmente.</summary>
+        public bool VehicleIsActive { get; set; }
+
+        /// <summary>Indica si el plan está habilitado, independientemente de sus fechas.</summary>
+        public bool PlanIsActive { get; set; }
 
         public decimal MonthlyFee { get; set; }
 

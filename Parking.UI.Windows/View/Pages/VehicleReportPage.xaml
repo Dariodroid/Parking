@@ -340,7 +340,7 @@
                                    Foreground="#596B7A" FontSize="13" TextWrapping="Wrap" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding Vehicles.Count, StringFormat='Vehículos encontrados: {0}'}"
                                    Foreground="#17324D" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                        <TextBlock Text="Los mensuales muestran actividad histórica; los ocasionales, actividad del período seleccionado."
+                        <TextBlock Text="Cuota = precio del plan; cobrado = pagos de estancias. Un cliente mensual puede ingresar con tarifa ocasional si el contrato u horario no cubre la entrada."
                                    Foreground="#596B7A" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
                     </StackPanel>
 

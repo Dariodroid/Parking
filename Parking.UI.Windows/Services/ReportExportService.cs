@@ -90,7 +90,7 @@ public sealed class ReportExportService
         sheet.Cell(6, 1).Value = "RESUMEN";
         sheet.Cell(6, 3).Value = $"{items.Count:N0} vehículos · Total cobrado mostrado: {items.Sum(x => x.TotalCollected).ToString("C", Culture)}";
         sheet.Range(6, 3, 6, 12).Merge();
-        sheet.Cell(7, 1).Value = "Nota: mensuales muestran actividad histórica; ocasionales, actividad del período seleccionado.";
+        sheet.Cell(7, 1).Value = "Cuota = precio del plan; cobrado = pagos de estancias. Un cliente mensual puede ingresar con tarifa ocasional fuera de cobertura.";
         sheet.Range(7, 1, 7, 12).Merge();
         sheet.Range(7, 1, 7, 12).Style.Font.FontColor = XLColor.FromHtml("#596B7A");
         ExcelHeader(sheet, 9, "Placa", "Propietario", "Tipo", "Categoría", "Estado plan",
@@ -104,8 +104,12 @@ public sealed class ReportExportService
             sheet.Cell(row, 1).Value = item.Plate;
             sheet.Cell(row, 2).Value = item.OwnerName;
             sheet.Cell(row, 3).Value = item.VehicleType;
-            sheet.Cell(row, 4).Value = item.Category;
-            sheet.Cell(row, 5).Value = item.PlanStatus;
+            sheet.Cell(row, 4).Value = item.Category == "Mensual"
+                ? $"Cliente mensual\n{item.AccessSummary}" : item.Category;
+            var reportRow = new VehicleReportRow(row - 9, item);
+            sheet.Cell(row, 5).Value = item.Category == "Mensual" && item.PlanEndDate.HasValue
+                ? $"{reportRow.PlanStatusLabel}\nFin: {item.PlanEndDate:dd/MM/yyyy}"
+                : reportRow.PlanStatusLabel;
             sheet.Cell(row, 6).Value = item.MonthlyFee;
             sheet.Cell(row, 7).Value = item.TotalEntries;
             if (item.LastEntryDate.HasValue) sheet.Cell(row, 8).Value = item.LastEntryDate.Value;
@@ -114,6 +118,13 @@ public sealed class ReportExportService
             sheet.Cell(row, 11).Value = item.TotalMinutesParked;
             if (item.LastExitDate.HasValue) sheet.Cell(row, 12).Value = item.LastExitDate.Value;
             ExcelBodyRow(sheet, row, 12);
+            // La modalidad ocupa una segunda línea para que no quede oculta en Excel.
+            if (item.Category == "Mensual")
+            {
+                sheet.Cell(row, 4).Style.Alignment.WrapText = true;
+                sheet.Cell(row, 5).Style.Alignment.WrapText = true;
+                sheet.Row(row).Height = 49;
+            }
             row++;
         }
         // La ausencia de filas se indica dentro de la misma tabla.
@@ -127,6 +138,7 @@ public sealed class ReportExportService
         // Anchos y formatos especializados evitan fechas o importes ambiguos.
         sheet.Columns(1, 12).Width = 17;
         sheet.Column(2).Width = 30;
+        sheet.Column(4).Width = 23;
         sheet.Column(5).Width = 20;
         sheet.Column(8).Width = 22;
         sheet.Column(12).Width = 22;
@@ -187,7 +199,7 @@ public sealed class ReportExportService
         WordText(body, $"Período de búsqueda: {VehiclePeriod(filter)}", true);
         WordText(body, $"Criterios: {VehicleCriteria(filter)}");
         WordText(body, $"{items.Count:N0} vehículos  |  Total cobrado mostrado: {items.Sum(x => x.TotalCollected).ToString("C", Culture)}", true);
-        WordText(body, "Los mensuales muestran actividad histórica; los ocasionales, actividad del período seleccionado.");
+        WordText(body, "Cuota = precio del plan; cobrado = pagos de estancias. Un cliente mensual puede ingresar con tarifa ocasional fuera de cobertura.");
 
         WordSection(body, "VEHÍCULOS ENCONTRADOS");
         // Los anchos explícitos mantienen una sola tabla legible en paisaje.
