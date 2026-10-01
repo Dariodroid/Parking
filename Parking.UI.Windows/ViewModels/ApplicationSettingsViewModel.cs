@@ -1,6 +1,7 @@
-using Microsoft.Data.SqlClient;
+using Parking.UI.Windows.Interfaces;
+using Parking.Application.Interfaces;
 using Parking.Application.Services;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Diagnostics;
@@ -18,6 +19,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     private readonly ThemeService _themeService;
     private readonly ThermalTicketPrinter _ticketPrinter;
     private readonly IDialogService _dialogs;
+    private readonly ISqlConnectionTester _connectionTester;
     private string _connectionString;
     private string _currencySymbol;
     private string _status = string.Empty;
@@ -138,13 +140,15 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     /// <param name="themeService">Control del tema global.</param>
     /// <param name="ticketPrinter">Consulta las colas instaladas de Windows.</param>
     /// <param name="dialogs">Presenta resultados y validaciones en el diálogo del sistema.</param>
+    /// <param name="connectionTester">Valida y prueba SQL desde el adaptador de datos.</param>
     public ApplicationSettingsViewModel(ApplicationSettingsStore store, ThemeService themeService,
-        ThermalTicketPrinter ticketPrinter, IDialogService dialogs)
+        ThermalTicketPrinter ticketPrinter, IDialogService dialogs, ISqlConnectionTester connectionTester)
     {
         _store = store;
         _themeService = themeService;
         _ticketPrinter = ticketPrinter;
         _dialogs = dialogs;
+        _connectionTester = connectionTester;
         _currencySymbol = store.Load().CurrencySymbol;
         var printerSettings = store.Load();
         _selectedTicketPrinter = printerSettings.TicketPrinterName;
@@ -277,24 +281,6 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         }
     }
 
-    /// <summary>Comprueba sintaxis, servidor y nombre de base sin mostrar la contraseña.</summary>
-    /// <param name="connectionString">Cadena introducida por el usuario.</param>
-    /// <param name="builder">Resultado listo para abrir SQL.</param>
-    /// <returns>Verdadero si están presentes los datos mínimos.</returns>
-    private static bool TryBuild(string connectionString, out SqlConnectionStringBuilder? builder)
-    {
-        builder = null;
-        try
-        {
-            var candidate = new SqlConnectionStringBuilder(connectionString);
-            if (string.IsNullOrWhiteSpace(candidate.DataSource)
-                || string.IsNullOrWhiteSpace(candidate.InitialCatalog)) return false;
-            builder = candidate;
-            return true;
-        }
-        catch (ArgumentException) { return false; }
-    }
-
     /// <summary>Abre y cierra la conexión propuesta sin modificar la base.</summary>
     /// <returns>Tarea que muestra el resultado de conectividad.</returns>
     private async Task TestConnectionAsync()
@@ -306,7 +292,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             return;
         }
 
-        if (!TryBuild(ConnectionString, out var builder))
+        if (!_connectionTester.TryNormalize(ConnectionString, out var normalized))
         {
             Status = "Indique Server y Database en una cadena SQL válida.";
             _dialogs.ShowWarning("Conexión", Status);
@@ -317,11 +303,9 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         Status = "Comprobando la conexión...";
         try
         {
-            // Un tiempo corto permite corregir el servidor sin bloquear la pantalla.
-            builder!.ConnectTimeout = 5;
-            await using var connection = new SqlConnection(builder.ConnectionString);
-            await connection.OpenAsync();
-            Status = $"Conexión correcta con {connection.Database}.";
+            // El adaptador SQL aplica el mismo límite corto y devuelve la base conectada.
+            string database = await _connectionTester.TestAsync(normalized);
+            Status = $"Conexión correcta con {database}.";
             _dialogs.ShowSuccess("Conexión", Status);
         }
         catch (Exception ex)
@@ -343,7 +327,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             return;
         }
 
-        if (!TryBuild(ConnectionString, out var builder))
+        if (!_connectionTester.TryNormalize(ConnectionString, out var normalized))
         {
             Status = "Indique Server y Database en una cadena SQL válida.";
             _dialogs.ShowWarning("Conexión", Status);
@@ -352,9 +336,9 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
 
         try
         {
-            // SqlConnectionStringBuilder normaliza claves equivalentes antes de guardar.
-            _store.Save(_store.Load() with { ConnectionString = builder!.ConnectionString });
-            ConnectionString = builder.ConnectionString;
+            // El adaptador SQL normaliza claves equivalentes antes de guardar.
+            _store.Save(_store.Load() with { ConnectionString = normalized });
+            ConnectionString = normalized;
             Status = "Conexión guardada para este equipo. Reinicie para aplicarla a todas las pantallas.";
             _dialogs.ShowSuccess("Conexión", Status);
             ConnectionSaved?.Invoke(this, EventArgs.Empty);

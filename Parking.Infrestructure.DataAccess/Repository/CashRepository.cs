@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Parking.Domain.Model.Abstractions;
+using Parking.Application.Interfaces;
 using Parking.Domain.Model.Models;
 using System;
 using System.Collections.Generic;

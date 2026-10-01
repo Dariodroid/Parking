@@ -1,8 +1,11 @@
-﻿using Parking.Application.Dto;
+using Parking.UI.Windows.Interfaces;
+using Parking.Application.Interfaces;
+using Parking.Application.Dto;
 using Parking.Application.Services;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.UI.Windows;
 using Parking.UI.Windows.View;
+using Parking.UI.Windows.Services;
 using Parking.UI.Windows.View.Pages;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Windows;

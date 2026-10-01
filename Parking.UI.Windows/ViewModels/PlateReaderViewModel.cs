@@ -1,13 +1,11 @@
-using OpenCvSharp;
+using Parking.UI.Windows.Interfaces;
 using Parking.Application.Interfaces;
-using Parking.Application.Ports;
+using Parking.Application.Contracts;
 using Parking.Application.Services;
 using Parking.Application.UseCases;
 using Parking.Domain.Model.Policies;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
-using Parking.Infrastructure.DataAccess.Repository;
-using Parking.Infrastructure.ExternalServices;
 using Parking.UI.Windows.Helpers;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
@@ -35,6 +33,7 @@ namespace Parking.UI.Windows.ViewModels
         private readonly CameraHealthMonitor _cameraHealth;
         private readonly CameraSelectionConfiguration? _savedCameraSelection;
         private readonly IPlateService _plateService;
+        private readonly IFrameOverlayRenderer _frameOverlayRenderer;
         private readonly IEntryService _entryService;
         private readonly IParkingStatusNotifier _parkingStatusNotifier;
         private readonly ThermalTicketPrinter _ticketPrinter;
@@ -164,6 +163,7 @@ namespace Parking.UI.Windows.ViewModels
         /// <param name="dialogService">Presenta avisos y errores al operador.</param>
         /// <param name="ticketPrinter">Envía tickets a una cola de impresión Windows.</param>
         /// <param name="settingsStore">Lee la impresora y el ancho elegidos para este equipo.</param>
+        /// <param name="frameOverlayRenderer">Dibuja las guías de vista previa fuera del ViewModel.</param>
         public PlateReaderViewModel(
             ICameraServiceFactory cameraFactory,
             ICameraSourceCatalog cameraSourceCatalog,
@@ -177,7 +177,8 @@ namespace Parking.UI.Windows.ViewModels
             IParkingStatusNotifier parkingStatusNotifier,
             IDialogService dialogService,
             ThermalTicketPrinter ticketPrinter,
-            ApplicationSettingsStore settingsStore)
+            ApplicationSettingsStore settingsStore,
+            IFrameOverlayRenderer frameOverlayRenderer)
         {
             _dialogService = dialogService;
             _ticketPrinter = ticketPrinter;
@@ -195,6 +196,7 @@ namespace Parking.UI.Windows.ViewModels
             EntranceFeed.DroidCamNetworkUrl = _savedCameraSelection?.EntranceDroidCamUrl ?? string.Empty;
             ExitFeed.DroidCamNetworkUrl = _savedCameraSelection?.ExitDroidCamUrl ?? string.Empty;
             _plateService = plateService;
+            _frameOverlayRenderer = frameOverlayRenderer;
             _entryService = entryService;
             _qrService = qrService;
             _vehicleTypeRepository = vehicleTypeRepository;
@@ -759,7 +761,7 @@ namespace Parking.UI.Windows.ViewModels
                             // La caja OCR se dibuja únicamente en el visor que la detectó.
                             var visibleDetection = now - feed.LastDetectionUtc < DetectionDisplayTime
                                 ? feed.CurrentDetection : null;
-                            byte[] frameToShow = DrawDetectionOnFrame(currentFrame, visibleDetection);
+                            byte[] frameToShow = _frameOverlayRenderer.Render(currentFrame, visibleDetection);
                             // BitmapSource se congela para pasar con seguridad al hilo de WPF.
                             var preview = BuildBitmapSource(frameToShow);
                             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => feed.Preview = preview);
@@ -989,7 +991,7 @@ namespace Parking.UI.Windows.ViewModels
                 // El detector nativo se comparte y se usa de forma secuencial.
                 await _plateReaderGate.WaitAsync();
                 PlateDetectionResult detection;
-                try { detection = await ((PlateReaderService)_plateService).DetectPlateWithRegionsAsync(frame); }
+                try { detection = await _plateService.DetectPlateWithRegionsAsync(frame); }
                 finally { _plateReaderGate.Release(); }
                 if (detection.HasPlateCandidates && string.IsNullOrWhiteSpace(detection.PlateNumber)
                     && !string.IsNullOrEmpty(_handledPlate))
@@ -1060,30 +1062,6 @@ namespace Parking.UI.Windows.ViewModels
             _handledPlateLastSeenUtc = now;
             return true;
         }
-
-        /// <summary>Dibuja la zona de búsqueda y una sola caja para la placa reconocida.</summary>
-        /// <param name="frameBytes">Fotograma original codificado.</param>
-        /// <param name="detection">Resultado de OCR y región de placa, si existe.</param>
-        /// <returns>Fotograma JPEG con las guías para el visor.</returns>
-        private byte[] DrawDetectionOnFrame(byte[] frameBytes, PlateDetectionResult? detection)
-        {
-            using var mat = Cv2.ImDecode(frameBytes, ImreadModes.Color);
-            // La zona cian indica dónde debe colocarse el vehículo para la lectura.
-            var roi = PlateReaderService.GetRecognitionRegion(mat.Width, mat.Height);
-            Cv2.Rectangle(mat, roi, Scalar.Cyan, 2, LineTypes.AntiAlias);
-            if (detection?.HasDetection == true)
-            {
-                // El servicio ya escogió la región válida; no se dibujan las demás candidatas.
-                var rect = detection.DetectedRegions[0];
-                Cv2.Rectangle(mat, rect, Scalar.LimeGreen, 4, LineTypes.AntiAlias);
-                if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
-                    Cv2.PutText(mat, detection.PlateNumber,
-                        new OpenCvSharp.Point(rect.X, Math.Max(20, rect.Y - 15)),
-                        HersheyFonts.HersheySimplex, 1.2, Scalar.LimeGreen, 3);
-            }
-            return mat.ToBytes(".jpg");
-        }
-
 
         /// <summary>Convierte un cuadro codificado en una imagen WPF segura para otro hilo.</summary>
         /// <param name="frameBytes">Bytes de la imagen que entregó la cámara.</param>

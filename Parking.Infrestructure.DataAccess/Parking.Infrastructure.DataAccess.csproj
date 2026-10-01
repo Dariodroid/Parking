@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.30" />
   </ItemGroup>
 
@@ -15,7 +16,6 @@
     <ProjectReference Include="..\Parking.Application\Parking.Application.csproj" />
     <ProjectReference Include="..\Parking.Application.Dto\Parking.Application.Dto.csproj" />
     <ProjectReference Include="..\Parking.Domain.Model\Parking.Domain.Model.csproj" />
-    <ProjectReference Include="..\Parking.Domain.Services\Parking.Domain.Services.csproj" />
   </ItemGroup>
 
 </Project>

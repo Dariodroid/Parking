@@ -1,7 +1,10 @@
-﻿using Parking.Application.Services;
+using Parking.UI.Windows.Interfaces;
+using Parking.Application.Services;
 using Parking.Application.UseCases;
+using Parking.Application.Dto;
+using Parking.Application.Interfaces;
 using Parking.Domain.Model.Policies;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
 using Parking.UI.Windows.Helpers;
@@ -17,11 +20,10 @@ namespace Parking.UI.Windows.ViewModels;
 public class RegisteredVehicleViewModel : BaseViewModel
 {
     private readonly IDialogService _dialogService;
-    private readonly IRegisteredVehicle _repository;
-    private readonly MonthlyFeeLedgerService _monthlyLedger;
+    private readonly IRegisteredVehicleManagementService _repository;
+    private readonly IMonthlyFeeLedgerService _monthlyLedger;
     bool confirmed;
 
-    private readonly IBaseRepository<vehicle_type> _vehicleTypeRepository;
 
     private readonly int _currentUserId = CurrentUser.Id;
 
@@ -63,16 +65,14 @@ public class RegisteredVehicleViewModel : BaseViewModel
     /// <summary>Prepara los comandos y los siete días editables del cliente mensualizado.</summary>
     /// <param name="repository">Consulta y guarda vehículo, plan y horarios.</param>
     /// <param name="dialogService">Muestra confirmaciones, avisos y errores al operador.</param>
-    /// <param name="vehicleTypeRepository">Carga los tipos de vehículo disponibles en el formulario.</param>
     /// <param name="monthlyLedger">Confirma el pago y guarda su asiento sin alterar la vigencia.</param>
-    public RegisteredVehicleViewModel(IRegisteredVehicle repository, IDialogService dialogService,
-        IBaseRepository<vehicle_type> vehicleTypeRepository, MonthlyFeeLedgerService monthlyLedger)
+    public RegisteredVehicleViewModel(IRegisteredVehicleManagementService repository, IDialogService dialogService,
+        IMonthlyFeeLedgerService monthlyLedger)
     {
         _dialogService = dialogService;
         _repository = repository;
         _monthlyLedger = monthlyLedger;
 
-        _vehicleTypeRepository = vehicleTypeRepository;
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync());
 
@@ -329,7 +329,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         VehicleTypes.Clear();
 
-        var items = await _vehicleTypeRepository.GetAllAsync();
+        var items = await _repository.GetVehicleTypesAsync();
 
         foreach (var item in items)
         {
@@ -538,13 +538,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 is_deleted = false
             };
 
-            await _repository.AddAsync(vehicle);
-
-            await _repository.SaveChangesAsync();
-
-            // YA TENEMOS EL ID
-            int registeredVehicleId = vehicle.id;
-
             // Un contrato histórico que se crea ya vencido debe conservar una cuota pendiente.
             // Usamos su inicio como última fecha conocida del período anterior; no declaramos un cobro nuevo.
             DateTime startDate = MonthlyStartDate!.Value;
@@ -557,8 +550,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
             var plan = new vehicle_monthly_plan
             {
-                registered_vehicle_id =
-                    registeredVehicleId,
+                registered_vehicle_id = 0,
 
                 monthly_fee =
                     MonthlyFee ?? 0,
@@ -586,11 +578,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 collected_by = createdAlreadyExpired ? null : _currentUserId
             };
 
-            await _repository
-                .AddMonthlyPlanAsync(plan);
-
-            await _repository.SaveChangesAsync();
-
             // =========================
             // 3. GUARDAR HORARIOS
             // =========================
@@ -601,8 +588,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 .Select(x =>
                     new monthly_vehicle_schedule
                     {
-                        registered_vehicle_id =
-                            registeredVehicleId,
+                        registered_vehicle_id = 0,
 
                         day_of_week =
                             x.DayOfWeek,
@@ -630,10 +616,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                     })
                 .ToList();
 
-            await _repository
-                .AddSchedulesAsync(schedules);
-
-            await _repository.SaveChangesAsync();
+            await _repository.RegisterAsync(vehicle, plan, schedules);
 
             StatusMessage = createdAlreadyExpired
                 ? "Cliente registrado con contrato vencido. Seleccione su ficha para registrar la cuota pendiente."
@@ -668,7 +651,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            var entity = await _repository .GetCompleteByIdAsync(Id);
+            var entity = await _repository.GetByIdAsync(Id);
 
             if (entity == null)
             {
@@ -790,30 +773,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 }
             }
 
-            // =========================
-            // GUARDAR UPDATES
-            // =========================
-
-            if (schedulesToUpdate.Any())
-            {
-                await _repository.UpdateSchedulesAsync(schedulesToUpdate);
-            }
-
-            // =========================
-            // GUARDAR NUEVOS
-            // =========================
-
-            if (schedulesToAdd.Any())
-            {
-                await _repository.AddSchedulesAsync(schedulesToAdd);
-            }
-            // =========================
-            // GUARDAR TODO
-            // =========================
-
-            await _repository.UpdateAsync(entity);
-
-            await _repository.SaveChangesAsync();
+            await _repository.UpdateAsync(entity, schedulesToUpdate, schedulesToAdd);
 
             _dialogService.ShowSuccess("¡Mensaje!", "Registro actualizado correctamente");
 
@@ -845,7 +805,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         try
         {
             // Se vuelve a consultar antes de pagar para usar el estado más reciente.
-            var vehicle = await _repository.GetCompleteByIdAsync(Id);
+            var vehicle = await _repository.GetByIdAsync(Id);
             if (vehicle?.vehicle_monthly_plan == null)
                 throw new InvalidOperationException("No se encontró el contrato mensual.");
 
@@ -903,7 +863,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            var entity = await _repository.GetCompleteByIdAsync(Id);
+            var entity = await _repository.GetByIdAsync(Id);
 
             if (entity == null)
             {
@@ -919,12 +879,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            await _repository
-                .SoftDeleteAsync(
-                    entity,
-                    _currentUserId);
-
-            await _repository.SaveChangesAsync();
+            await _repository.DeleteAsync(entity, _currentUserId);
 
             await LoadAsync();
 

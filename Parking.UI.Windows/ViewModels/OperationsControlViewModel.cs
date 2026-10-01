@@ -1,4 +1,7 @@
+using Parking.UI.Windows.Interfaces;
 using Parking.Application.Services;
+using Parking.Application.Dto;
+using Parking.Application.Interfaces;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
@@ -10,7 +13,7 @@ namespace Parking.UI.Windows.ViewModels;
 /// <summary>Presenta incidencias, revisiones y la conciliación del turno del usuario actual.</summary>
 public sealed class OperationsControlViewModel : BaseViewModel
 {
-    private readonly OperationsControlService _control;
+    private readonly IOperationsControlService _control;
     private readonly CameraHealthMonitor _cameras;
     private readonly IDialogService _dialogs;
     private ControlIncident? _selectedIncident;
@@ -23,7 +26,18 @@ public sealed class OperationsControlViewModel : BaseViewModel
     public ObservableCollection<ControlIncident> Incidents { get; } = new();
     public ObservableCollection<IncidentReview> Reviews { get; } = new();
     public ObservableCollection<ShiftClosure> Closures { get; } = new();
-    public ControlIncident? SelectedIncident { get => _selectedIncident; set => SetProperty(ref _selectedIncident, value); }
+    public ControlIncident? SelectedIncident
+    {
+        get => _selectedIncident;
+        set
+        {
+            // La foto se comprueba en la interfaz local, sin añadir acceso a archivos al DTO.
+            if (SetProperty(ref _selectedIncident, value)) OnPropertyChanged(nameof(SelectedIncidentHasPhoto));
+        }
+    }
+    /// <summary>Indica si la foto de la incidencia existe en este equipo.</summary>
+    public bool SelectedIncidentHasPhoto => !string.IsNullOrWhiteSpace(SelectedIncident?.PhotoPath)
+        && System.IO.File.Exists(SelectedIncident.PhotoPath);
     public ShiftSummary CurrentShift { get => _currentShift; private set => SetProperty(ref _currentShift, value); }
     public string ReviewReason { get => _reviewReason; set => SetProperty(ref _reviewReason, value); }
     public string ClosingNote { get => _closingNote; set => SetProperty(ref _closingNote, value); }
@@ -41,7 +55,7 @@ public sealed class OperationsControlViewModel : BaseViewModel
     /// <param name="control">Cálculos y escritura auditada del módulo.</param>
     /// <param name="cameras">Fallos de vídeo del proceso actual.</param>
     /// <param name="dialogs">Muestra los avisos y confirmaciones con CustomMessageBox.</param>
-    public OperationsControlViewModel(OperationsControlService control, CameraHealthMonitor cameras,
+    public OperationsControlViewModel(IOperationsControlService control, CameraHealthMonitor cameras,
         IDialogService dialogs)
     {
         _control = control;

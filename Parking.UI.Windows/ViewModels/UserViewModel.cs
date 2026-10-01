@@ -1,8 +1,10 @@
-﻿using Parking.Application.Services;
-using Parking.Domain.Model.Abstractions;
+using Parking.UI.Windows.Interfaces;
+using Parking.Application.Services;
+using Parking.Application.Interfaces;
 using Parking.Domain.Model.Enums;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.ViewModels.Base;
+using Parking.UI.Windows.Services;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
@@ -14,9 +16,8 @@ namespace Parking.UI.Windows.ViewModels;
 public class userViewModel : BaseViewModel
 {
 
-    private readonly IuserRepository _repository;
+    private readonly IUserManagementService _users;
 
-    private readonly IPasswordHasher _passwordHasher;
     private readonly IDialogService _dialogs;
 
 
@@ -47,14 +48,12 @@ public class userViewModel : BaseViewModel
 
 
     public userViewModel(
-        IuserRepository repository,
-        IPasswordHasher passwordHasher,
+        IUserManagementService users,
         IDialogService dialogs)
     {
 
-        _repository = repository;
+        _users = users;
 
-        _passwordHasher = passwordHasher;
         _dialogs = dialogs;
 
 
@@ -226,7 +225,7 @@ public class userViewModel : BaseViewModel
 
 
         var items =
-            await _repository.GetAllAsync();
+            await _users.GetAllAsync();
 
 
 
@@ -327,24 +326,6 @@ public class userViewModel : BaseViewModel
 
 
 
-            bool exists =
-                await _repository
-                .ExistsByusernameAsync(username);
-
-
-
-            if (exists)
-            {
-                StatusMessage =
-                    "El usuario ya existe.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
-
-                return;
-            }
-
-
-
-
             var entity = new user
             {
 
@@ -358,13 +339,6 @@ public class userViewModel : BaseViewModel
 
                 role =
                     SelectedRole.ToString(),
-
-
-
-                // NUEVO SISTEMA DE HASH
-                password_hash =
-                    _passwordHasher
-                    .HashPassword(Password),
 
 
 
@@ -389,10 +363,12 @@ public class userViewModel : BaseViewModel
 
 
 
-            await _repository.AddAsync(entity);
-
-
-            await _repository.SaveChangesAsync();
+            if (!await _users.CreateAsync(entity, Password))
+            {
+                StatusMessage = "El usuario ya existe.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
+                return;
+            }
 
 
 
@@ -435,7 +411,7 @@ public class userViewModel : BaseViewModel
 
 
         var entity =
-            await _repository.GetByIdAsync(Id);
+            await _users.GetByIdAsync(Id);
 
 
 
@@ -499,23 +475,9 @@ public class userViewModel : BaseViewModel
 
 
 
-            entity.password_hash =
-                _passwordHasher
-                .HashPassword(Password);
-
-            // Un administrador que cambia la clave restablece también el acceso bloqueado.
-            entity.login_attempts = 0;
-            entity.locked_until = null;
-
         }
 
-
-
-
-        await _repository.UpdateAsync(entity);
-
-
-        await _repository.SaveChangesAsync();
+        await _users.UpdateAsync(entity, Password);
 
 
 
@@ -547,7 +509,7 @@ public class userViewModel : BaseViewModel
 
 
         var entity =
-            await _repository.GetByIdAsync(Id);
+            await _users.GetByIdAsync(Id);
 
 
 
@@ -562,21 +524,7 @@ public class userViewModel : BaseViewModel
 
 
 
-        entity.is_deleted = true;
-
-
-        entity.deleted_at =
-            DateTime.Now;
-
-
-        entity.deleted_by =
-            _currentuserId;
-
-
-
-        await _repository.UpdateAsync(entity);
-        // La baja se confirma en SQL antes de comunicar éxito al administrador.
-        await _repository.SaveChangesAsync();
+        await _users.DeleteAsync(entity, _currentuserId);
 
         StatusMessage =
             "Usuario eliminado.";

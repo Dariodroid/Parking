@@ -1,5 +1,6 @@
-﻿using Parking.Application.Dto;
-using Parking.Domain.Model.Abstractions;
+using Parking.Application.Interfaces;
+using Parking.Application.Dto;
+using Parking.Domain.Model.Interfaces;
 
 
 namespace Parking.Application.Services;

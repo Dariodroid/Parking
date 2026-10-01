@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Parking.Domain.Model.Abstractions;
-using Parking.Domain.Model.Models;
+using Parking.Application.Interfaces;
+using Parking.Application.Dto;
 using Parking.Infrastructure.DataAccess;
 
 public class OperatorReportRepository

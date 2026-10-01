@@ -1,4 +1,4 @@
-using Parking.Application.Ports;
+using Parking.Application.Interfaces;
 
 namespace Parking.Infrastructure.ExternalServices;
 

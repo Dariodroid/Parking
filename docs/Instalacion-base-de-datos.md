@@ -1,6 +1,6 @@
 # Base de datos al instalar el sistema
 
-`parking_dbContext` se generó a partir de una base SQL Server existente con EF Core Power Tools. Los modelos C# describen las tablas y permiten consultar datos, pero **no crean una base nueva ni actualizan una existente por sí solos**. Este proyecto no tiene migraciones de EF Core.
+`parking_dbContext` contiene las entidades y el mapeo de las tablas existentes en SQL Server. Se puede volver a generar el modelo desde la base mediante EF Core Power Tools. La aplicación no crea ni modifica el esquema SQL al arrancar.
 
 ## Trasladar una instalación existente
 
@@ -8,10 +8,10 @@
 2. Configurar en el primer inicio del programa la cadena de conexión de ese equipo.
 3. Si la tabla `users` está vacía, el programa abre el asistente de creación del primer administrador. Si se trasladaron usuarios, se ingresa con las credenciales existentes.
 
-La aplicación crea las tablas auxiliares `parking_incident_reviews`, `parking_shift_closures` y `parking_monthly_fee_receipts` cuando se utilizan sus módulos, siempre que la cuenta SQL tenga permiso `CREATE TABLE`. Sus entidades y configuraciones EF permanecen en el proyecto.
+Las tablas `parking_incident_reviews`, `parking_shift_closures` y `parking_monthly_fee_receipts` ya forman parte de la base y están mapeadas en el contexto EF junto con las demás tablas.
 
 ## Servidor SQL completamente vacío
 
-Instalar SQL Server no crea automáticamente `parking_db`. Antes de iniciar sesión hay que provisionar el esquema de la base, por ejemplo restaurando una copia preparada para instalaciones nuevas. El asistente de administrador necesita que ya exista la tabla `users`.
+Instalar SQL Server no crea automáticamente `parking_db`. Antes de iniciar sesión hay que preparar la estructura de la base. El asistente de administrador necesita que ya exista la tabla `users`.
 
-Actualmente el proyecto **no incluye scripts SQL de instalación ni migraciones**. Por tanto, el instalador todavía no prepara por sí solo un servidor SQL completamente vacío. Si se usará ese escenario, hay que implementar y probar el aprovisionamiento de la base antes de distribuir el instalador.
+El proyecto no incluye migraciones ni ejecuta una creación automática de tablas. Tener las clases C# permite trabajar con EF y generar un esquema aparte, pero los modelos por sí solos no crean la base al instalar el programa.

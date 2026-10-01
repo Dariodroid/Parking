@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 
+using Parking.Application.Dto;
+
 namespace Parking.UI.Windows.Services;
 
 /// <summary>Conserva fallos activos de las cámaras durante la sesión de la aplicación.</summary>

@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Parking.Domain.Model.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 
-public class userRepository : IBaseRepository<user>, IuserRepository
+public class userRepository : IuserRepository
 {
     private readonly parking_dbContext _context;
 

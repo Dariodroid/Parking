@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Parking.Domain.Model.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using System.Threading.Tasks;
 

@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Parking.Domain.Model;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;

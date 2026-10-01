@@ -1,16 +1,17 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Parking.UI.Windows.Interfaces;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Parking.Application.Dto;
 using Parking.Application.Interfaces;
-using Parking.Application.Ports;
 using Parking.Application.Services;
 using Parking.Application.UseCases;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.Infrastructure.CrossCutting.Security;
 using Parking.Infrastructure.DataAccess;
 using Parking.Infrastructure.DataAccess.Repository;
+using Parking.Infrastructure.DataAccess.Services;
 using Parking.Infrastructure.ExternalServices;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.View;
@@ -44,14 +45,16 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton(themeService);
 
             // ====================== 1. ENTITY FRAMEWORK CORE ======================
-            serviceCollection.AddDbContext<parking_dbContext>((provider, options) =>
+            // La fábrica crea un contexto aislado para cada cobro mensual; también
+            // permite inyectar el contexto scoped en los repositorios existentes.
+            serviceCollection.AddDbContextFactory<parking_dbContext>((provider, options) =>
             {
                 // No se distribuye la dirección SQL de la computadora de desarrollo.
                 string connectionString = provider.GetRequiredService<ApplicationSettingsStore>()
                     .Load().ConnectionString;
                 if (string.IsNullOrWhiteSpace(connectionString))
                     throw new InvalidOperationException("Configure la conexión SQL antes de iniciar sesión.");
-                // El contexto principal se obtuvo por ingeniería inversa; no hay migraciones EF.
+                // La estructura SQL se prepara fuera del arranque de la aplicación.
                 options.UseSqlServer(connectionString);
             });
 
@@ -68,17 +71,15 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
             serviceCollection.AddScoped<IParkingPerformanceRepository, ParkingPerformanceRepository>();
             serviceCollection.AddScoped<IVehicleReportRepository, VehicleReportRepository>();
-            serviceCollection.AddScoped<IPasswordHasher,PasswordHasher>();
-
             serviceCollection.AddScoped<IAuthenticationService, AuthenticationService>();
+            serviceCollection.AddScoped<IUserManagementService, UserManagementService>();
+            serviceCollection.AddScoped<IVehicleTypeManagementService, VehicleTypeManagementService>();
+            serviceCollection.AddScoped<IParkingSlotManagementService, ParkingSlotManagementService>();
+            serviceCollection.AddScoped<IRegisteredVehicleManagementService, RegisteredVehicleManagementService>();
             serviceCollection.AddScoped<IPasswordHasher, PasswordHasher>();
             // La primera cuenta se crea solo tras comprobar la tabla users de la base configurada.
-            serviceCollection.AddScoped<InitialAdministratorService>();
+            serviceCollection.AddScoped<IInitialAdministratorService, InitialAdministratorService>();
             // ====================== 3. SERVICIOS EXTERNOS ======================
-            serviceCollection.AddSingleton<YoloPlateDetector>(_ =>
-                new RfdetrPlateDetector(System.IO.Path.Combine(
-                    AppContext.BaseDirectory, "Model", "rfdetr_alpr.onnx")));
-
             // Los visores reciben capturas independientes y el catálogo enumera las cámaras Windows.
             serviceCollection.AddSingleton<ICameraServiceFactory, OpenCvCameraServiceFactory>();
             serviceCollection.AddSingleton<ICameraSourceCatalog, OpenCvCameraSourceCatalog>();
@@ -86,9 +87,14 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<CameraSelectionStore>();
             serviceCollection.AddSingleton<CameraHealthMonitor>();
             // El libro mensual comparte la base SQL y conserva un asiento por cuota cobrada.
-            serviceCollection.AddSingleton<MonthlyFeeLedgerService>();
-            serviceCollection.AddTransient<OperationsControlService>();
+            serviceCollection.AddSingleton<IConnectionStringProvider, ApplicationConnectionStringProvider>();
+            serviceCollection.AddSingleton<ICurrencyFormatter, ApplicationCurrencyFormatter>();
+            serviceCollection.AddSingleton<ISqlConnectionTester, SqlConnectionTester>();
+            serviceCollection.AddSingleton<IMonthlyFeeLedgerStore, MonthlyFeeLedgerStore>();
+            serviceCollection.AddSingleton<IMonthlyFeeLedgerService, Parking.Application.Services.MonthlyFeeLedgerService>();
+            serviceCollection.AddTransient<IOperationsControlService, OperationsControlService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
+            serviceCollection.AddSingleton<IFrameOverlayRenderer, OpenCvFrameOverlayRenderer>();
             serviceCollection.AddSingleton<IEntryPhotoStore, LocalEntryPhotoStore>();
             serviceCollection.AddSingleton<IQrService, QrReaderService>();
             serviceCollection.AddSingleton<IQrTicketStore, LocalQrTicketStore>();
@@ -117,7 +123,6 @@ namespace Parking.UI.Windows
             serviceCollection.AddTransient<ParkingPerformanceViewModel>();
             serviceCollection.AddTransient<OperationsControlViewModel>();
             serviceCollection.AddTransient<VehicleReportViewModel>();
-            serviceCollection.AddTransient<VehicleReportViewModel>();
             serviceCollection.AddTransient<LoginViewModel>();
             serviceCollection.AddTransient<ApplicationSettingsViewModel>();
 
@@ -145,7 +150,7 @@ namespace Parking.UI.Windows
             // Si SQL no responde o falta la tabla, no se ofrece un alta alternativa que eluda el control.
             using (var scope = ServiceProvider.CreateScope())
             {
-                var initialAdmin = scope.ServiceProvider.GetRequiredService<InitialAdministratorService>();
+                var initialAdmin = scope.ServiceProvider.GetRequiredService<IInitialAdministratorService>();
                 bool isRequired;
                 try
                 {

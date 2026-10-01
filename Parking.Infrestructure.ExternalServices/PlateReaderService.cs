@@ -1,5 +1,6 @@
-﻿using OpenCvSharp;
-using Parking.Application.Ports;
+using OpenCvSharp;
+using Parking.Application.Contracts;
+using Parking.Application.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,6 +26,17 @@ namespace Parking.Infrastructure.ExternalServices
         // Coordenadas relativas al frame. La zona se muestra en el visor para orientar la cámara.
         public static OpenCvSharp.Rect GetRecognitionRegion(int width, int height) =>
             new((int)(width * .10), (int)(height * .30), (int)(width * .80), (int)(height * .60));
+
+        /// <summary>Entrega a la interfaz la misma guía del detector sin exponer tipos OpenCV.</summary>
+        /// <param name="width">Anchura del fotograma en píxeles.</param>
+        /// <param name="height">Altura del fotograma en píxeles.</param>
+        /// <returns>Coordenadas de la zona de reconocimiento.</returns>
+        public PlateRegion GetRecognitionRegionCoordinates(int width, int height)
+        {
+            // La conversión conserva exactamente la zona usada por el OCR.
+            var region = GetRecognitionRegion(width, height);
+            return new PlateRegion(region.X, region.Y, region.Width, region.Height);
+        }
 
         /// <summary>Prepara las rutas y difiere la carga del detector y del OCR hasta la primera lectura.</summary>
         public PlateReaderService()
@@ -127,7 +139,9 @@ namespace Parking.Infrastructure.ExternalServices
                             // Mostrar solo la región que permitió leer la placa.
                             // Los demás candidatos del detector siguen disponibles
                             // para OCR, pero no se dibujan sobre el visor.
-                            result.DetectedRegions.Add(ChooseDisplayRegion(regions, rect));
+                            var displayRegion = ChooseDisplayRegion(regions, rect);
+                            result.DetectedRegions.Add(new PlateRegion(
+                                displayRegion.X, displayRegion.Y, displayRegion.Width, displayRegion.Height));
                             result.PlateImage = plate.ToBytes(".jpg");
                             return result;
                         }

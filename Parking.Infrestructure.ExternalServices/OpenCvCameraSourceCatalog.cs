@@ -1,5 +1,6 @@
 using OpenCvSharp;
-using Parking.Application.Ports;
+using Parking.Application.Contracts;
+using Parking.Application.Interfaces;
 
 namespace Parking.Infrastructure.ExternalServices;
 

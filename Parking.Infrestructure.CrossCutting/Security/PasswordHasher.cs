@@ -1,4 +1,4 @@
-﻿using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using System.Security.Cryptography;
 
 namespace Parking.Infrastructure.CrossCutting.Security;

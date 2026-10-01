@@ -90,7 +90,7 @@
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedIncident.HasPhoto}" Value="True">
+                                    <DataTrigger Binding="{Binding SelectedIncidentHasPhoto}" Value="True">
                                         <Setter Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                 </Style.Triggers>

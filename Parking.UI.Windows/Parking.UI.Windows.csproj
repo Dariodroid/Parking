@@ -13,22 +13,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="MaterialDesignColors" Version="5.3.2" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.30" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.24" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
-    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.13.0.20260330" />
+    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260330" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Parking.Application.Dto\Parking.Application.Dto.csproj" />
     <ProjectReference Include="..\Parking.Application\Parking.Application.csproj" />
     <ProjectReference Include="..\Parking.Domain.Model\Parking.Domain.Model.csproj" />
-    <ProjectReference Include="..\Parking.Domain.Services\Parking.Domain.Services.csproj" />
     <ProjectReference Include="..\Parking.Infrestructure.CrossCutting\Parking.Infrastructure.CrossCutting.csproj" />
     <ProjectReference Include="..\Parking.Infrestructure.DataAccess\Parking.Infrastructure.DataAccess.csproj" />
     <ProjectReference Include="..\Parking.Infrestructure.ExternalServices\Parking.Infrastructure.ExternalServices.csproj" />

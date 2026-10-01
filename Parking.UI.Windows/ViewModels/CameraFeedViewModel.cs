@@ -1,5 +1,5 @@
-using Parking.Application.Ports;
-using Parking.Infrastructure.ExternalServices;
+using Parking.Application.Contracts;
+using Parking.Application.Interfaces;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;

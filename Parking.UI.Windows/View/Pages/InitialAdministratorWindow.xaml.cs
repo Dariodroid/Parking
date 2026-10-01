@@ -1,4 +1,6 @@
+using Parking.UI.Windows.Interfaces;
 using Parking.UI.Windows.Services;
+using Parking.Application.Interfaces;
 using Parking.Application.Services;
 using System.Windows;
 
@@ -7,13 +9,13 @@ namespace Parking.UI.Windows.View.Pages;
 /// <summary>Recoge las credenciales del primer administrador antes de permitir el login.</summary>
 public partial class InitialAdministratorWindow : Window
 {
-    private readonly InitialAdministratorService _service;
+    private readonly IInitialAdministratorService _service;
     private readonly IDialogService _dialogs;
 
     /// <summary>Crea el asistente para una base sin cuentas.</summary>
     /// <param name="service">Servicio que verifica y guarda la primera cuenta.</param>
     /// <param name="dialogs">Muestra los avisos con el diálogo visual del sistema.</param>
-    public InitialAdministratorWindow(InitialAdministratorService service, IDialogService dialogs)
+    public InitialAdministratorWindow(IInitialAdministratorService service, IDialogService dialogs)
     {
         _service = service;
         _dialogs = dialogs;

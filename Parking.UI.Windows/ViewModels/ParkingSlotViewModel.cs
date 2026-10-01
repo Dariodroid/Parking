@@ -1,7 +1,10 @@
-﻿using Parking.Domain.Model.Abstractions;
+using Parking.Application.Interfaces;
+using Parking.UI.Windows.Interfaces;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.Application.Services;
 using Parking.UI.Windows.ViewModels.Base;
+using Parking.UI.Windows.Services;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
@@ -10,7 +13,7 @@ namespace Parking.UI.Windows.ViewModels;
 
 public class ParkingSlotViewModel : BaseViewModel
 {
-    private readonly IParkingSlotRepository _repository;
+    private readonly IParkingSlotManagementService _repository;
     private readonly IDialogService _dialogs;
 
     public ObservableCollection<parking_slot> Slots { get; }
@@ -25,7 +28,7 @@ public class ParkingSlotViewModel : BaseViewModel
     public ICommand NewCommand { get; }
 
     public ParkingSlotViewModel(
-        IParkingSlotRepository repository,
+        IParkingSlotManagementService repository,
         IDialogService dialogs)
     {
         _repository = repository;
@@ -132,7 +135,7 @@ public class ParkingSlotViewModel : BaseViewModel
                 return;
             }
 
-            await _repository.AddAsync(
+            await _repository.CreateAsync(
                 new parking_slot
                 {
                     slot_number =
@@ -143,7 +146,6 @@ public class ParkingSlotViewModel : BaseViewModel
                     updated_at = DateTime.Now
                 });
 
-            await _repository.SaveChangesAsync();
 
             StatusMessage =
                 "Puesto creado correctamente.";
@@ -195,7 +197,6 @@ public class ParkingSlotViewModel : BaseViewModel
 
             await _repository.UpdateAsync(slot);
 
-            await _repository.SaveChangesAsync();
 
             StatusMessage =
                 "Puesto actualizado correctamente.";
@@ -246,9 +247,8 @@ public class ParkingSlotViewModel : BaseViewModel
                 return;
             }
 
-            await _repository.DeleteAsync(slot.id);
+            await _repository.DeleteAsync(slot);
 
-            await _repository.SaveChangesAsync();
 
             StatusMessage =
                 "Puesto eliminado correctamente.";

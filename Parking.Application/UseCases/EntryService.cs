@@ -1,7 +1,6 @@
-﻿using Parking.Application.Interfaces;
-using Parking.Application.Ports;
+using Parking.Application.Interfaces;
 using Parking.Application.Services;
-using Parking.Domain.Model.Abstractions;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.Domain.Model.Policies;
 using System;

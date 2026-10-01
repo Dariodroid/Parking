@@ -1,7 +1,9 @@
-﻿using Microsoft.Win32;
-using Parking.Domain.Model.Abstractions;
+using Parking.UI.Windows.Interfaces;
+using Microsoft.Win32;
+using Parking.Domain.Model.Interfaces;
 using Parking.Application.Services;
 using Parking.Domain.Model.Models;
+using Parking.Application.Interfaces;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
@@ -12,7 +14,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class CashViewModel : BaseViewModel
 {
     private readonly ExcelExportService _excelExportService;
-    private readonly MonthlyFeeLedgerService _monthlyLedger;
+    private readonly IMonthlyFeeLedgerService _monthlyLedger;
     private readonly IDialogService _dialogs;
     private string _status = string.Empty;
 
@@ -96,7 +98,7 @@ public class CashViewModel : BaseViewModel
     /// <param name="monthlyLedger">Consulta los asientos de cuotas mensuales.</param>
     /// <param name="dialogs">Muestra avisos de exportación con los diálogos del sistema.</param>
     public CashViewModel(ICashRepository cashRepository, ExcelExportService excelExportService,
-        MonthlyFeeLedgerService monthlyLedger, IDialogService dialogs)
+        IMonthlyFeeLedgerService monthlyLedger, IDialogService dialogs)
     {
         _cashRepository = cashRepository;
         _excelExportService = excelExportService;

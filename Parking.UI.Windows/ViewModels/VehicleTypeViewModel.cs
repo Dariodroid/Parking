@@ -1,8 +1,11 @@
-﻿using Parking.Application.Services;
-using Parking.Domain.Model.Abstractions;
+using Parking.Application.Interfaces;
+using Parking.UI.Windows.Interfaces;
+using Parking.Application.Services;
+using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
 using Parking.UI.Windows.ViewModels.Base;
+using Parking.UI.Windows.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -13,7 +16,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class vehicle_typeViewModel : BaseViewModel
 {
     private readonly IDialogService _dialogService;
-    private readonly Ivehicle_typeRepository _repository;
+    private readonly IVehicleTypeManagementService _repository;
     bool dialog;
 
     private readonly int _currentuserId = CurrentUser.Id;
@@ -28,7 +31,7 @@ public class vehicle_typeViewModel : BaseViewModel
     /// <summary>Prepara la edición de tipos de vehículo y sus tarifas.</summary>
     /// <param name="repository">Consulta y guarda los tipos de vehículo.</param>
     /// <param name="dialogService">Muestra validaciones y resultados al operador.</param>
-    public vehicle_typeViewModel(Ivehicle_typeRepository repository, IDialogService dialogService)
+    public vehicle_typeViewModel(IVehicleTypeManagementService repository, IDialogService dialogService)
     {
         _repository = repository;
         _dialogService = dialogService;
@@ -244,9 +247,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 is_deleted = false
             };
 
-            await _repository.AddAsync(entity);
-
-            await _repository.SaveChangesAsync();
+            await _repository.CreateAsync(entity);
 
             _dialogService.ShowWarning("Atención", "El nombre del tipo de vehículo es obligatorio");
 
@@ -298,8 +299,6 @@ public class vehicle_typeViewModel : BaseViewModel
 
             await _repository.UpdateAsync(entity);
 
-            await _repository.SaveChangesAsync();
-
             _dialogService.ShowSuccess("Mensaje !","Registro actualizado correctamente.");
 
             await LoadAsync();
@@ -338,13 +337,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 return;
             }
 
-            entity.is_deleted = true;
-            entity.deleted_at = DateTime.Now;
-            entity.deleted_by = _currentuserId;
-
-            await _repository.SoftDeleteAsync(entity);
-
-            await _repository.SaveChangesAsync();
+            await _repository.DeleteAsync(entity, _currentuserId);
 
             _dialogService.ShowInfo("Mensaje !", "Registro eliminado correctamente.");
 
