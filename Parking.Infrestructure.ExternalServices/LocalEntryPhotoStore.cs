@@ -1,4 +1,4 @@
-using Parking.Application.EntityService;
+using Parking.Application.Ports;
 using System;
 using System.IO;
 using System.Threading.Tasks;

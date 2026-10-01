@@ -6,22 +6,32 @@ namespace Parking.UI.Windows.View.Dialogs;
 public partial class CustomMessageBox : Window
 {
     /// <summary>Construye el diálogo sobre la ventana propietaria con contenido y acciones elegidas.</summary>
-    /// <param name="owner">Ventana que define posición y tamaño del diálogo.</param>
+    /// <param name="owner">Ventana visible que define posición y tamaño; nula durante el arranque.</param>
     /// <param name="title">Título visible del mensaje.</param>
     /// <param name="message">Texto principal presentado al usuario.</param>
     /// <param name="buttons">Combinación de botones que se mostrará.</param>
     /// <param name="icon">Símbolo del mensaje; Información si se omite.</param>
-    public CustomMessageBox(Window owner, string title, string message, DialogButtons buttons, DialogIcon icon = DialogIcon.Info)
+    public CustomMessageBox(Window? owner, string title, string message, DialogButtons buttons, DialogIcon icon = DialogIcon.Info)
     {
         // Carga los controles definidos en XAML antes de asignarles valores.
         InitializeComponent();
 
         // Superpone el diálogo a la ventana de origen usando sus dimensiones.
-        Owner = owner;
-        Width = owner.ActualWidth;
-        Height = owner.ActualHeight;
-        Left = owner.Left;
-        Top = owner.Top;
+        if (owner is { IsVisible: true })
+        {
+            Owner = owner;
+            Width = owner.ActualWidth;
+            Height = owner.ActualHeight;
+            Left = owner.Left;
+            Top = owner.Top;
+        }
+        else
+        {
+            // Antes del login todavía no hay una ventana propietaria.
+            Width = 520;
+            Height = 300;
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
 
         // El contenido y las acciones proceden de los argumentos recibidos.
         TitleText.Text = title;

@@ -1,4 +1,4 @@
-namespace Parking.Application.EntityService;
+namespace Parking.Application.Ports;
 
 /// <summary>Crea una captura independiente para cada visor simultáneo.</summary>
 public interface ICameraServiceFactory

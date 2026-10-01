@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using Parking.Application.Dto;
-using Parking.Application.Dto.Interfaces;
+using Parking.Application.Interfaces;
+using Parking.Application.Services;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
@@ -13,6 +14,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class VehicleReportViewModel : BaseViewModel
 {
     private readonly IVehicleReportRepository _repository;
+    private readonly IDialogService _dialogs;
     private readonly ReportExportService _exportService = new();
     private readonly ReportPrintService _printService = new();
     private ObservableCollection<VehicleReportDto> _vehicles = new();
@@ -75,9 +77,11 @@ public class VehicleReportViewModel : BaseViewModel
 
     /// <summary>Configura búsqueda y exportaciones sobre el mismo repositorio.</summary>
     /// <param name="repository">Consulta vehículos según los filtros elegidos.</param>
-    public VehicleReportViewModel(IVehicleReportRepository repository)
+    /// <param name="dialogs">Muestra advertencias y errores con los diálogos del sistema.</param>
+    public VehicleReportViewModel(IVehicleReportRepository repository, IDialogService dialogs)
     {
         _repository = repository;
+        _dialogs = dialogs;
         SearchCommand = new AsyncRelayCommand(async _ => await LoadData());
         ExportExcelCommand = new AsyncRelayCommand(async _ => await Export(false));
         ExportWordCommand = new AsyncRelayCommand(async _ => await Export(true));
@@ -91,7 +95,7 @@ public class VehicleReportViewModel : BaseViewModel
         // Se rechaza un período invertido antes de consultar.
         if (Filter.FromDate > Filter.ToDate)
         {
-            MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
+            _dialogs.ShowWarning("Reportes", "La fecha inicial debe ser anterior o igual a la fecha final.");
             return;
         }
 
@@ -126,7 +130,7 @@ public class VehicleReportViewModel : BaseViewModel
         // No se exporta un intervalo de fechas inválido.
         if (Filter.FromDate > Filter.ToDate)
         {
-            MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
+            _dialogs.ShowWarning("Reportes", "La fecha inicial debe ser anterior o igual a la fecha final.");
             return;
         }
         // Si el usuario cambió criterios, se consulta antes de generar el archivo.
@@ -149,10 +153,11 @@ public class VehicleReportViewModel : BaseViewModel
                 _exportService.ExportVehiclesWord(dialog.FileName, Vehicles, AppliedFilter, ReportDate);
             else
                 _exportService.ExportVehiclesExcel(dialog.FileName, Vehicles, AppliedFilter, ReportDate);
+            _dialogs.ShowSuccess("Reportes", "Informe exportado correctamente.");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"No se pudo exportar el informe: {ex.Message}", "Reportes", MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogs.ShowError("Reportes", $"No se pudo exportar el informe: {ex.Message}");
         }
     }
 
@@ -164,7 +169,7 @@ public class VehicleReportViewModel : BaseViewModel
         // Se usan los mismos criterios y filas que reciben Word y Excel.
         if (Filter.FromDate > Filter.ToDate)
         {
-            MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
+            _dialogs.ShowWarning("Reportes", "La fecha inicial debe ser anterior o igual a la fecha final.");
             return;
         }
         try
@@ -176,8 +181,7 @@ public class VehicleReportViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"No se pudo imprimir el informe: {ex.Message}", "Reportes",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogs.ShowError("Reportes", $"No se pudo imprimir el informe: {ex.Message}");
         }
     }
 

@@ -1,6 +1,6 @@
 using Parking.Domain.Model.Models;
 
-namespace Parking.Application.UseCases;
+namespace Parking.Domain.Model.Policies;
 
 /// <summary>Aplica las fechas, el estado y el horario semanal del plan mensual al momento de entrada.</summary>
 public static class MonthlyAccessPolicy

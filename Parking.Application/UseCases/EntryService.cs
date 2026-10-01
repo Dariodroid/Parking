@@ -1,7 +1,9 @@
-﻿using Parking.Application.EntityService;
+﻿using Parking.Application.Interfaces;
+using Parking.Application.Ports;
 using Parking.Application.Services;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
+using Parking.Domain.Model.Policies;
 using System;
 using System.Threading.Tasks;
 

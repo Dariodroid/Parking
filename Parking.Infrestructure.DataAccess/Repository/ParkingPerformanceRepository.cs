@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Parking.Application.Dto;
-using Parking.Application.Dto.Interfaces;
+using Parking.Application.Interfaces;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 

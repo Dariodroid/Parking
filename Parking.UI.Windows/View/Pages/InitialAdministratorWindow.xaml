@@ -24,7 +24,7 @@
                      Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
                      BorderBrush="{DynamicResource AppInputBorderBrush}"/>
 
-            <TextBlock Text="CONTRASEÑA (MÍNIMO 12 CARACTERES)" Foreground="{DynamicResource AppMutedTextBrush}" FontWeight="SemiBold"/>
+            <TextBlock Text="CONTRASEÑA (MÍNIMO 8 CARACTERES)" Foreground="{DynamicResource AppMutedTextBrush}" FontWeight="SemiBold"/>
             <PasswordBox x:Name="PasswordInput" Height="36" Margin="0,4,0,12"
                          Background="{DynamicResource AppInputBrush}" Foreground="{DynamicResource AppTextBrush}"
                          BorderBrush="{DynamicResource AppInputBorderBrush}"/>

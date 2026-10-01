@@ -1,4 +1,4 @@
-using Parking.Application.EntityService;
+using Parking.Application.Ports;
 using Parking.Infrastructure.ExternalServices;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;

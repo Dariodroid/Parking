@@ -17,6 +17,7 @@ public class userViewModel : BaseViewModel
     private readonly IuserRepository _repository;
 
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IDialogService _dialogs;
 
 
     private readonly int _currentuserId = CurrentUser.Id;
@@ -47,12 +48,14 @@ public class userViewModel : BaseViewModel
 
     public userViewModel(
         IuserRepository repository,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IDialogService dialogs)
     {
 
         _repository = repository;
 
         _passwordHasher = passwordHasher;
+        _dialogs = dialogs;
 
 
 
@@ -265,6 +268,7 @@ public class userViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(username))
         {
             StatusMessage = "Ingrese el usuario.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
             return false;
         }
 
@@ -273,6 +277,7 @@ public class userViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(FullName))
         {
             StatusMessage = "Ingrese el nombre.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
             return false;
         }
 
@@ -284,6 +289,14 @@ public class userViewModel : BaseViewModel
             if (string.IsNullOrWhiteSpace(Password))
             {
                 StatusMessage = "Ingrese la contraseña.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
+                return false;
+            }
+
+            if (Password.Length < 8)
+            {
+                StatusMessage = "La contraseña debe tener al menos 8 caracteres.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
                 return false;
             }
 
@@ -292,6 +305,7 @@ public class userViewModel : BaseViewModel
             {
                 StatusMessage =
                     "Las contraseñas no coinciden.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
 
                 return false;
             }
@@ -323,6 +337,7 @@ public class userViewModel : BaseViewModel
             {
                 StatusMessage =
                     "El usuario ya existe.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
 
                 return;
             }
@@ -383,6 +398,7 @@ public class userViewModel : BaseViewModel
 
             StatusMessage =
                 "Usuario registrado correctamente.";
+            _dialogs.ShowSuccess("Usuarios", StatusMessage);
 
 
 
@@ -396,14 +412,9 @@ public class userViewModel : BaseViewModel
         catch (Exception ex)
         {
 
-            StatusMessage = ex.Message;
-
-
-            MessageBox.Show(
-                ex.ToString(),
-                "ERROR",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            System.Diagnostics.Debug.WriteLine($"Error al registrar usuario: {ex}");
+            StatusMessage = "No se pudo registrar el usuario. Revise los datos e inténtelo de nuevo.";
+            _dialogs.ShowError("Usuarios", StatusMessage);
 
         }
 
@@ -416,6 +427,7 @@ public class userViewModel : BaseViewModel
         {
             StatusMessage =
                 "Seleccione un usuario.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
 
             return;
         }
@@ -431,6 +443,7 @@ public class userViewModel : BaseViewModel
         {
             StatusMessage =
                 "Usuario no encontrado.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
 
             return;
         }
@@ -468,10 +481,18 @@ public class userViewModel : BaseViewModel
         if (!string.IsNullOrWhiteSpace(Password))
         {
 
+            if (Password.Length < 8)
+            {
+                StatusMessage = "La contraseña debe tener al menos 8 caracteres.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
+                return;
+            }
+
             if (Password != ConfirmPassword)
             {
                 StatusMessage =
                     "Las contraseñas no coinciden.";
+                _dialogs.ShowWarning("Usuarios", StatusMessage);
 
                 return;
             }
@@ -481,6 +502,10 @@ public class userViewModel : BaseViewModel
             entity.password_hash =
                 _passwordHasher
                 .HashPassword(Password);
+
+            // Un administrador que cambia la clave restablece también el acceso bloqueado.
+            entity.login_attempts = 0;
+            entity.locked_until = null;
 
         }
 
@@ -496,6 +521,7 @@ public class userViewModel : BaseViewModel
 
         StatusMessage =
             "Usuario actualizado.";
+        _dialogs.ShowSuccess("Usuarios", StatusMessage);
 
 
 
@@ -513,6 +539,7 @@ public class userViewModel : BaseViewModel
         {
             StatusMessage =
                 "Seleccione un usuario.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
 
             return;
         }
@@ -528,6 +555,7 @@ public class userViewModel : BaseViewModel
         {
             StatusMessage =
                 "Usuario no encontrado.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
 
             return;
         }
@@ -547,11 +575,12 @@ public class userViewModel : BaseViewModel
 
 
         await _repository.UpdateAsync(entity);
-
-
+        // La baja se confirma en SQL antes de comunicar éxito al administrador.
+        await _repository.SaveChangesAsync();
 
         StatusMessage =
             "Usuario eliminado.";
+        _dialogs.ShowSuccess("Usuarios", StatusMessage);
 
 
 

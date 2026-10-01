@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using Parking.Application.Dto;
-using Parking.Application.Dto.Interfaces;
+using Parking.Application.Interfaces;
+using Parking.Application.Services;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Windows.Input;
@@ -12,6 +13,7 @@ namespace Parking.UI.Windows.ViewModels;
 public sealed class ParkingPerformanceViewModel : BaseViewModel
 {
     private readonly IParkingPerformanceRepository _repository;
+    private readonly IDialogService _dialogs;
     private readonly ReportExportService _export = new();
     private readonly ReportPrintService _printer = new();
     private DateTime _startDate = DateTime.Today.AddDays(-29);
@@ -52,9 +54,11 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
 
     /// <summary>Configura la consulta y las tres acciones del informe.</summary>
     /// <param name="repository">Fuente de sesiones, puestos y pagos.</param>
-    public ParkingPerformanceViewModel(IParkingPerformanceRepository repository)
+    /// <param name="dialogs">Muestra los resultados de las acciones en el diálogo del sistema.</param>
+    public ParkingPerformanceViewModel(IParkingPerformanceRepository repository, IDialogService dialogs)
     {
         _repository = repository;
+        _dialogs = dialogs;
         RefreshCommand = new AsyncRelayCommand(_ => LoadAsync());
         ExportExcelCommand = new AsyncRelayCommand(_ => ExportAsync(false));
         ExportWordCommand = new AsyncRelayCommand(_ => ExportAsync(true));
@@ -68,6 +72,7 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
         if (StartDate.Date > EndDate.Date || (EndDate.Date - StartDate.Date).TotalDays > 92)
         {
             Status = "Elija un período válido de hasta 93 días.";
+            _dialogs.ShowWarning("Rendimiento", Status);
             return;
         }
         try
@@ -83,6 +88,7 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
         catch (Exception ex)
         {
             Status = $"No se pudo consultar el rendimiento: {ex.Message}";
+            _dialogs.ShowError("Rendimiento", Status);
         }
     }
 
@@ -106,10 +112,12 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
             if (word) _export.ExportPerformanceWord(dialog.FileName, Report, AppliedStartDate, AppliedEndDate);
             else _export.ExportPerformanceExcel(dialog.FileName, Report, AppliedStartDate, AppliedEndDate);
             Status = $"Informe guardado en {dialog.FileName}.";
+            _dialogs.ShowSuccess("Rendimiento", Status);
         }
         catch (Exception ex)
         {
             Status = $"No se pudo exportar el informe: {ex.Message}";
+            _dialogs.ShowError("Rendimiento", Status);
         }
     }
 
@@ -126,11 +134,15 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
         {
             if (sheet is null) throw new InvalidOperationException("No se encontró la hoja del informe.");
             if (_printer.Print(sheet, "Ocupación y recaudación"))
+            {
                 Status = "Informe enviado a la impresora seleccionada.";
+                _dialogs.ShowSuccess("Rendimiento", Status);
+            }
         }
         catch (Exception ex)
         {
             Status = $"No se pudo imprimir el informe: {ex.Message}";
+            _dialogs.ShowError("Rendimiento", Status);
         }
     }
 }

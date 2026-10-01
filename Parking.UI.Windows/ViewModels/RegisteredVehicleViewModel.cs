@@ -1,5 +1,6 @@
 ﻿using Parking.Application.Services;
 using Parking.Application.UseCases;
+using Parking.Domain.Model.Policies;
 using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.View.Dialogs;
@@ -637,6 +638,10 @@ public class RegisteredVehicleViewModel : BaseViewModel
             StatusMessage = createdAlreadyExpired
                 ? "Cliente registrado con contrato vencido. Seleccione su ficha para registrar la cuota pendiente."
                 : "Cliente mensualizado registrado.";
+            if (createdAlreadyExpired)
+                _dialogService.ShowWarning("Clientes", StatusMessage);
+            else
+                _dialogService.ShowSuccess("Clientes", StatusMessage);
 
             await LoadAsync();
 
@@ -645,6 +650,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         catch (Exception ex)
         {
             StatusMessage = ex.Message;
+            _dialogService.ShowError("Clientes", StatusMessage);
         }
     }
 
@@ -818,6 +824,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         catch (Exception ex)
         {
             StatusMessage = ex.Message;
+            _dialogService.ShowError("Clientes", StatusMessage);
         }
     }
 

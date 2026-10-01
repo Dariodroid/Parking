@@ -1,4 +1,4 @@
-namespace Parking.Application.UseCases;
+namespace Parking.Domain.Model.Policies;
 
 /// <summary>Motivo por el que una entrada recibe acceso mensual o tarifa ocasional.</summary>
 public enum MonthlyAccessKind

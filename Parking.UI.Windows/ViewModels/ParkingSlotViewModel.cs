@@ -1,5 +1,6 @@
 ﻿using Parking.Domain.Model.Abstractions;
 using Parking.Domain.Model.Models;
+using Parking.Application.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -10,6 +11,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class ParkingSlotViewModel : BaseViewModel
 {
     private readonly IParkingSlotRepository _repository;
+    private readonly IDialogService _dialogs;
 
     public ObservableCollection<parking_slot> Slots { get; }
         = new();
@@ -23,9 +25,11 @@ public class ParkingSlotViewModel : BaseViewModel
     public ICommand NewCommand { get; }
 
     public ParkingSlotViewModel(
-        IParkingSlotRepository repository)
+        IParkingSlotRepository repository,
+        IDialogService dialogs)
     {
         _repository = repository;
+        _dialogs = dialogs;
 
         SaveCommand =
             new RelayCommand(async _ =>
@@ -100,9 +104,6 @@ public class ParkingSlotViewModel : BaseViewModel
         var items =
             await _repository.GetAllAsync();
 
-        //MessageBox.Show(
-        //    $"Registros encontrados: {items.Count()}");
-
         foreach (var item in items)
         {
             Slots.Add(item);
@@ -126,6 +127,7 @@ public class ParkingSlotViewModel : BaseViewModel
             {
                 StatusMessage =
                     "Ingrese el puesto.";
+                _dialogs.ShowWarning("Puestos", StatusMessage);
 
                 return;
             }
@@ -145,6 +147,7 @@ public class ParkingSlotViewModel : BaseViewModel
 
             StatusMessage =
                 "Puesto creado correctamente.";
+            _dialogs.ShowSuccess("Puestos", StatusMessage);
 
             await LoadAsync();
 
@@ -154,6 +157,7 @@ public class ParkingSlotViewModel : BaseViewModel
         {
             StatusMessage =
                 ex.Message;
+            _dialogs.ShowError("Puestos", StatusMessage);
         }
     }
 
@@ -165,6 +169,7 @@ public class ParkingSlotViewModel : BaseViewModel
             {
                 StatusMessage =
                     "Seleccione un puesto.";
+                _dialogs.ShowWarning("Puestos", StatusMessage);
 
                 return;
             }
@@ -177,6 +182,7 @@ public class ParkingSlotViewModel : BaseViewModel
             {
                 StatusMessage =
                     "Puesto no encontrado.";
+                _dialogs.ShowWarning("Puestos", StatusMessage);
 
                 return;
             }
@@ -193,6 +199,7 @@ public class ParkingSlotViewModel : BaseViewModel
 
             StatusMessage =
                 "Puesto actualizado correctamente.";
+            _dialogs.ShowSuccess("Puestos", StatusMessage);
 
             await LoadAsync();
         }
@@ -200,6 +207,7 @@ public class ParkingSlotViewModel : BaseViewModel
         {
             StatusMessage =
                 ex.Message;
+            _dialogs.ShowError("Puestos", StatusMessage);
         }
     }
 
@@ -211,6 +219,7 @@ public class ParkingSlotViewModel : BaseViewModel
             {
                 StatusMessage =
                     "Seleccione un puesto.";
+                _dialogs.ShowWarning("Puestos", StatusMessage);
 
                 return;
             }
@@ -223,6 +232,7 @@ public class ParkingSlotViewModel : BaseViewModel
             {
                 StatusMessage =
                     "Puesto no encontrado.";
+                _dialogs.ShowWarning("Puestos", StatusMessage);
 
                 return;
             }
@@ -231,6 +241,7 @@ public class ParkingSlotViewModel : BaseViewModel
             {
                 StatusMessage =
                     "No puede eliminar un puesto ocupado.";
+                _dialogs.ShowWarning("Puestos", StatusMessage);
 
                 return;
             }
@@ -241,6 +252,7 @@ public class ParkingSlotViewModel : BaseViewModel
 
             StatusMessage =
                 "Puesto eliminado correctamente.";
+            _dialogs.ShowSuccess("Puestos", StatusMessage);
 
             await LoadAsync();
 
@@ -250,6 +262,7 @@ public class ParkingSlotViewModel : BaseViewModel
         {
             StatusMessage =
                 ex.Message;
+            _dialogs.ShowError("Puestos", StatusMessage);
         }
     }
 

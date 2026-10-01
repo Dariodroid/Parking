@@ -2,8 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Parking.Application.Dto;
-using Parking.Application.Dto.Interfaces;
-using Parking.Application.EntityService;
+using Parking.Application.Interfaces;
+using Parking.Application.Ports;
 using Parking.Application.Services;
 using Parking.Application.UseCases;
 using Parking.Domain.Model.Abstractions;
@@ -67,7 +67,7 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<ICashRepository, CashRepository>();
             serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
             serviceCollection.AddScoped<IParkingPerformanceRepository, ParkingPerformanceRepository>();
-            serviceCollection.AddScoped<Application.Dto.Interfaces.IVehicleReportRepository,VehicleReportRepository>();
+            serviceCollection.AddScoped<IVehicleReportRepository, VehicleReportRepository>();
             serviceCollection.AddScoped<IPasswordHasher,PasswordHasher>();
 
             serviceCollection.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -155,13 +155,14 @@ namespace Parking.UI.Windows
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error comprobando usuarios iniciales: {ex}");
-                    MessageBox.Show("No se pudo verificar la base de datos. Revise la conexión y la tabla de usuarios.",
-                        "Inicio del sistema", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ServiceProvider.GetRequiredService<IDialogService>().ShowError("Inicio del sistema",
+                        "No se pudo verificar la base de datos. Revise la conexión y la tabla de usuarios.");
                     Shutdown();
                     return;
                 }
 
-                if (isRequired && new InitialAdministratorWindow(initialAdmin).ShowDialog() != true)
+                if (isRequired && new InitialAdministratorWindow(initialAdmin,
+                    ServiceProvider.GetRequiredService<IDialogService>()).ShowDialog() != true)
                 {
                     Shutdown();
                     return;

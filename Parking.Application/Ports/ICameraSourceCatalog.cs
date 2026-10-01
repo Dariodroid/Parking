@@ -1,4 +1,4 @@
-namespace Parking.Application.EntityService;
+namespace Parking.Application.Ports;
 
 /// <summary>Enumera cámaras conectadas que OpenCV puede abrir en Windows.</summary>
 public interface ICameraSourceCatalog

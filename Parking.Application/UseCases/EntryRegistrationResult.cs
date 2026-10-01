@@ -1,3 +1,5 @@
+using Parking.Domain.Model.Policies;
+
 namespace Parking.Application.UseCases;
 
 /// <summary>Información devuelta al operador después de intentar registrar una entrada.</summary>

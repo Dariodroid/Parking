@@ -1,4 +1,6 @@
-namespace Parking.Application.Dto.Interfaces;
+using Parking.Application.Dto;
+
+namespace Parking.Application.Interfaces;
 
 /// <summary>Consulta datos históricos para el informe de ocupación y recaudación.</summary>
 public interface IParkingPerformanceRepository

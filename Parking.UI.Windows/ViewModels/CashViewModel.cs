@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using Parking.Domain.Model.Abstractions;
+using Parking.Application.Services;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
@@ -12,6 +13,7 @@ public class CashViewModel : BaseViewModel
 {
     private readonly ExcelExportService _excelExportService;
     private readonly MonthlyFeeLedgerService _monthlyLedger;
+    private readonly IDialogService _dialogs;
     private string _status = string.Empty;
 
     /// <summary>Informa si alguna fuente de cobros no pudo cargarse.</summary>
@@ -92,12 +94,14 @@ public class CashViewModel : BaseViewModel
     /// <param name="cashRepository">Consulta los cobros de salidas guardados en payments.</param>
     /// <param name="excelExportService">Genera el libro Excel con las filas mostradas.</param>
     /// <param name="monthlyLedger">Consulta los asientos de cuotas mensuales.</param>
+    /// <param name="dialogs">Muestra avisos de exportación con los diálogos del sistema.</param>
     public CashViewModel(ICashRepository cashRepository, ExcelExportService excelExportService,
-        MonthlyFeeLedgerService monthlyLedger)
+        MonthlyFeeLedgerService monthlyLedger, IDialogService dialogs)
     {
         _cashRepository = cashRepository;
         _excelExportService = excelExportService;
         _monthlyLedger = monthlyLedger;
+        _dialogs = dialogs;
 
         RefreshCommand =
             new AsyncRelayCommand(async _ =>
@@ -144,6 +148,7 @@ public class CashViewModel : BaseViewModel
         {
             System.Diagnostics.Debug.WriteLine($"Caja: {ex}");
             Status = "No se pudo cargar Caja completa. Revise la conexión y el libro de cuotas mensuales; no exporte hasta actualizar correctamente.";
+            _dialogs.ShowError("Caja", Status);
             Payments.Clear();
             TodayIncome = MonthIncome = CashIncome = TransferIncome = CardIncome = 0;
             TotalPayments = 0;
@@ -156,7 +161,7 @@ private void ExportExcel()
 {
     if (!string.IsNullOrEmpty(Status))
     {
-        MessageBox.Show(Status, "Caja", MessageBoxButton.OK, MessageBoxImage.Warning);
+        _dialogs.ShowWarning("Caja", Status);
         return;
     }
     // El operador escoge la ubicación del archivo de Excel.
@@ -177,10 +182,6 @@ private void ExportExcel()
         _appliedFromDate,
         _appliedToDate);
 
-    MessageBox.Show(
-        "Archivo exportado correctamente.",
-        "Excel",
-        MessageBoxButton.OK,
-        MessageBoxImage.Information);
+    _dialogs.ShowSuccess("Excel", "Archivo exportado correctamente.");
 }
 }

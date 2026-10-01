@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Parking.Application.Services;
+using Parking.Domain.Model.Abstractions;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Diagnostics;
@@ -16,6 +17,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     private readonly ApplicationSettingsStore _store;
     private readonly ThemeService _themeService;
     private readonly ThermalTicketPrinter _ticketPrinter;
+    private readonly IDialogService _dialogs;
     private string _connectionString;
     private string _currencySymbol;
     private string _status = string.Empty;
@@ -135,12 +137,14 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     /// <param name="store">Almacén cifrado local.</param>
     /// <param name="themeService">Control del tema global.</param>
     /// <param name="ticketPrinter">Consulta las colas instaladas de Windows.</param>
+    /// <param name="dialogs">Presenta resultados y validaciones en el diálogo del sistema.</param>
     public ApplicationSettingsViewModel(ApplicationSettingsStore store, ThemeService themeService,
-        ThermalTicketPrinter ticketPrinter)
+        ThermalTicketPrinter ticketPrinter, IDialogService dialogs)
     {
         _store = store;
         _themeService = themeService;
         _ticketPrinter = ticketPrinter;
+        _dialogs = dialogs;
         _currencySymbol = store.Load().CurrencySymbol;
         var printerSettings = store.Load();
         _selectedTicketPrinter = printerSettings.TicketPrinterName;
@@ -171,13 +175,17 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             foreach (string name in _ticketPrinter.GetPrinterNames()) TicketPrinters.Add(name);
             SelectedTicketPrinter = TicketPrinters.Contains(selected) ? selected : string.Empty;
             if (showStatus)
+            {
                 Status = TicketPrinters.Count == 0
                     ? "Windows no muestra impresoras instaladas para este usuario."
                     : $"Se encontraron {TicketPrinters.Count} impresoras.";
+                _dialogs.ShowInfo("Impresoras", Status);
+            }
         }
         catch (Exception ex)
         {
             Status = $"No se pudo consultar las impresoras de Windows: {ex.Message}";
+            if (showStatus) _dialogs.ShowError("Impresoras", Status);
         }
     }
 
@@ -187,16 +195,19 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         if (!CanManagePrinter)
         {
             Status = "Solo un administrador puede configurar la impresora.";
+            _dialogs.ShowWarning("Impresoras", Status);
             return;
         }
         if (TicketPaperWidthMm is not (58 or 80))
         {
             Status = "Elija papel de 58 u 80 mm.";
+            _dialogs.ShowWarning("Impresoras", Status);
             return;
         }
         if (AutoPrintTickets && !TicketPrinters.Contains(SelectedTicketPrinter))
         {
             Status = "Elija una impresora de Windows antes de activar la impresión automática.";
+            _dialogs.ShowWarning("Impresoras", Status);
             return;
         }
         try
@@ -209,10 +220,12 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
                 AutoPrintTickets = AutoPrintTickets
             });
             Status = "Configuración de tickets guardada para este usuario de Windows.";
+            _dialogs.ShowSuccess("Impresoras", Status);
         }
         catch (Exception ex)
         {
             Status = $"No se pudo guardar la impresora: {ex.Message}";
+            _dialogs.ShowError("Impresoras", Status);
         }
     }
 
@@ -222,11 +235,13 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         if (!CanManageCurrency)
         {
             Status = "Solo un administrador puede cambiar el signo de moneda.";
+            _dialogs.ShowWarning("Moneda", Status);
             return;
         }
         if (!CurrencyDisplay.IsValidSymbol(CurrencySymbol))
         {
             Status = "Use un signo de hasta ocho caracteres, sin cifras ni separadores decimales.";
+            _dialogs.ShowWarning("Moneda", Status);
             return;
         }
         try
@@ -235,10 +250,12 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             CurrencyDisplay.SetSymbol(CurrencySymbol);
             OnPropertyChanged(nameof(CurrencyPreview));
             Status = "Signo guardado. Las próximas vistas e informes usarán este signo; los importes de la base no cambian.";
+            _dialogs.ShowSuccess("Moneda", Status);
         }
         catch (Exception ex)
         {
             Status = $"No se pudo guardar el signo: {ex.Message}";
+            _dialogs.ShowError("Moneda", Status);
         }
     }
 
@@ -256,6 +273,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         catch (Exception ex)
         {
             Status = $"No se pudo guardar el tema: {ex.Message}";
+            _dialogs.ShowError("Apariencia", Status);
         }
     }
 
@@ -284,12 +302,14 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         if (!CanManageConnection)
         {
             Status = "Solo un administrador puede configurar la conexión.";
+            _dialogs.ShowWarning("Conexión", Status);
             return;
         }
 
         if (!TryBuild(ConnectionString, out var builder))
         {
             Status = "Indique Server y Database en una cadena SQL válida.";
+            _dialogs.ShowWarning("Conexión", Status);
             return;
         }
 
@@ -302,11 +322,13 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             await using var connection = new SqlConnection(builder.ConnectionString);
             await connection.OpenAsync();
             Status = $"Conexión correcta con {connection.Database}.";
+            _dialogs.ShowSuccess("Conexión", Status);
         }
         catch (Exception ex)
         {
             // Se muestra el error del proveedor, nunca la cadena ni la contraseña.
             Status = $"No se pudo conectar: {ex.Message}";
+            _dialogs.ShowError("Conexión", Status);
         }
         finally { IsBusy = false; }
     }
@@ -317,12 +339,14 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         if (!CanManageConnection)
         {
             Status = "Solo un administrador puede configurar la conexión.";
+            _dialogs.ShowWarning("Conexión", Status);
             return;
         }
 
         if (!TryBuild(ConnectionString, out var builder))
         {
             Status = "Indique Server y Database en una cadena SQL válida.";
+            _dialogs.ShowWarning("Conexión", Status);
             return;
         }
 
@@ -332,11 +356,13 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             _store.Save(_store.Load() with { ConnectionString = builder!.ConnectionString });
             ConnectionString = builder.ConnectionString;
             Status = "Conexión guardada para este equipo. Reinicie para aplicarla a todas las pantallas.";
+            _dialogs.ShowSuccess("Conexión", Status);
             ConnectionSaved?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
             Status = $"No se pudo guardar la configuración: {ex.Message}";
+            _dialogs.ShowError("Conexión", Status);
         }
     }
 
@@ -346,6 +372,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         if (!CanManageConnection)
         {
             Status = "Solo un administrador puede configurar la conexión.";
+            _dialogs.ShowWarning("Conexión", Status);
             return;
         }
 
@@ -353,6 +380,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(executable))
         {
             Status = "Cierre y vuelva a abrir la aplicación para aplicar la conexión.";
+            _dialogs.ShowWarning("Conexión", Status);
             return;
         }
         try
@@ -372,6 +400,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         catch (Exception ex)
         {
             Status = $"No se pudo reiniciar la aplicación: {ex.Message}";
+            _dialogs.ShowError("Conexión", Status);
         }
     }
 }

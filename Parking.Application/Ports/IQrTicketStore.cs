@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Parking.Application.EntityService;
+namespace Parking.Application.Ports;
 
 /// <summary>Almacén de imágenes QR para tickets de entradas ocasionales.</summary>
 public interface IQrTicketStore

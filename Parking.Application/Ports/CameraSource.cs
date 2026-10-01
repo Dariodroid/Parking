@@ -1,4 +1,4 @@
-namespace Parking.Application.EntityService;
+namespace Parking.Application.Ports;
 
 /// <summary>Fuente seleccionable para uno de los visores de operación.</summary>
 /// <param name="Id">Identificador estable durante la ejecución para comparar selecciones.</param>

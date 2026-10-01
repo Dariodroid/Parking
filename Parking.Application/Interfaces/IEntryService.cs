@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Parking.Application.UseCases;
 
-namespace Parking.Application.EntityService
+namespace Parking.Application.Interfaces
 {
     /// <summary>Contrato para registrar entradas, consultar sesiones abiertas y cerrar salidas.</summary>
     public interface IEntryService

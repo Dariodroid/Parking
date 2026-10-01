@@ -1,4 +1,4 @@
-namespace Parking.Application.EntityService
+namespace Parking.Application.Ports
 {
     /// <summary>Captura fotogramas de una sola fuente; cada visor recibe una instancia propia.</summary>
     public interface ICameraService

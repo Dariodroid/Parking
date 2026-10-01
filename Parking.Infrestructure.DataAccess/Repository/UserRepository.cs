@@ -103,20 +103,43 @@ public class userRepository : IBaseRepository<user>, IuserRepository
         return true;
     }
 
-    public async Task UpdateLastLoginAsync(int userId)
+    /// <summary>Registra el acceso correcto y restablece el contador de intentos de forma inmediata.</summary>
+    /// <param name="userId">Cuenta autenticada correctamente.</param>
+    /// <param name="now">Instante UTC para comprobar si existe un bloqueo vigente.</param>
+    /// <returns>Verdadero si el acceso se registró sin un bloqueo concurrente.</returns>
+    public async Task<bool> UpdateLastLoginAsync(int userId, DateTime now)
     {
-        var user = await _context.users
-            .FirstOrDefaultAsync(x =>
-                x.id == userId &&
-                !x.is_deleted);
+        // El filtro y la actualización ocurren en una sola sentencia: otro intento no puede bloquear entre ambos.
+        int updated = await _context.users.Where(x => x.id == userId && x.is_active && !x.is_deleted
+                && (x.locked_until == null || x.locked_until <= now))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.last_login, DateTime.Now)
+                .SetProperty(x => x.login_attempts, 0)
+                .SetProperty(x => x.locked_until, (DateTime?)null));
+        return updated == 1;
+    }
 
-        if (user == null)
-            return;
-
-        user.last_login = DateTime.Now;
-        user.login_attempts = 0;
-
-        _context.users.Update(user);
+    /// <summary>Incrementa el contador en SQL para que dos terminales no pierdan fallos simultáneos.</summary>
+    /// <param name="userId">Identificador de la cuenta que falló.</param>
+    /// <param name="now">Instante UTC del intento.</param>
+    /// <param name="maximumAttempts">Número de fallos que activa el bloqueo.</param>
+    /// <param name="lockDuration">Duración del bloqueo temporal.</param>
+    public async Task RecordFailedLoginAsync(int userId, DateTime now, int maximumAttempts, TimeSpan lockDuration)
+    {
+        DateTime until = now.Add(lockDuration);
+        // Al vencer un bloqueo se inicia un conteo nuevo; el quinto fallo queda visible como 5.
+        await _context.users
+            .Where(x => x.id == userId && x.is_active && !x.is_deleted
+                && (x.locked_until == null || x.locked_until <= now))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.locked_until,
+                    x => x.locked_until != null && x.locked_until <= now
+                        ? (DateTime?)null
+                        : x.login_attempts >= maximumAttempts - 1 ? until : x.locked_until)
+                .SetProperty(x => x.login_attempts,
+                    x => x.locked_until != null && x.locked_until <= now
+                        ? 1
+                        : x.login_attempts >= maximumAttempts ? maximumAttempts : x.login_attempts + 1));
     }
 
     public Task UpdateAsync(user entity)
@@ -157,6 +180,7 @@ public class userRepository : IBaseRepository<user>, IuserRepository
     public async Task<user?> GetByusernameAsync(string username)
     {
         return await _context.users
+            .AsNoTracking()
             .FirstOrDefaultAsync(x =>
                 x.username == username &&
                 !x.is_deleted);

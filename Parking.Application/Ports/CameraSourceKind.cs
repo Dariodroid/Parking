@@ -1,4 +1,4 @@
-namespace Parking.Application.EntityService;
+namespace Parking.Application.Ports;
 
 /// <summary>Indica cómo OpenCV obtiene los fotogramas de una cámara.</summary>
 public enum CameraSourceKind

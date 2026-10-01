@@ -1,5 +1,6 @@
-﻿namespace Parking.Application.Services;
+namespace Parking.Application.Services;
 
+/// <summary>Puerto para mostrar mensajes con los diálogos de la interfaz.</summary>
 public interface IDialogService
 {
     bool ShowConfirmation(string title, string message);

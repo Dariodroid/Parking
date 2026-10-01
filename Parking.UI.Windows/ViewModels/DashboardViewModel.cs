@@ -1,5 +1,5 @@
 ﻿using Parking.Application.Dto;
-using Parking.Application.Dto.Interfaces;
+using Parking.Application.Interfaces;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;

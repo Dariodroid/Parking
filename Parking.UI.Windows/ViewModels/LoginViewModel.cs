@@ -140,8 +140,8 @@ public class LoginViewModel : BaseViewModel
 
             if (!result.Success)
             {
-                // El login no distingue públicamente entre cuentas ausentes, inactivas o claves erróneas.
-                _dialogService.ShowError("Error", "Usuario o contraseña incorrectos.");
+                // El servicio conserva el mensaje genérico salvo si la contraseña válida pertenece a una cuenta bloqueada.
+                _dialogService.ShowError("Inicio de sesión", result.Message);
                 return;
             }
 

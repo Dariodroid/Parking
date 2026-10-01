@@ -1,4 +1,4 @@
-namespace Parking.Application.EntityService;
+namespace Parking.Application.Ports;
 
 /// <summary>Determina cómo se interpreta la dirección de vídeo de una fuente de red.</summary>
 public enum CameraAddressProfile

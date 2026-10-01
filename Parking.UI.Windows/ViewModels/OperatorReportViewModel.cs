@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using Parking.Domain.Model.Abstractions;
+using Parking.Application.Services;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
@@ -13,6 +14,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class OperatorReportViewModel : BaseViewModel
 {
     private readonly IOperatorReportRepository _repository;
+    private readonly IDialogService _dialogs;
     private readonly ReportExportService _exportService = new();
     private readonly ReportPrintService _printService = new();
     private ObservableCollection<OperatorReportItem> _reportItems = new();
@@ -74,9 +76,11 @@ public class OperatorReportViewModel : BaseViewModel
 
     /// <summary>Conecta la consulta y los comandos de actualización/exportación.</summary>
     /// <param name="repository">Consulta cobros agrupados por operador.</param>
-    public OperatorReportViewModel(IOperatorReportRepository repository)
+    /// <param name="dialogs">Muestra advertencias y errores con los diálogos del sistema.</param>
+    public OperatorReportViewModel(IOperatorReportRepository repository, IDialogService dialogs)
     {
         _repository = repository;
+        _dialogs = dialogs;
         RefreshCommand = new AsyncRelayCommand(async _ => await LoadReport());
         ExportExcelCommand = new RelayCommand(_ => Export(false));
         ExportWordCommand = new RelayCommand(_ => Export(true));
@@ -90,7 +94,7 @@ public class OperatorReportViewModel : BaseViewModel
         // El período inválido no se envía al repositorio.
         if (FromDate.Date > ToDate.Date)
         {
-            MessageBox.Show("La fecha inicial debe ser anterior o igual a la fecha final.", "Reportes");
+            _dialogs.ShowWarning("Reportes", "La fecha inicial debe ser anterior o igual a la fecha final.");
             return;
         }
 
@@ -129,10 +133,11 @@ public class OperatorReportViewModel : BaseViewModel
                 _exportService.ExportOperatorsWord(dialog.FileName, ReportItems, AppliedFromDate, AppliedToDate, ReportDate);
             else
                 _exportService.ExportOperatorsExcel(dialog.FileName, ReportItems, AppliedFromDate, AppliedToDate, ReportDate);
+            _dialogs.ShowSuccess("Reportes", "Informe exportado correctamente.");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"No se pudo exportar el informe: {ex.Message}", "Reportes", MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogs.ShowError("Reportes", $"No se pudo exportar el informe: {ex.Message}");
         }
     }
 
@@ -148,8 +153,7 @@ public class OperatorReportViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"No se pudo imprimir el informe: {ex.Message}", "Reportes",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogs.ShowError("Reportes", $"No se pudo imprimir el informe: {ex.Message}");
         }
     }
 }

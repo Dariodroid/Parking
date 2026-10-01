@@ -1,5 +1,4 @@
 ﻿using Parking.Application.Dto;
-using Parking.Application.Dto.Interfaces;
 using Parking.Domain.Model.Abstractions;
 
 
@@ -9,6 +8,10 @@ namespace Parking.Application.Services;
 public class AuthenticationService : IAuthenticationService
 {
     private const string InvalidCredentialsMessage = "Usuario o contraseña incorrectos.";
+    private const string LockedMessage =
+        "Acceso bloqueado por cinco intentos fallidos. Espere hasta 15 minutos e inténtelo de nuevo.";
+    private const int MaximumAttempts = 5;
+    private static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(15);
     // Mismo formato PBKDF2 que un usuario real: 100 000 iteraciones, sal y hash de 32 bytes.
     private const string DummyPasswordHash =
         "100000.AAAAAAAAAAAAAAAAAAAAAA==.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
@@ -27,7 +30,7 @@ public class AuthenticationService : IAuthenticationService
 
     /// <summary>Comprueba credenciales sin revelar si el usuario existe o está activo.</summary>
     /// <param name="request">Nombre de usuario y contraseña introducidos.</param>
-    /// <returns>Usuario autenticado o un mismo rechazo para todos los fallos de credenciales.</returns>
+    /// <returns>Usuario autenticado, rechazo genérico o aviso de bloqueo si la contraseña es válida.</returns>
     public async Task<LoginResult> LoginAsync(
         LoginRequest request)
     {
@@ -47,14 +50,24 @@ public class AuthenticationService : IAuthenticationService
             validPassword = false;
         }
 
+        // Solo una contraseña válida permite distinguir el bloqueo; una inválida mantiene el rechazo genérico.
+        bool locked = user?.locked_until > DateTime.UtcNow;
         if (user == null || !user.is_active || !validPassword)
         {
+            // Solo un usuario real y activo incrementa el contador; SQL hace la operación atómica.
+            if (user is { is_active: true } && !locked && !validPassword)
+                await _userRepository.RecordFailedLoginAsync(user.id, DateTime.UtcNow,
+                    MaximumAttempts, LockDuration);
             return new LoginResult
             {
                 Success = false,
                 Message = InvalidCredentialsMessage
             };
         }
+
+        // Quien conoce la contraseña correcta recibe una explicación útil del bloqueo temporal.
+        if (locked)
+            return new LoginResult { Success = false, Message = LockedMessage };
 
         UserDto dto = new()
         {
@@ -67,7 +80,9 @@ public class AuthenticationService : IAuthenticationService
             Role = user.role
         };
 
-        await _userRepository.UpdateLastLoginAsync(user.id);
+        // Una cuenta bloqueada por otro intento justo ahora tampoco puede iniciar sesión.
+        if (!await _userRepository.UpdateLastLoginAsync(user.id, DateTime.UtcNow))
+            return new LoginResult { Success = false, Message = LockedMessage };
 
         return new LoginResult
         {

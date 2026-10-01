@@ -1,5 +1,5 @@
 ﻿using OpenCvSharp;
-using Parking.Application.EntityService;
+using Parking.Application.Ports;
 using System;
 using System.Collections.Generic;
 using System.IO;

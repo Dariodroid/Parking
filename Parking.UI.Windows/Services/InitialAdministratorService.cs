@@ -35,7 +35,7 @@ public sealed class InitialAdministratorService
         // Se validan los límites de la tabla antes de intentar la escritura.
         username = username.Trim();
         fullName = fullName.Trim();
-        if (username.Length is < 3 or > 50 || fullName.Length is < 3 or > 120 || password.Length < 12)
+        if (username.Length is < 3 or > 50 || fullName.Length is < 3 or > 120 || password.Length < 8)
             throw new ArgumentException("Revise el usuario, nombre y contraseña.");
 
         // La transacción evita que dos instalaciones creen simultáneamente la primera cuenta.

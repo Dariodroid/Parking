@@ -1,4 +1,4 @@
-namespace Parking.Application.UseCases;
+namespace Parking.Domain.Model.Policies;
 
 /// <summary>Resultado de evaluar el contrato antes de abrir una sesión de estacionamiento.</summary>
 /// <param name="Kind">Clasificación que determina si se genera ticket y se cobra estancia.</param>
