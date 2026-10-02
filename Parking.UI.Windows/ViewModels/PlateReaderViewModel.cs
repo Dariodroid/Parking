@@ -4,7 +4,6 @@ using Parking.Application.Contracts;
 using Parking.Application.Services;
 using Parking.Application.UseCases;
 using Parking.Domain.Model.Policies;
-using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.UI.Windows.Helpers;
 using Parking.UI.Windows.Services;
@@ -23,8 +22,8 @@ namespace Parking.UI.Windows.ViewModels
     public class PlateReaderViewModel : BaseViewModel
     {
         private readonly IDialogService _dialogService;
-        private readonly Ivehicle_typeRepository _vehicleTypeRepository;
-        private readonly IParkingSlotRepository _slotRepo; 
+        private readonly IVehicleTypeManagementService _vehicleTypes;
+        private readonly IParkingSlotManagementService _slots;
         private static readonly TimeSpan AutoDetectionInterval = TimeSpan.FromMilliseconds(900);
         private static readonly TimeSpan DetectionDisplayTime = TimeSpan.FromSeconds(3);
 
@@ -157,8 +156,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <param name="plateService">Reconoce placas dentro del fotograma.</param>
         /// <param name="qrService">Lee los tickets QR mostrados a la cámara.</param>
         /// <param name="entryService">Registra y consulta las sesiones de estacionamiento.</param>
-        /// <param name="vehicleTypeRepository">Proporciona tipos de vehículo disponibles.</param>
-        /// <param name="slotRepo">Consulta la ocupación y los puestos libres.</param>
+        /// <param name="vehicleTypes">Proporciona tipos de vehículo disponibles.</param>
+        /// <param name="slots">Consulta la ocupación y los puestos libres.</param>
         /// <param name="parkingStatusNotifier">Notifica cambios de ocupación a otras vistas.</param>
         /// <param name="dialogService">Presenta avisos y errores al operador.</param>
         /// <param name="ticketPrinter">Envía tickets a una cola de impresión Windows.</param>
@@ -172,8 +171,8 @@ namespace Parking.UI.Windows.ViewModels
             IPlateService plateService,
             IQrService qrService,
             IEntryService entryService,
-            Ivehicle_typeRepository vehicleTypeRepository,
-            IParkingSlotRepository slotRepo,
+            IVehicleTypeManagementService vehicleTypes,
+            IParkingSlotManagementService slots,
             IParkingStatusNotifier parkingStatusNotifier,
             IDialogService dialogService,
             ThermalTicketPrinter ticketPrinter,
@@ -199,8 +198,8 @@ namespace Parking.UI.Windows.ViewModels
             _frameOverlayRenderer = frameOverlayRenderer;
             _entryService = entryService;
             _qrService = qrService;
-            _vehicleTypeRepository = vehicleTypeRepository;
-            _slotRepo = slotRepo;
+            _vehicleTypes = vehicleTypes;
+            _slots = slots;
             _parkingStatusNotifier = parkingStatusNotifier;
 
             StartCameraCommand = new AsyncRelayCommand(_ => StartCameraAsync());
@@ -255,7 +254,7 @@ namespace Parking.UI.Windows.ViewModels
         /// <summary>Actualiza total, ocupados y puestos disponibles conservando la selección actual.</summary>
         private async Task LoadSlotStatsAsync()
         {
-            var slots = (await _slotRepo.GetAllAsync()).ToList();
+            var slots = (await _slots.GetAllAsync()).ToList();
             int totalSlots = slots.Count;
             int occupiedSlots = slots.Count(s => s.is_occupied);
 
@@ -288,7 +287,7 @@ namespace Parking.UI.Windows.ViewModels
         private async Task LoadVehicleTypesAsync()
         {
             VehicleTypes.Clear();
-            var items = await _vehicleTypeRepository.GetAllAsync();
+            var items = await _vehicleTypes.GetAllAsync();
             foreach (var item in items.Where(x => x.is_active && !x.is_deleted))
             {
                 VehicleTypes.Add(item);

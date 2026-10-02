@@ -13,7 +13,7 @@ namespace Parking.UI.Windows.ViewModels;
 /// <summary>Presenta el rendimiento diario y exporta exactamente la búsqueda aplicada.</summary>
 public sealed class ParkingPerformanceViewModel : BaseViewModel
 {
-    private readonly IParkingPerformanceRepository _repository;
+    private readonly IReportQueryService _reports;
     private readonly IDialogService _dialogs;
     private readonly ReportExportService _export = new();
     private readonly ReportPrintService _printer = new();
@@ -54,11 +54,11 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
     public ICommand PrintCommand { get; }
 
     /// <summary>Configura la consulta y las tres acciones del informe.</summary>
-    /// <param name="repository">Fuente de sesiones, puestos y pagos.</param>
+    /// <param name="reports">Consulta sesiones, puestos y pagos del informe.</param>
     /// <param name="dialogs">Muestra los resultados de las acciones en el diálogo del sistema.</param>
-    public ParkingPerformanceViewModel(IParkingPerformanceRepository repository, IDialogService dialogs)
+    public ParkingPerformanceViewModel(IReportQueryService reports, IDialogService dialogs)
     {
-        _repository = repository;
+        _reports = reports;
         _dialogs = dialogs;
         RefreshCommand = new AsyncRelayCommand(_ => LoadAsync());
         ExportExcelCommand = new AsyncRelayCommand(_ => ExportAsync(false));
@@ -79,7 +79,7 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
         try
         {
             // Una sola instantánea alimenta tarjetas, tabla y exportaciones.
-            var result = await _repository.GetAsync(StartDate.Date, EndDate.Date.AddDays(1), DateTime.Now);
+            var result = await _reports.GetPerformanceAsync(StartDate.Date, EndDate.Date.AddDays(1), DateTime.Now);
             Report = result;
             AppliedStartDate = StartDate.Date;
             AppliedEndDate = EndDate.Date;

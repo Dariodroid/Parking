@@ -1,8 +1,7 @@
 using Parking.UI.Windows.Interfaces;
 using Microsoft.Win32;
-using Parking.Domain.Model.Interfaces;
+using Parking.Application.Dto;
 using Parking.Application.Services;
-using Parking.Domain.Model.Models;
 using Parking.Application.Interfaces;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
@@ -14,7 +13,6 @@ namespace Parking.UI.Windows.ViewModels;
 public class CashViewModel : BaseViewModel
 {
     private readonly ExcelExportService _excelExportService;
-    private readonly IMonthlyFeeLedgerService _monthlyLedger;
     private readonly IDialogService _dialogs;
     private string _status = string.Empty;
 
@@ -86,23 +84,21 @@ public class CashViewModel : BaseViewModel
     public ObservableCollection<CashMovement> Payments { get; }
         = new();
 
-    private readonly ICashRepository _cashRepository;
+    private readonly ICashQueryService _cash;
 
 
     public ICommand RefreshCommand { get; }
     public ICommand ExportExcelCommand { get; }
 
     /// <summary>Prepara Caja para consultar salidas y cuotas mensuales y exportar la misma lista visible.</summary>
-    /// <param name="cashRepository">Consulta los cobros de salidas guardados en payments.</param>
+    /// <param name="cash">Consulta los cobros confirmados de salidas y mensualidades.</param>
     /// <param name="excelExportService">Genera el libro Excel con las filas mostradas.</param>
-    /// <param name="monthlyLedger">Consulta los asientos de cuotas mensuales.</param>
     /// <param name="dialogs">Muestra avisos de exportación con los diálogos del sistema.</param>
-    public CashViewModel(ICashRepository cashRepository, ExcelExportService excelExportService,
-        IMonthlyFeeLedgerService monthlyLedger, IDialogService dialogs)
+    public CashViewModel(ICashQueryService cash, ExcelExportService excelExportService,
+        IDialogService dialogs)
     {
-        _cashRepository = cashRepository;
+        _cash = cash;
         _excelExportService = excelExportService;
-        _monthlyLedger = monthlyLedger;
         _dialogs = dialogs;
 
         RefreshCommand =
@@ -122,17 +118,7 @@ public class CashViewModel : BaseViewModel
             // Primero se consultan ambas fuentes: nunca se muestra un total incompleto como si fuera final.
             DateTime from = FromDate.Date;
             DateTime to = ToDate.Date.AddDays(1);
-            var departures = await _cashRepository.GetPaymentsAsync(from, to);
-            var monthly = await _monthlyLedger.GetReceiptsAsync(from, to);
-            var payments = departures.Select(p => new CashMovement(
-                    p.session?.plate ?? string.Empty,
-                    p.collected_byNavigation?.full_name ?? string.Empty,
-                    p.amount_paid, p.payment_method ?? string.Empty, p.payment_reference ?? string.Empty,
-                    p.collected_at, p.notes ?? string.Empty, "Salida"))
-                .Concat(monthly.Select(r => new CashMovement(r.Plate, r.OperatorName,
-                    r.Amount, r.PaymentMethod, $"MENSUAL-{r.Id}", r.CollectedAt,
-                    $"Cuota vencida al {r.PeriodEndDate:dd/MM/yyyy}", "Mensualidad")))
-                .OrderByDescending(p => p.CollectedAt).ToList();
+            var payments = await _cash.GetMovementsAsync(from, to);
 
             Payments.Clear();
             foreach (var item in payments) Payments.Add(item);

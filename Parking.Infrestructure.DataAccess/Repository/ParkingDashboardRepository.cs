@@ -8,16 +8,17 @@ namespace Parking.Infrastructure.DataAccess.Repository;
 
 public class ParkingDashboardRepository : IParkingDashboard
 {
-    private readonly parking_dbContext _context;
+    private readonly IDbContextFactory<parking_dbContext> _contextFactory;
 
-    public ParkingDashboardRepository(parking_dbContext context)
+    public ParkingDashboardRepository(IDbContextFactory<parking_dbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<IEnumerable<ParkingSlotDashboardItemDTO>> GetDashboardSlotsAsync()
     {
-        return await _context.parking_slots
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.parking_slots
             .AsNoTracking()
             .Include(x => x.current_session)
             .ThenInclude(x => x.registered_vehicle)

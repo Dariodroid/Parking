@@ -1,12 +1,12 @@
 using Parking.Application.Interfaces;
-using Parking.Application.Services;
+using Parking.Application.UseCases;
 using Parking.Domain.Model.Interfaces;
 using Parking.Domain.Model.Models;
 using Parking.Domain.Model.Policies;
 using System;
 using System.Threading.Tasks;
 
-namespace Parking.Application.UseCases
+namespace Parking.Application.Services
 {
     /// <summary>
     /// Orquesta entradas y salidas, conservando en cada sesión si el ingreso

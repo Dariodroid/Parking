@@ -6,14 +6,14 @@ using Parking.Application.UseCases;
 using Parking.Domain.Model.Models;
 using Parking.Domain.Model.Policies;
 
-namespace Parking.Infrastructure.DataAccess.Services;
+namespace Parking.Infrastructure.DataAccess.Repository;
 
 /// <summary>Guarda los cobros mensuales con EF Core y confirma el recibo y el contrato juntos.</summary>
-public sealed class MonthlyFeeLedgerStore : IMonthlyFeeLedgerStore
+public sealed class MonthlyFeeLedgerRepository : IMonthlyFeeLedgerRepository
 {
     private readonly IDbContextFactory<parking_dbContext> _contextFactory;
 
-    public MonthlyFeeLedgerStore(IDbContextFactory<parking_dbContext> contextFactory)
+    public MonthlyFeeLedgerRepository(IDbContextFactory<parking_dbContext> contextFactory)
         => _contextFactory = contextFactory;
 
     /// <summary>Registra una cuota vencida sin modificar las fechas de vigencia del contrato.</summary>

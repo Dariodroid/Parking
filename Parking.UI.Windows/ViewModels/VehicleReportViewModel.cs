@@ -14,7 +14,7 @@ namespace Parking.UI.Windows.ViewModels;
 /// <summary>Coordina filtros, filas de vista previa y exportación de vehículos.</summary>
 public class VehicleReportViewModel : BaseViewModel
 {
-    private readonly IVehicleReportRepository _repository;
+    private readonly IReportQueryService _reports;
     private readonly IDialogService _dialogs;
     private readonly ReportExportService _exportService = new();
     private readonly ReportPrintService _printService = new();
@@ -77,11 +77,11 @@ public class VehicleReportViewModel : BaseViewModel
     public ICommand PrintCommand { get; }
 
     /// <summary>Configura búsqueda y exportaciones sobre el mismo repositorio.</summary>
-    /// <param name="repository">Consulta vehículos según los filtros elegidos.</param>
+    /// <param name="reports">Consulta vehículos según los filtros elegidos.</param>
     /// <param name="dialogs">Muestra advertencias y errores con los diálogos del sistema.</param>
-    public VehicleReportViewModel(IVehicleReportRepository repository, IDialogService dialogs)
+    public VehicleReportViewModel(IReportQueryService reports, IDialogService dialogs)
     {
-        _repository = repository;
+        _reports = reports;
         _dialogs = dialogs;
         SearchCommand = new AsyncRelayCommand(async _ => await LoadData());
         ExportExcelCommand = new AsyncRelayCommand(async _ => await Export(false));
@@ -115,7 +115,7 @@ public class VehicleReportViewModel : BaseViewModel
             VehicleTypeId = Filter.VehicleTypeId
         };
         // Una consulta alimenta tabla, filas formateadas y total mostrado.
-        var data = await _repository.GetReportAsync(snapshot);
+        var data = await _reports.GetVehiclesAsync(snapshot);
         Vehicles = new ObservableCollection<VehicleReportDto>(data);
         ReportRows = data.Select((vehicle, index) => new VehicleReportRow(index + 1, vehicle)).ToList();
         TotalCollected = data.Sum(x => x.TotalCollected);

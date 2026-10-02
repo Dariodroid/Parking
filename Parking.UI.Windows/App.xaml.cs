@@ -66,11 +66,14 @@ namespace Parking.UI.Windows
             serviceCollection.AddScoped<IBaseRepository<payment>, BaseRepository<payment>>();
             serviceCollection.AddScoped<IRegisteredVehicle, RegisteredVehicleRepository>();
             serviceCollection.AddScoped<IParkingSlotRepository, ParkingSlotRepository>();
-            serviceCollection.AddScoped<IParkingDashboard, ParkingDashboardRepository>();
+            serviceCollection.AddSingleton<IParkingDashboard, ParkingDashboardRepository>();
             serviceCollection.AddScoped<ICashRepository, CashRepository>();
             serviceCollection.AddScoped<IOperatorReportRepository,OperatorReportRepository>();
             serviceCollection.AddScoped<IParkingPerformanceRepository, ParkingPerformanceRepository>();
             serviceCollection.AddScoped<IVehicleReportRepository, VehicleReportRepository>();
+            serviceCollection.AddScoped<ICashQueryService, CashQueryService>();
+            serviceCollection.AddScoped<IReportQueryService, ReportQueryService>();
+            serviceCollection.AddSingleton<IParkingDashboardService, ParkingDashboardService>();
             serviceCollection.AddScoped<IAuthenticationService, AuthenticationService>();
             serviceCollection.AddScoped<IUserManagementService, UserManagementService>();
             serviceCollection.AddScoped<IVehicleTypeManagementService, VehicleTypeManagementService>();
@@ -90,8 +93,9 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<IConnectionStringProvider, ApplicationConnectionStringProvider>();
             serviceCollection.AddSingleton<ICurrencyFormatter, ApplicationCurrencyFormatter>();
             serviceCollection.AddSingleton<ISqlConnectionTester, SqlConnectionTester>();
-            serviceCollection.AddSingleton<IMonthlyFeeLedgerStore, MonthlyFeeLedgerStore>();
+            serviceCollection.AddSingleton<IMonthlyFeeLedgerRepository, MonthlyFeeLedgerRepository>();
             serviceCollection.AddSingleton<IMonthlyFeeLedgerService, Parking.Application.Services.MonthlyFeeLedgerService>();
+            serviceCollection.AddTransient<IOperationsControlRepository, OperationsControlRepository>();
             serviceCollection.AddTransient<IOperationsControlService, OperationsControlService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
             serviceCollection.AddSingleton<IFrameOverlayRenderer, OpenCvFrameOverlayRenderer>();

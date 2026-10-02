@@ -13,7 +13,7 @@ namespace Parking.UI.Windows.ViewModels;
 
 public class ParkingSlotViewModel : BaseViewModel
 {
-    private readonly IParkingSlotManagementService _repository;
+    private readonly IParkingSlotManagementService _service;
     private readonly IDialogService _dialogs;
 
     public ObservableCollection<parking_slot> Slots { get; }
@@ -28,10 +28,10 @@ public class ParkingSlotViewModel : BaseViewModel
     public ICommand NewCommand { get; }
 
     public ParkingSlotViewModel(
-        IParkingSlotManagementService repository,
+        IParkingSlotManagementService service,
         IDialogService dialogs)
     {
-        _repository = repository;
+        _service = service;
         _dialogs = dialogs;
 
         SaveCommand =
@@ -105,7 +105,7 @@ public class ParkingSlotViewModel : BaseViewModel
         Slots.Clear();
 
         var items =
-            await _repository.GetAllAsync();
+            await _service.GetAllAsync();
 
         foreach (var item in items)
         {
@@ -135,7 +135,7 @@ public class ParkingSlotViewModel : BaseViewModel
                 return;
             }
 
-            await _repository.CreateAsync(
+            await _service.CreateAsync(
                 new parking_slot
                 {
                     slot_number =
@@ -177,7 +177,7 @@ public class ParkingSlotViewModel : BaseViewModel
             }
 
             var slot =
-                await _repository
+                await _service
                     .GetByIdAsync(Id);
 
             if (slot == null)
@@ -195,7 +195,7 @@ public class ParkingSlotViewModel : BaseViewModel
             slot.updated_at =
                 DateTime.Now;
 
-            await _repository.UpdateAsync(slot);
+            await _service.UpdateAsync(slot);
 
 
             StatusMessage =
@@ -226,7 +226,7 @@ public class ParkingSlotViewModel : BaseViewModel
             }
 
             var slot =
-                await _repository
+                await _service
                     .GetByIdAsync(Id);
 
             if (slot == null)
@@ -247,7 +247,7 @@ public class ParkingSlotViewModel : BaseViewModel
                 return;
             }
 
-            await _repository.DeleteAsync(slot);
+            await _service.DeleteAsync(slot);
 
 
             StatusMessage =

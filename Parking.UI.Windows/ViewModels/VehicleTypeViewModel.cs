@@ -16,7 +16,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class vehicle_typeViewModel : BaseViewModel
 {
     private readonly IDialogService _dialogService;
-    private readonly IVehicleTypeManagementService _repository;
+    private readonly IVehicleTypeManagementService _service;
     bool dialog;
 
     private readonly int _currentuserId = CurrentUser.Id;
@@ -29,11 +29,11 @@ public class vehicle_typeViewModel : BaseViewModel
     public ICommand DeleteCommand { get; }
 
     /// <summary>Prepara la edición de tipos de vehículo y sus tarifas.</summary>
-    /// <param name="repository">Consulta y guarda los tipos de vehículo.</param>
+    /// <param name="service">Consulta y guarda los tipos de vehículo.</param>
     /// <param name="dialogService">Muestra validaciones y resultados al operador.</param>
-    public vehicle_typeViewModel(IVehicleTypeManagementService repository, IDialogService dialogService)
+    public vehicle_typeViewModel(IVehicleTypeManagementService service, IDialogService dialogService)
     {
-        _repository = repository;
+        _service = service;
         _dialogService = dialogService;
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync());
@@ -154,7 +154,7 @@ public class vehicle_typeViewModel : BaseViewModel
     {
         vehicle_types.Clear();
 
-        var items = await _repository.GetAllAsync();
+        var items = await _service.GetAllAsync();
 
         foreach (var item in items)
         {
@@ -247,7 +247,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 is_deleted = false
             };
 
-            await _repository.CreateAsync(entity);
+            await _service.CreateAsync(entity);
 
             _dialogService.ShowWarning("Atención", "El nombre del tipo de vehículo es obligatorio");
 
@@ -275,7 +275,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 return;
             }
 
-            var entity = await _repository.GetByIdAsync(Id);
+            var entity = await _service.GetByIdAsync(Id);
 
             if (entity == null)
             {
@@ -297,7 +297,7 @@ public class vehicle_typeViewModel : BaseViewModel
             entity.updated_at = DateTime.Now;
             entity.updated_by = _currentuserId;
 
-            await _repository.UpdateAsync(entity);
+            await _service.UpdateAsync(entity);
 
             _dialogService.ShowSuccess("Mensaje !","Registro actualizado correctamente.");
 
@@ -322,7 +322,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 return;
             }
 
-            var entity = await _repository.GetByIdAsync(Id);
+            var entity = await _service.GetByIdAsync(Id);
 
             if (entity == null)
             {
@@ -337,7 +337,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 return;
             }
 
-            await _repository.DeleteAsync(entity, _currentuserId);
+            await _service.DeleteAsync(entity, _currentuserId);
 
             _dialogService.ShowInfo("Mensaje !", "Registro eliminado correctamente.");
 

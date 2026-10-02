@@ -11,7 +11,7 @@ namespace Parking.UI.Windows.ViewModels;
 
 public class DashboardViewModel : BaseViewModel
 {
-    private readonly IParkingDashboard _repository;
+    private readonly IParkingDashboardService _dashboard;
     private readonly IParkingStatusNotifier _parkingStatusNotifier;
 
     public ICommand SelectSlotCommand { get; }
@@ -22,10 +22,10 @@ public class DashboardViewModel : BaseViewModel
     public ObservableCollection<ParkingSlotDashboardItemDTO> Slots { get; } = new();
 
     public DashboardViewModel(
-        IParkingDashboard repository,
+        IParkingDashboardService dashboard,
         IParkingStatusNotifier parkingStatusNotifier)
     {
-        _repository = repository;
+        _dashboard = dashboard;
         _parkingStatusNotifier = parkingStatusNotifier;
 
         SelectSlotCommand = new RelayCommand(slot =>
@@ -119,10 +119,10 @@ public class DashboardViewModel : BaseViewModel
         Slots.Clear();
 
         // 1. Datos del negocio (BD principal)
-        var items = await _repository.GetDashboardSlotsAsync();
+        var items = await _dashboard.GetDashboardSlotsAsync();
 
         // 2. Posiciones personalizadas (SQLite)
-        var savedPositions = await _repository.GetSlotPositionsAsync();
+        var savedPositions = await _dashboard.GetSlotPositionsAsync();
 
         // 3. Orden profesional por número de puesto
         var orderedItems = items
@@ -236,7 +236,7 @@ public class DashboardViewModel : BaseViewModel
             // 🟢 NUEVO: Recalcular el tamaño del mapa antes de persistir
             UpdateMapSize();
 
-            await _repository.UpdateSlotPositionsAsync(positions);
+            await _dashboard.UpdateSlotPositionsAsync(positions);
         }
         catch (Exception ex)
         {

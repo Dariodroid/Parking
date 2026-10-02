@@ -20,7 +20,9 @@ dominio: ni Domain.Model ni Application conocen UI o Infrastructure.
 
 - **Domain.Model:** entidades, reglas del contrato e interfaces de persistencia
   que trabajan con esas entidades. `MonthlyAccessPolicy` decide la modalidad de
-  ingreso sin abrir SQL ni cámaras. Todas sus interfaces están en `Interfaces`.
+  ingreso sin abrir SQL ni cámaras. `OperationsControlPolicy` decide incidencias,
+  clasifica pagos y valida cierres sin conocer EF ni la UI. Todas sus interfaces
+  están en `Interfaces`.
 - **Application:** casos de uso como `EntryService`; interfaces de consultas,
   cobros y servicios externos; contratos de datos que cruzan capas. Decide el
   orden de consultas y cambios de estado y solicita la persistencia.
@@ -50,12 +52,18 @@ se eligen en `App.xaml.cs`.
 Los formularios de usuarios, tipos de vehículo, puestos y clientes llaman a
 servicios de Application. Estos coordinan las escrituras y consultas mediante
 los repositorios de Domain; los ViewModels no reciben esos repositorios.
+Caja, tablero y reportes también consultan mediante servicios de Application;
+las consultas EF y la persistencia de posiciones permanecen en DataAccess.
 
 El primer administrador, las cuotas mensuales y el centro de control se
-solicitan desde la UI por interfaces de Application. Sus implementaciones SQL
-están en DataAccess. Los mensajes visuales usan `IDialogService` en UI.
+solicitan desde la UI por interfaces de Application. Sus lecturas y escrituras SQL
+están en DataAccess. `OperationsControlService` coordina las lecturas,
+`OperationsControlPolicy` aplica las reglas y `OperationsControlRepository` lee
+y guarda los datos. Para cerrar caja, el repositorio obtiene los pagos y solicita
+la decisión del dominio dentro de la misma transacción serializable, antes de
+guardar el cierre. Los mensajes visuales usan `IDialogService` en UI.
 En cuotas mensuales, `MonthlyFeeLedgerService` valida el caso de uso en
-Application y `MonthlyFeeLedgerStore` conserva la transacción en DataAccess.
+Application y `MonthlyFeeLedgerRepository` conserva la transacción en DataAccess.
 `MonthlyFeePaymentPolicy` decide la elegibilidad de la cuota en Domain.
 Las tablas auxiliares deben existir en la base configurada: los modelos EF
 describen su estructura, pero la aplicación no ejecuta `CREATE TABLE`

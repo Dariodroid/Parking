@@ -20,7 +20,7 @@ namespace Parking.UI.Windows.ViewModels;
 public class RegisteredVehicleViewModel : BaseViewModel
 {
     private readonly IDialogService _dialogService;
-    private readonly IRegisteredVehicleManagementService _repository;
+    private readonly IRegisteredVehicleManagementService _service;
     private readonly IMonthlyFeeLedgerService _monthlyLedger;
     bool confirmed;
 
@@ -63,14 +63,14 @@ public class RegisteredVehicleViewModel : BaseViewModel
     }
 
     /// <summary>Prepara los comandos y los siete días editables del cliente mensualizado.</summary>
-    /// <param name="repository">Consulta y guarda vehículo, plan y horarios.</param>
+    /// <param name="service">Consulta y guarda vehículo, plan y horarios.</param>
     /// <param name="dialogService">Muestra confirmaciones, avisos y errores al operador.</param>
     /// <param name="monthlyLedger">Confirma el pago y guarda su asiento sin alterar la vigencia.</param>
-    public RegisteredVehicleViewModel(IRegisteredVehicleManagementService repository, IDialogService dialogService,
+    public RegisteredVehicleViewModel(IRegisteredVehicleManagementService service, IDialogService dialogService,
         IMonthlyFeeLedgerService monthlyLedger)
     {
         _dialogService = dialogService;
-        _repository = repository;
+        _service = service;
         _monthlyLedger = monthlyLedger;
 
 
@@ -329,7 +329,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         VehicleTypes.Clear();
 
-        var items = await _repository.GetVehicleTypesAsync();
+        var items = await _service.GetVehicleTypesAsync();
 
         foreach (var item in items)
         {
@@ -345,7 +345,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     {
         RegisteredVehicles.Clear();
 
-        var items = await _repository.GetAllCompleteAsync();
+        var items = await _service.GetAllCompleteAsync();
 
         foreach (var item in items)
         {
@@ -500,7 +500,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
 
             var exists =
-                await _repository.ExistsByPlateAsync(
+                await _service.ExistsByPlateAsync(
                     Plate.Trim().ToUpper());
 
             if (exists)
@@ -616,7 +616,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                     })
                 .ToList();
 
-            await _repository.RegisterAsync(vehicle, plan, schedules);
+            await _service.RegisterAsync(vehicle, plan, schedules);
 
             StatusMessage = createdAlreadyExpired
                 ? "Cliente registrado con contrato vencido. Seleccione su ficha para registrar la cuota pendiente."
@@ -651,7 +651,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            var entity = await _repository.GetByIdAsync(Id);
+            var entity = await _service.GetByIdAsync(Id);
 
             if (entity == null)
             {
@@ -773,7 +773,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 }
             }
 
-            await _repository.UpdateAsync(entity, schedulesToUpdate, schedulesToAdd);
+            await _service.UpdateAsync(entity, schedulesToUpdate, schedulesToAdd);
 
             _dialogService.ShowSuccess("¡Mensaje!", "Registro actualizado correctamente");
 
@@ -805,7 +805,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
         try
         {
             // Se vuelve a consultar antes de pagar para usar el estado más reciente.
-            var vehicle = await _repository.GetByIdAsync(Id);
+            var vehicle = await _service.GetByIdAsync(Id);
             if (vehicle?.vehicle_monthly_plan == null)
                 throw new InvalidOperationException("No se encontró el contrato mensual.");
 
@@ -863,7 +863,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            var entity = await _repository.GetByIdAsync(Id);
+            var entity = await _service.GetByIdAsync(Id);
 
             if (entity == null)
             {
@@ -879,7 +879,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            await _repository.DeleteAsync(entity, _currentUserId);
+            await _service.DeleteAsync(entity, _currentUserId);
 
             await LoadAsync();
 

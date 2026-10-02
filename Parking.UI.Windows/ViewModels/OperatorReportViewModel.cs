@@ -16,7 +16,7 @@ namespace Parking.UI.Windows.ViewModels;
 /// <summary>Mantiene la búsqueda aplicada y la exportación del informe de operadores.</summary>
 public class OperatorReportViewModel : BaseViewModel
 {
-    private readonly IOperatorReportRepository _repository;
+    private readonly IReportQueryService _reports;
     private readonly IDialogService _dialogs;
     private readonly ReportExportService _exportService = new();
     private readonly ReportPrintService _printService = new();
@@ -78,11 +78,11 @@ public class OperatorReportViewModel : BaseViewModel
     public ICommand PrintCommand { get; }
 
     /// <summary>Conecta la consulta y los comandos de actualización/exportación.</summary>
-    /// <param name="repository">Consulta cobros agrupados por operador.</param>
+    /// <param name="reports">Consulta cobros agrupados por operador.</param>
     /// <param name="dialogs">Muestra advertencias y errores con los diálogos del sistema.</param>
-    public OperatorReportViewModel(IOperatorReportRepository repository, IDialogService dialogs)
+    public OperatorReportViewModel(IReportQueryService reports, IDialogService dialogs)
     {
-        _repository = repository;
+        _reports = reports;
         _dialogs = dialogs;
         RefreshCommand = new AsyncRelayCommand(async _ => await LoadReport());
         ExportExcelCommand = new RelayCommand(_ => Export(false));
@@ -102,7 +102,7 @@ public class OperatorReportViewModel : BaseViewModel
         }
 
         // El límite superior exclusivo incluye toda la fecha final.
-        var data = await _repository.GetReportAsync(FromDate.Date, ToDate.Date.AddDays(1));
+        var data = await _reports.GetOperatorsAsync(FromDate.Date, ToDate.Date.AddDays(1));
         // Se separan fechas aplicadas y editables para exportar lo mostrado.
         ReportItems = new ObservableCollection<OperatorReportItem>(data);
         AppliedFromDate = FromDate.Date;
