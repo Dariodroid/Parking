@@ -360,91 +360,45 @@ public class RegisteredVehicleViewModel : BaseViewModel
         // Se recalcula la cuota con la fecha actual al seleccionar la fila.
         PendingMonthlyFee = MonthlyAccessPolicy.Evaluate(item, DateTime.Now).PendingFee;
         Id = item.id;
-
         Plate = item.plate;
-
         VehicleTypeId = item.vehicle_type_id;
-
         OwnerName = item.owner_name ?? string.Empty;
-
         OwnerPhone = item.owner_phone ?? string.Empty;
-
         OwnerEmail = item.owner_email ?? string.Empty;
-
         OwnerCedula = item.owner_cedula ?? string.Empty;
-
         Notes = item.notes ?? string.Empty;
-
         IsActive = item.is_active;
-
-        // =========================
-        // PLAN
-        // =========================
-
-        if (item.vehicle_monthly_plan != null)
+        if (item.vehicle_monthly_plan is { } plan)
         {
-            MonthlyFee =
-                item.vehicle_monthly_plan.monthly_fee;
-
-            MonthlyStartDate =
-                item.vehicle_monthly_plan.start_date;
-
-            MonthlyEndDate =
-                item.vehicle_monthly_plan.end_date;
+            MonthlyFee = plan.monthly_fee;
+            MonthlyStartDate = plan.start_date;
+            MonthlyEndDate = plan.end_date;
         }
+        LoadSchedules(item);
+    }
 
-        // =========================
-        // RESETEAR HORARIOS
-        // =========================
-
+    /// <summary>Restablece los siete días y carga solo los horarios no eliminados de la ficha.</summary>
+    private void LoadSchedules(registered_vehicle item)
+    {
         foreach (var schedule in VehicleSchedules)
         {
             schedule.IsEnabled = false;
-
             schedule.IsFullDay = false;
-
-            schedule.StartTime =
-                new TimeSpan(7, 0, 0);
-
-            schedule.EndTime =
-                new TimeSpan(19, 0, 0);
+            schedule.StartTime = new TimeSpan(7, 0, 0);
+            schedule.EndTime = new TimeSpan(19, 0, 0);
         }
-
-        // =========================
-        // CARGAR HORARIOS REALES
-        // =========================
-
-        if (item.monthly_vehicle_schedules != null
-            && item.monthly_vehicle_schedules.Any())
+        if (item.monthly_vehicle_schedules == null || !item.monthly_vehicle_schedules.Any())
+            return;
+        foreach (var schedule in VehicleSchedules)
         {
-            foreach (var schedule
-                in VehicleSchedules)
-            {
-                var dbSchedule =
-                    item.monthly_vehicle_schedules
-                        .Where(x => !x.is_deleted)
-                        .FirstOrDefault(x =>
-                            x.day_of_week ==
-                            schedule.DayOfWeek);
-
-                if (dbSchedule != null)
-                {
-                    // Una fila guardada pero desactivada debe verse desactivada;
-                    // su mera existencia no autoriza acceso ese día.
-                    schedule.IsEnabled = dbSchedule.is_active;
-
-                    schedule.StartTime =
-                        dbSchedule.start_time
-                            .ToTimeSpan();
-
-                    schedule.EndTime =
-                        dbSchedule.end_time
-                            .ToTimeSpan();
-
-                    schedule.IsFullDay =
-                        dbSchedule.is_full_day;
-                }
-            }
+            var saved = item.monthly_vehicle_schedules
+                .FirstOrDefault(x => !x.is_deleted && x.day_of_week == schedule.DayOfWeek);
+            if (saved == null) continue;
+            // Una fila guardada pero inactiva debe verse desactivada.
+            schedule.IsEnabled = saved.is_active;
+            schedule.StartTime = saved.start_time.ToTimeSpan();
+            schedule.EndTime = saved.end_time.ToTimeSpan();
+            schedule.IsFullDay = saved.is_full_day;
         }
     }
 
@@ -491,6 +445,53 @@ public class RegisteredVehicleViewModel : BaseViewModel
         return true;
     }
 
+    /// <summary>Construye la ficha que acompaña al nuevo contrato mensual.</summary>
+    private registered_vehicle CreateVehicle() => new()
+    {
+        plate = Plate.Trim().ToUpper(),
+        vehicle_type_id = VehicleTypeId,
+        owner_name = OwnerName?.Trim(),
+        owner_phone = OwnerPhone?.Trim(),
+        owner_email = OwnerEmail?.Trim(),
+        owner_cedula = OwnerCedula?.Trim(),
+        notes = Notes?.Trim(),
+        is_active = IsActive,
+        created_at = DateTime.Now,
+        created_by = _currentUserId,
+        is_deleted = false
+    };
+
+    /// <summary>Conserva como pendiente la cuota de un plan que se crea ya vencido.</summary>
+    private vehicle_monthly_plan CreatePlan(DateTime startDate, DateTime endDate, bool expired) => new()
+    {
+        registered_vehicle_id = 0,
+        monthly_fee = MonthlyFee ?? 0,
+        start_date = startDate,
+        end_date = endDate,
+        payment_date = expired ? startDate : DateTime.Now,
+        is_active = IsActive,
+        notes = Notes?.Trim(),
+        created_at = DateTime.Now,
+        created_by = _currentUserId,
+        is_deleted = false,
+        status = IsActive ? "active" : "cancelled",
+        collected_by = expired ? null : _currentUserId
+    };
+
+    /// <summary>Convierte un día habilitado de la pantalla en una fila nueva del horario.</summary>
+    private monthly_vehicle_schedule CreateSchedule(VehicleScheduleItemViewModel day, int vehicleId) => new()
+    {
+        registered_vehicle_id = vehicleId,
+        day_of_week = day.DayOfWeek,
+        start_time = TimeOnly.FromTimeSpan(day.StartTime),
+        end_time = TimeOnly.FromTimeSpan(day.EndTime),
+        is_active = day.IsEnabled,
+        is_full_day = day.IsFullDay,
+        created_at = DateTime.Now,
+        created_by = _currentUserId,
+        is_deleted = false
+    };
+
     /// <summary>Crea vehículo, plan y horarios; deja pendiente la cuota de un contrato creado ya vencido.</summary>
     private async Task SaveAsync()
     {
@@ -509,34 +510,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            // =========================
-            // 1. GUARDAR VEHÍCULO
-            // =========================
-
-            var vehicle = new registered_vehicle
-            {
-                plate = Plate.Trim().ToUpper(),
-
-                vehicle_type_id = VehicleTypeId,
-
-                owner_name = OwnerName?.Trim(),
-
-                owner_phone = OwnerPhone?.Trim(),
-
-                owner_email = OwnerEmail?.Trim(),
-
-                owner_cedula = OwnerCedula?.Trim(),
-
-                notes = Notes?.Trim(),
-
-                is_active = IsActive,
-
-                created_at = DateTime.Now,
-
-                created_by = _currentUserId,
-
-                is_deleted = false
-            };
+            var vehicle = CreateVehicle();
 
             // Un contrato histórico que se crea ya vencido debe conservar una cuota pendiente.
             // Usamos su inicio como última fecha conocida del período anterior; no declaramos un cobro nuevo.
@@ -544,77 +518,9 @@ public class RegisteredVehicleViewModel : BaseViewModel
             DateTime endDate = MonthlyEndDate!.Value;
             bool createdAlreadyExpired = endDate.Date < DateTime.Today;
 
-            // =========================
-            // 2. GUARDAR PLAN
-            // =========================
-
-            var plan = new vehicle_monthly_plan
-            {
-                registered_vehicle_id = 0,
-
-                monthly_fee =
-                    MonthlyFee ?? 0,
-
-                start_date = startDate,
-
-                end_date = endDate,
-
-                payment_date = createdAlreadyExpired ? startDate : DateTime.Now,
-
-                is_active = IsActive,
-
-                notes = Notes?.Trim(),
-
-                created_at = DateTime.Now,
-
-                created_by = _currentUserId,
-
-                is_deleted = false,
-
-                status = IsActive
-                    ? "active"
-                    : "cancelled",
-
-                collected_by = createdAlreadyExpired ? null : _currentUserId
-            };
-
-            // =========================
-            // 3. GUARDAR HORARIOS
-            // =========================
-
-            var schedules =
-                VehicleSchedules
-                .Where(x => x.IsEnabled)
-                .Select(x =>
-                    new monthly_vehicle_schedule
-                    {
-                        registered_vehicle_id = 0,
-
-                        day_of_week =
-                            x.DayOfWeek,
-
-                        start_time =
-                            TimeOnly.FromTimeSpan(
-                                x.StartTime),
-
-                        end_time =
-                            TimeOnly.FromTimeSpan(
-                                x.EndTime),
-
-                        is_active = true,
-
-                        is_full_day =
-                            x.IsFullDay,
-
-                        created_at =
-                            DateTime.Now,
-
-                        created_by =
-                            _currentUserId,
-
-                        is_deleted = false
-                    })
-                .ToList();
+            var plan = CreatePlan(startDate, endDate, createdAlreadyExpired);
+            var schedules = VehicleSchedules.Where(x => x.IsEnabled)
+                .Select(x => CreateSchedule(x, 0)).ToList();
 
             await _service.RegisterAsync(vehicle, plan, schedules);
 
@@ -635,6 +541,61 @@ public class RegisteredVehicleViewModel : BaseViewModel
             StatusMessage = ex.Message;
             _dialogService.ShowError("Clientes", StatusMessage);
         }
+    }
+
+    /// <summary>Aplica a la entidad los campos editados de la ficha.</summary>
+    private void ApplyVehicleChanges(registered_vehicle entity)
+    {
+        entity.plate = Plate.Trim().ToUpper();
+        entity.vehicle_type_id = VehicleTypeId;
+        entity.owner_name = OwnerName?.Trim();
+        entity.owner_phone = OwnerPhone?.Trim();
+        entity.owner_email = OwnerEmail?.Trim();
+        entity.owner_cedula = OwnerCedula?.Trim();
+        entity.notes = Notes?.Trim();
+        entity.is_active = IsActive;
+        entity.updated_at = DateTime.Now;
+        entity.updated_by = _currentUserId;
+    }
+
+    /// <summary>Actualiza las fechas y el estado del plan existente sin registrar un pago.</summary>
+    private void ApplyPlanChanges(vehicle_monthly_plan? plan)
+    {
+        if (plan is null) return;
+        plan.monthly_fee = MonthlyFee ?? 0;
+        plan.start_date = MonthlyStartDate ?? DateTime.Today;
+        plan.end_date = MonthlyEndDate ?? DateTime.Today.AddMonths(1);
+        plan.is_active = IsActive;
+        plan.notes = Notes?.Trim();
+        plan.updated_at = DateTime.Now;
+        plan.updated_by = _currentUserId;
+        plan.status = IsActive ? "active" : "cancelled";
+    }
+
+    /// <summary>Separa los horarios que se actualizan de los nuevos días habilitados.</summary>
+    private (List<monthly_vehicle_schedule> ToUpdate, List<monthly_vehicle_schedule> ToAdd)
+        BuildScheduleChanges(registered_vehicle entity)
+    {
+        var toUpdate = new List<monthly_vehicle_schedule>();
+        var toAdd = new List<monthly_vehicle_schedule>();
+        foreach (var day in VehicleSchedules)
+        {
+            var existing = entity.monthly_vehicle_schedules
+                .FirstOrDefault(x => x.day_of_week == day.DayOfWeek);
+            if (existing is not null)
+            {
+                existing.start_time = TimeOnly.FromTimeSpan(day.StartTime);
+                existing.end_time = TimeOnly.FromTimeSpan(day.EndTime);
+                existing.is_full_day = day.IsFullDay;
+                existing.is_active = day.IsEnabled;
+                existing.updated_at = DateTime.Now;
+                existing.updated_by = _currentUserId;
+                toUpdate.Add(existing);
+            }
+            else if (day.IsEnabled)
+                toAdd.Add(CreateSchedule(day, entity.id));
+        }
+        return (toUpdate, toAdd);
     }
 
     /// <summary>Actualiza la ficha, el estado, las fechas y los horarios sin registrar un cobro nuevo.</summary>
@@ -660,118 +621,9 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            // =========================
-            // VEHÍCULO
-            // =========================
-
-            entity.plate = Plate.Trim().ToUpper();
-
-            entity.vehicle_type_id = VehicleTypeId;
-
-            entity.owner_name = OwnerName?.Trim();
-
-            entity.owner_phone = OwnerPhone?.Trim();
-
-            entity.owner_email = OwnerEmail?.Trim();
-
-            entity.owner_cedula = OwnerCedula?.Trim();
-
-            entity.notes = Notes?.Trim();
-
-            entity.is_active = IsActive;
-
-            entity.updated_at = DateTime.Now;
-
-            entity.updated_by = _currentUserId;
-
-            // =========================
-            // PLAN
-            // =========================
-
-            if (entity.vehicle_monthly_plan != null)
-            {
-                entity.vehicle_monthly_plan.monthly_fee = MonthlyFee ?? 0;
-
-                entity.vehicle_monthly_plan.start_date = MonthlyStartDate ?? DateTime.Today;
-
-                entity.vehicle_monthly_plan.end_date = MonthlyEndDate ?? DateTime.Today.AddMonths(1);
-
-                entity.vehicle_monthly_plan.is_active = IsActive;
-
-                entity.vehicle_monthly_plan.notes = Notes?.Trim();
-
-                entity.vehicle_monthly_plan.updated_at = DateTime.Now;
-
-                entity.vehicle_monthly_plan.updated_by = _currentUserId;
-
-                entity.vehicle_monthly_plan.status = IsActive ? "active" : "cancelled";
-            }
-
-            // =========================
-            // ACTUALIZAR HORARIOS
-            // =========================
-
-            // =========================
-            // ACTUALIZAR HORARIOS
-            // =========================
-
-            var schedulesToUpdate = new List<monthly_vehicle_schedule>();
-
-            var schedulesToAdd = new List<monthly_vehicle_schedule>();
-
-            foreach (var vmSchedule in VehicleSchedules)
-            {
-                var existingSchedule = entity.monthly_vehicle_schedules.FirstOrDefault(x => x.day_of_week == vmSchedule.DayOfWeek);
-
-                // =========================
-                // UPDATE
-                // =========================
-
-                if (existingSchedule != null)
-                {
-                    existingSchedule.start_time = TimeOnly.FromTimeSpan(vmSchedule.StartTime);
-
-                    existingSchedule.end_time =TimeOnly.FromTimeSpan(vmSchedule.EndTime);
-
-                    existingSchedule.is_full_day = vmSchedule.IsFullDay;
-
-                    existingSchedule.is_active = vmSchedule.IsEnabled;
-
-                    existingSchedule.updated_at = DateTime.Now;
-
-                    existingSchedule.updated_by = _currentUserId;
-
-                    schedulesToUpdate .Add(existingSchedule);
-                }
-
-                // =========================
-                // INSERT
-                // =========================
-
-                else if (vmSchedule.IsEnabled)
-                {
-                    schedulesToAdd.Add(new monthly_vehicle_schedule
-                        {
-                            registered_vehicle_id = entity.id,
-
-                            day_of_week = vmSchedule.DayOfWeek,
-
-                            start_time = TimeOnly.FromTimeSpan(vmSchedule.StartTime),
-
-                            end_time = TimeOnly.FromTimeSpan(vmSchedule.EndTime),
-
-                            is_active = true,
-
-                            is_full_day = vmSchedule.IsFullDay,
-
-                            created_at = DateTime.Now,
-
-                            created_by = _currentUserId,
-
-                            is_deleted = false
-                        });
-                }
-            }
+            ApplyVehicleChanges(entity);
+            ApplyPlanChanges(entity.vehicle_monthly_plan);
+            var (schedulesToUpdate, schedulesToAdd) = BuildScheduleChanges(entity);
 
             await _service.UpdateAsync(entity, schedulesToUpdate, schedulesToAdd);
 

@@ -1,9 +1,9 @@
-﻿using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Parking.Application.Dto;
+using Parking.UI.Windows.ViewModels;
 
 namespace Parking.UI.Windows.View.Pages
 {
@@ -145,8 +145,7 @@ namespace Parking.UI.Windows.View.Pages
 
             if (draggedItem != null && targetItem != null && draggedItem != targetItem)
             {
-                var viewModel = this.DataContext;
-                if (viewModel == null) return;
+                if (DataContext is not DashboardViewModel viewModel) return;
 
                 // Intercambiamos posiciones (con notificación en tiempo real)
                 var tempX = draggedItem.PositionX;
@@ -157,15 +156,7 @@ namespace Parking.UI.Windows.View.Pages
                 targetItem.PositionX = tempX;
                 targetItem.PositionY = tempY;
 
-                var saveMethod = viewModel.GetType().GetMethod("SaveSlotPositionsAsync", BindingFlags.Public | BindingFlags.Instance);
-                if (saveMethod != null)
-                {
-                    var saveTask = (Task)saveMethod.Invoke(viewModel, null);
-                    if (saveTask != null)
-                    {
-                        await saveTask;
-                    }
-                }
+                await viewModel.SaveSlotPositionsAsync();
             }
 
             var border = FindVisualChild<Border>(targetButton);
@@ -198,19 +189,8 @@ namespace Parking.UI.Windows.View.Pages
             draggedItem.PositionX = (int)position.X - 80;
             draggedItem.PositionY = (int)position.Y - 50;
 
-            var viewModel = this.DataContext;
-            if (viewModel != null)
-            {
-                var saveMethod = viewModel.GetType().GetMethod("SaveSlotPositionsAsync", BindingFlags.Public | BindingFlags.Instance);
-                if (saveMethod != null)
-                {
-                    var saveTask = (Task)saveMethod.Invoke(viewModel, null);
-                    if (saveTask != null)
-                    {
-                        await saveTask;
-                    }
-                }
-            }
+            if (DataContext is DashboardViewModel viewModel)
+                await viewModel.SaveSlotPositionsAsync();
         }
 
         // ==========================================

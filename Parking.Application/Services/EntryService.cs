@@ -114,9 +114,7 @@ namespace Parking.Application.Services
 
                 // Ambas consultas devuelven la entidad seguida por EF. El puesto
                 // elegido se valida otra vez al guardar por si dejó de estar libre.
-                var availableSlot = selectedSlotId.HasValue
-                    ? await _slotRepo.GetAvailableSlotByIdAsync(selectedSlotId.Value)
-                    : await _slotRepo.GetFirstAvailableSlotAsync();
+                var availableSlot = await FindAvailableSlotAsync(selectedSlotId);
 
                 if (availableSlot == null)
                 {
@@ -129,35 +127,8 @@ namespace Parking.Application.Services
 
                 // Se crea una sesión para todo vehículo, también para el mensualizado
                 // que no recibe ticket: así se registran su entrada y posterior salida.
-                var session = new parking_session
-                {
-                    // La placa y el código interno identifican la estancia.
-                    plate = normalized,
-                    session_code = LocalTimeSessionPrefix + Guid.NewGuid().ToString("N")[..16].ToUpperInvariant(),
-                    // Los clientes mensuales se identifican por placa; únicamente
-                    // las entradas con tarifa ocasional necesitan ticket QR.
-                    qr_data = access.IsMonthly ? null : $"SESSION-{Guid.NewGuid():N}".ToUpper(),
-                    // Se guarda la hora local que sirvió para evaluar el acceso.
-                    entry_time = entryTime,
-                    status = "active",
-                    // La ficha del cliente sigue vinculada incluso si paga como ocasional.
-                    vehicle_type_id = resolvedVehicleTypeId,
-                    registered_vehicle_id = registered?.id,
-                    // Se conserva la modalidad y, si corresponde tarifa ocasional a un cliente,
-                    // el motivo exacto evaluado al entrar para permitir auditorías posteriores.
-                    notes = access.IsMonthly ? MonthlyAccessPolicy.MonthlySessionNote
-                        : registered is not null
-                            ? ParkingSessionNotes.OccasionalReasonPrefix + access.Kind
-                            : null,
-                    // Se atribuye la apertura al operador actual.
-                    entry_operator_id = CurrentUser.Id,
-                    created_by = CurrentUser.Id,
-                    created_at = entryTime,
-                    is_deleted = false,
-
-                    // La sesión conserva el puesto aunque luego se libere.
-                    parking_slot_id = availableSlot.id
-                };
+                var session = CreateSession(normalized, resolvedVehicleTypeId, registered,
+                    availableSlot, access, entryTime);
 
                 // Se guarda evidencia fotográfica únicamente si hay captura.
                 if (plateImage?.Length > 0)
@@ -170,21 +141,7 @@ namespace Parking.Application.Services
                 if (session.qr_data is { } ticketQr)
                     qrPath = await _qrTicketStore.SaveAsync(ticketQr, session.session_code);
 
-                // Se agrega la sesión al mismo contexto usado para el puesto.
-                await _sessionRepo.AddAsync(session);
-
-                // El puesto queda ocupado y enlazado a la nueva sesión.
-                availableSlot.is_occupied = true;
-                availableSlot.current_session = session;
-                availableSlot.updated_at = entryTime;
-
-                await _slotRepo.UpdateAsync(availableSlot);
-
-                // Una sola confirmación persiste sesión y ocupación del puesto.
-                bool success = await _sessionRepo.SaveChangesAsync();
-
-                if (!success)
-                    throw new InvalidOperationException("La base de datos no confirmó el registro de la entrada.");
+                await SaveEntryAsync(session, availableSlot, entryTime);
 
                 // El ticket se expone únicamente después de confirmar la sesión y el puesto.
                 EntryTicketData? ticket = qrPath is null ? null : new EntryTicketData(
@@ -200,6 +157,44 @@ namespace Parking.Application.Services
                 if (qrPath != null) _qrTicketStore.Delete(qrPath);
                 throw;
             }
+        }
+
+        /// <summary>Busca el puesto elegido o el primero disponible, sin ocuparlo todavía.</summary>
+        private Task<parking_slot?> FindAvailableSlotAsync(int? selectedSlotId) =>
+            selectedSlotId.HasValue
+                ? _slotRepo.GetAvailableSlotByIdAsync(selectedSlotId.Value)
+                : _slotRepo.GetFirstAvailableSlotAsync();
+
+        /// <summary>Construye la sesión con la modalidad fijada al ingresar.</summary>
+        private static parking_session CreateSession(string plate, int vehicleTypeId,
+            registered_vehicle? registered, parking_slot slot, MonthlyAccessDecision access, DateTime entryTime) => new()
+        {
+            plate = plate,
+            session_code = LocalTimeSessionPrefix + Guid.NewGuid().ToString("N")[..16].ToUpperInvariant(),
+            qr_data = access.IsMonthly ? null : $"SESSION-{Guid.NewGuid():N}".ToUpper(),
+            entry_time = entryTime,
+            status = "active",
+            vehicle_type_id = vehicleTypeId,
+            registered_vehicle_id = registered?.id,
+            notes = access.IsMonthly ? MonthlyAccessPolicy.MonthlySessionNote
+                : registered is not null ? ParkingSessionNotes.OccasionalReasonPrefix + access.Kind : null,
+            entry_operator_id = CurrentUser.Id,
+            created_by = CurrentUser.Id,
+            created_at = entryTime,
+            is_deleted = false,
+            parking_slot_id = slot.id
+        };
+
+        /// <summary>Guarda sesión y ocupación juntas en el contexto compartido por los repositorios.</summary>
+        private async Task SaveEntryAsync(parking_session session, parking_slot slot, DateTime entryTime)
+        {
+            await _sessionRepo.AddAsync(session);
+            slot.is_occupied = true;
+            slot.current_session = session;
+            slot.updated_at = entryTime;
+            await _slotRepo.UpdateAsync(slot);
+            if (!await _sessionRepo.SaveChangesAsync())
+                throw new InvalidOperationException("La base de datos no confirmó el registro de la entrada.");
         }
 
         /// <summary>Cierra la sesión encontrada por placa; permite salir sin ticket al mensualizado.</summary>
@@ -236,50 +231,13 @@ namespace Parking.Application.Services
 
             // Las sesiones recientes usan hora local; las antiguas se convierten abajo.
             DateTime exitTime = DateTime.Now;
-            DateTime entryTime = session.entry_time;
-            if (!session.session_code.StartsWith(LocalTimeSessionPrefix, StringComparison.Ordinal))
-            {
-                // Sesión abierta antes del cambio: su hora de entrada era UTC.
-                // Convertimos la fila al horario local al cerrarla y calculamos
-                // la duración con los instantes UTC originales.
-                DateTime entryUtc = DateTime.SpecifyKind(entryTime, DateTimeKind.Utc);
-                entryTime = entryUtc.ToLocalTime();
-                session.entry_time = entryTime;
-                session.created_at = DateTime.SpecifyKind(session.created_at, DateTimeKind.Utc).ToLocalTime();
-            }
+            DateTime entryTime = NormalizeLegacyEntryTime(session);
 
             // Se conserva la hora real de salida y la duración total de estancia.
             session.exit_time = exitTime;
             TimeSpan duration = exitTime - entryTime;
 
-            // La modalidad quedó fijada al registrar la entrada. Cambios
-            // posteriores al plan u horario no alteran el cobro de esta sesión.
-            // Para ocasionales se conserva la regla previa de hora iniciada:
-            // cualquier fracción de hora cuenta como una hora, con mínimo de una.
-            decimal hoursToCharge = (decimal)Math.Ceiling(duration.TotalHours);
-            if (hoursToCharge < 1) hoursToCharge = 1;
-
-            // duration_minutes refleja el tiempo real; chargeable_minutes, el cobrado.
-            session.duration_minutes = (int)duration.TotalMinutes;
-            // La marca persistida al entrar evita recalcular fechas u horarios al salir.
-            bool monthlyAccess = session.notes == MonthlyAccessPolicy.MonthlySessionNote;
-            session.chargeable_minutes = monthlyAccess
-                ? 0 : (int)(hoursToCharge * 60);
-            // Una sesión mensual vigente no genera importe por la estancia.
-            if (monthlyAccess)
-                session.amount_due = 0;
-            else
-            {
-                // Se obtiene la tarifa configurada para el tipo de esta sesión.
-                var vehicleType = await _vehicleTypes.GetByIdAsync(session.vehicle_type_id);
-                if (vehicleType == null || vehicleType.is_deleted)
-                    throw new InvalidOperationException("No se encontró la tarifa del tipo de vehículo.");
-                // El importe ocasional resulta de horas iniciadas por tarifa/hora.
-                // La tarifa y el producto deben caber exactamente en decimal(10,2).
-                // Rechazar un dato inválido evita que SQL redondee o desborde al guardar.
-                decimal hourlyRate = MoneyAmount.RequireValid(vehicleType.hourly_rate, "La tarifa por hora");
-                session.amount_due = MoneyAmount.RequireValid(hoursToCharge * hourlyRate, "El cobro de salida");
-            }
+            await CalculateExitChargeAsync(session, duration);
 
             // El cierre pagado y el asiento contable se confirman juntos.
             session.status = "paid";
@@ -290,52 +248,84 @@ namespace Parking.Application.Services
             // EF registra los cambios en la sesión antes de guardar el contexto.
             await _sessionRepo.UpdateAsync(session);
 
-            if (session.amount_due is > 0)
-            {
-                // Si el operador no indicó un medio, se registra como desconocido
-                // en lugar de atribuir el dinero incorrectamente a efectivo.
-                string method = paymentMethod?.Trim().ToLowerInvariant() switch
-                {
-                    "cash" => "cash",
-                    "transfer" => "transfer",
-                    "card" => "card",
-                    _ => "other"
-                };
-                await _paymentRepo.AddAsync(new payment
-                {
-                    session_id = session.id,
-                    amount_paid = session.amount_due.Value,
-                    payment_method = method,
-                    notes = method == "other"
-                        ? "Salida registrada sin indicar el medio de pago."
-                        : "Cobro registrado al cerrar la sesión.",
-                    collected_by = CurrentUser.Id,
-                    collected_at = exitTime,
-                    created_at = exitTime,
-                    is_deleted = false
-                });
-            }
+            await RecordPaymentAsync(session, paymentMethod, exitTime);
 
             // 5. LIBERAR EL PUESTO DE ESTACIONAMIENTO
             // La sesión conserva su parking_slot_id aunque current_session_id no se haya sincronizado.
             // Usar ese id garantiza que una salida QR libere el puesto correcto.
-            var occupiedSlot = session.parking_slot_id.HasValue
-                ? await _slotRepo.GetByIdAsync(session.parking_slot_id.Value)
-                : null;
-
-            if (occupiedSlot != null)
-            {
-                // Se libera el puesto y se retira el enlace a la sesión actual;
-                // parking_slot_id permanece en la sesión como dato histórico.
-                occupiedSlot.is_occupied = false;
-                occupiedSlot.current_session_id = null;
-                occupiedSlot.current_session = null;
-                occupiedSlot.updated_at = exitTime;
-                await _slotRepo.UpdateAsync(occupiedSlot);
-            }
+            await ReleaseSlotAsync(session, exitTime);
 
             // Un único SaveChanges persiste sesión, pago y puesto en la misma transacción de EF.
             return await _sessionRepo.SaveChangesAsync();
+        }
+
+        /// <summary>Convierte al horario local las sesiones anteriores al formato EC-.</summary>
+        private static DateTime NormalizeLegacyEntryTime(parking_session session)
+        {
+            if (session.session_code.StartsWith(LocalTimeSessionPrefix, StringComparison.Ordinal))
+                return session.entry_time;
+            DateTime localEntry = DateTime.SpecifyKind(session.entry_time, DateTimeKind.Utc).ToLocalTime();
+            session.entry_time = localEntry;
+            session.created_at = DateTime.SpecifyKind(session.created_at, DateTimeKind.Utc).ToLocalTime();
+            return localEntry;
+        }
+
+        /// <summary>Conserva la modalidad de entrada y cobra por hora iniciada solo al ocasional.</summary>
+        private async Task CalculateExitChargeAsync(parking_session session, TimeSpan duration)
+        {
+            bool monthly = session.notes == MonthlyAccessPolicy.MonthlySessionNote;
+            decimal rate = 0m;
+            if (!monthly)
+            {
+                var vehicleType = await _vehicleTypes.GetByIdAsync(session.vehicle_type_id);
+                if (vehicleType == null || vehicleType.is_deleted)
+                    throw new InvalidOperationException("No se encontró la tarifa del tipo de vehículo.");
+                rate = MoneyAmount.RequireValid(vehicleType.hourly_rate, "La tarifa por hora");
+            }
+
+            ParkingCharge charge = ParkingChargePolicy.Calculate(duration, monthly, rate);
+            session.duration_minutes = charge.DurationMinutes;
+            session.chargeable_minutes = charge.ChargeableMinutes;
+            session.amount_due = monthly ? 0m : MoneyAmount.RequireValid(charge.AmountDue, "El cobro de salida");
+        }
+
+        /// <summary>Agrega el asiento del cobro al mismo contexto de la sesión.</summary>
+        private async Task RecordPaymentAsync(parking_session session, string paymentMethod, DateTime exitTime)
+        {
+            if (session.amount_due is not > 0) return;
+            string method = paymentMethod?.Trim().ToLowerInvariant() switch
+            {
+                "cash" => "cash",
+                "transfer" => "transfer",
+                "card" => "card",
+                _ => "other"
+            };
+            await _paymentRepo.AddAsync(new payment
+            {
+                session_id = session.id,
+                amount_paid = session.amount_due.Value,
+                payment_method = method,
+                notes = method == "other"
+                    ? "Salida registrada sin indicar el medio de pago."
+                    : "Cobro registrado al cerrar la sesión.",
+                collected_by = CurrentUser.Id,
+                collected_at = exitTime,
+                created_at = exitTime,
+                is_deleted = false
+            });
+        }
+
+        /// <summary>Libera el puesto y mantiene su id histórico en la sesión cerrada.</summary>
+        private async Task ReleaseSlotAsync(parking_session session, DateTime exitTime)
+        {
+            var slot = session.parking_slot_id.HasValue
+                ? await _slotRepo.GetByIdAsync(session.parking_slot_id.Value) : null;
+            if (slot == null) return;
+            slot.is_occupied = false;
+            slot.current_session_id = null;
+            slot.current_session = null;
+            slot.updated_at = exitTime;
+            await _slotRepo.UpdateAsync(slot);
         }
 
         /// <summary>Consulta una sesión abierta por el valor codificado en el ticket.</summary>

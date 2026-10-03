@@ -351,53 +351,7 @@ namespace Parking.UI.Windows.ViewModels
                 }
                 else if (!string.IsNullOrEmpty(entry.SlotNumber))
                 {
-                    // El ticket se conserva para reimprimir incluso si falla el spooler.
-                    string? printingWarning = null;
-                    if (entry.Ticket is not null)
-                    {
-                        _lastTicket = entry.Ticket;
-                        OnPropertyChanged(nameof(CanReprintLastTicket));
-                        var printerSettings = _settingsStore.Load();
-                        if (printerSettings.AutoPrintTickets)
-                        {
-                            try
-                            {
-                                // La sesión ya está confirmada: imprimir nunca cambia el registro.
-                                _ticketPrinter.Print(entry.Ticket, printerSettings.TicketPrinterName,
-                                    printerSettings.TicketPaperWidthMm);
-                            }
-                            catch (Exception printError)
-                            {
-                                printingWarning = $"Entrada guardada, pero no se pudo enviar el ticket a la impresora: {printError.Message} Use Reimprimir último ticket.";
-                            }
-                        }
-                    }
-                    // Cada clasificación explica al operador si hubo ticket o
-                    // si se respetó el acceso mensual sin cargo por estancia.
-                    string accessMessage = entry.Access.Kind switch
-                    {
-                        MonthlyAccessKind.Monthly => "Cliente mensualizado: entrada registrada sin ticket y sin cobro de estancia.",
-                        MonthlyAccessKind.OutsideSchedule => "Fuera del horario mensual. Se aplicará la tarifa ocasional.",
-                        MonthlyAccessKind.Expired => "Contrato vencido. Se aplicará la tarifa ocasional.",
-                        MonthlyAccessKind.Inactive => "Contrato inactivo. Se aplicará la tarifa ocasional.",
-                        MonthlyAccessKind.NotStarted => "El contrato aún no inicia. Se aplicará la tarifa ocasional.",
-                        _ => "Se aplicará la tarifa ocasional."
-                    };
-                    // La cuota vencida se muestra aparte del cobro ocasional.
-                    if (entry.Access.PendingFee > 0)
-                        accessMessage += $" Cuota mensual pendiente: {CurrencyDisplay.Format(entry.Access.PendingFee)}.";
-                    if (printingWarning is not null) accessMessage += $" {printingWarning}";
-                    // El puesto y la regla aplicada quedan visibles en pantalla.
-                    StatusMessage = $"ENTRADA: {plate} asignado al puesto {entry.SlotNumber}. {accessMessage}";
-                    ScannerAudioFeedback.PlayEntry();
-                    // Una deuda se destaca como aviso aun cuando la entrada se guardó.
-                    if (entry.Access.PendingFee > 0 || printingWarning is not null)
-                        _dialogService.ShowWarning(printingWarning is not null
-                            ? "Entrada guardada: revise la impresión"
-                            : "Entrada registrada: cuota pendiente", StatusMessage);
-                    else
-                        _dialogService.ShowSuccess("Entrada registrada", StatusMessage);
-                    _parkingStatusNotifier.NotifyParkingStatusChanged();
+                    ShowRegisteredEntry(plate, entry);
                 }
                 else
                 {
@@ -411,6 +365,59 @@ namespace Parking.UI.Windows.ViewModels
                 try { await LoadSlotStatsAsync(); }
                 finally { _sessionOperationGate.Release(); }
             }
+        }
+
+        /// <summary>Conserva el ticket y comunica la modalidad con el diálogo adecuado.</summary>
+        private void ShowRegisteredEntry(string plate, EntryRegistrationResult entry)
+        {
+            string? printingWarning = PrintEntryTicketIfNeeded(entry.Ticket);
+            string accessMessage = DescribeEntryAccess(entry.Access);
+            if (printingWarning is not null) accessMessage += $" {printingWarning}";
+            StatusMessage = $"ENTRADA: {plate} asignado al puesto {entry.SlotNumber}. {accessMessage}";
+            ScannerAudioFeedback.PlayEntry();
+            if (entry.Access.PendingFee > 0 || printingWarning is not null)
+                _dialogService.ShowWarning(printingWarning is not null
+                    ? "Entrada guardada: revise la impresión"
+                    : "Entrada registrada: cuota pendiente", StatusMessage);
+            else
+                _dialogService.ShowSuccess("Entrada registrada", StatusMessage);
+            _parkingStatusNotifier.NotifyParkingStatusChanged();
+        }
+
+        /// <summary>Imprime solo si está configurado y devuelve un aviso si falló la impresora.</summary>
+        private string? PrintEntryTicketIfNeeded(EntryTicketData? ticket)
+        {
+            if (ticket is null) return null;
+            _lastTicket = ticket;
+            OnPropertyChanged(nameof(CanReprintLastTicket));
+            var settings = _settingsStore.Load();
+            if (!settings.AutoPrintTickets) return null;
+            try
+            {
+                _ticketPrinter.Print(ticket, settings.TicketPrinterName, settings.TicketPaperWidthMm);
+                return null;
+            }
+            catch (Exception error)
+            {
+                return $"Entrada guardada, pero no se pudo enviar el ticket a la impresora: {error.Message} Use Reimprimir último ticket.";
+            }
+        }
+
+        /// <summary>Traduce la clasificación de Domain y agrega la cuota pendiente si existe.</summary>
+        private static string DescribeEntryAccess(MonthlyAccessDecision access)
+        {
+            string message = access.Kind switch
+            {
+                MonthlyAccessKind.Monthly => "Cliente mensualizado: entrada registrada sin ticket y sin cobro de estancia.",
+                MonthlyAccessKind.OutsideSchedule => "Fuera del horario mensual. Se aplicará la tarifa ocasional.",
+                MonthlyAccessKind.Expired => "Contrato vencido. Se aplicará la tarifa ocasional.",
+                MonthlyAccessKind.Inactive => "Contrato inactivo. Se aplicará la tarifa ocasional.",
+                MonthlyAccessKind.NotStarted => "El contrato aún no inicia. Se aplicará la tarifa ocasional.",
+                _ => "Se aplicará la tarifa ocasional."
+            };
+            if (access.PendingFee > 0)
+                message += $" Cuota mensual pendiente: {CurrencyDisplay.Format(access.PendingFee)}.";
+            return message;
         }
 
         /// <summary>Inicia la salida manual por placa, incluida la de clientes sin ticket.</summary>
@@ -755,35 +762,15 @@ namespace Parking.UI.Windows.ViewModels
                         DateTime now = DateTime.UtcNow;
                         lastFrameUtc = now;
                         _cameraHealth.Clear(feed.Title);
-                        if (now - lastPreviewUtc >= TimeSpan.FromMilliseconds(66))
-                        {
-                            // La caja OCR se dibuja únicamente en el visor que la detectó.
-                            var visibleDetection = now - feed.LastDetectionUtc < DetectionDisplayTime
-                                ? feed.CurrentDetection : null;
-                            byte[] frameToShow = _frameOverlayRenderer.Render(currentFrame, visibleDetection);
-                            // BitmapSource se congela para pasar con seguridad al hilo de WPF.
-                            var preview = BuildBitmapSource(frameToShow);
-                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => feed.Preview = preview);
-                            lastPreviewUtc = now;
-                        }
+                        lastPreviewUtc = await UpdatePreviewIfDueAsync(feed, currentFrame, now, lastPreviewUtc);
                         // Los dos visores pueden leer ambas señales; sus límites son independientes.
                         TryQueueQrDetection(feed, currentFrame);
                         TryQueuePlateDetection(feed, currentFrame);
                     }
                     // Read() ya espera al siguiente fotograma. Solo hacemos una
                     // pausa breve si el dispositivo aún no entrega imágenes.
-                    if (currentFrame.Length == 0)
-                    {
-                        // El operador puede buscar dispositivos y reiniciar la fuente perdida.
-                        if (DateTime.UtcNow - lastFrameUtc > TimeSpan.FromSeconds(5))
-                        {
-                            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                                feed.Status = "Esta cámara dejó de entregar imagen. Pulse Buscar o Iniciar.");
-                            _cameraHealth.ReportFailure(feed.Title, feed.Status);
-                            break;
-                        }
-                        await Task.Delay(50, cancellationToken);
-                    }
+                    if (currentFrame.Length == 0 &&
+                        await HandleMissingFrameAsync(feed, lastFrameUtc, cancellationToken)) break;
                 }
             }
             catch (OperationCanceledException) { }
@@ -814,6 +801,34 @@ namespace Parking.UI.Windows.ViewModels
                     });
                 }
             }
+        }
+
+        /// <summary>Actualiza como máximo quince imágenes por segundo y conserva el último instante dibujado.</summary>
+        private async Task<DateTime> UpdatePreviewIfDueAsync(CameraFeedViewModel feed, byte[] frame,
+            DateTime now, DateTime lastPreviewUtc)
+        {
+            if (now - lastPreviewUtc < TimeSpan.FromMilliseconds(66)) return lastPreviewUtc;
+            var visibleDetection = now - feed.LastDetectionUtc < DetectionDisplayTime
+                ? feed.CurrentDetection : null;
+            byte[] image = _frameOverlayRenderer.Render(frame, visibleDetection);
+            var preview = BuildBitmapSource(image);
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => feed.Preview = preview);
+            return now;
+        }
+
+        /// <summary>Espera el siguiente fotograma o avisa cuando una cámara no entrega imagen.</summary>
+        private async Task<bool> HandleMissingFrameAsync(CameraFeedViewModel feed,
+            DateTime lastFrameUtc, CancellationToken cancellationToken)
+        {
+            if (DateTime.UtcNow - lastFrameUtc > TimeSpan.FromSeconds(5))
+            {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    feed.Status = "Esta cámara dejó de entregar imagen. Pulse Buscar o Iniciar.");
+                _cameraHealth.ReportFailure(feed.Title, feed.Status);
+                return true;
+            }
+            await Task.Delay(50, cancellationToken);
+            return false;
         }
 
         /// <summary>Programa una lectura QR para un visor si su lector está disponible.</summary>
@@ -912,14 +927,7 @@ namespace Parking.UI.Windows.ViewModels
 
                 if (session == null)
                 {
-                    if (showMissingSession)
-                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                        {
-                            AmountToCharge = 0;
-                            _dialogService.ShowWarning("Atención", $"No hay sesión activa para {identifier}.");
-                        });
-                    else if (isQr)
-                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => StatusMessage = "QR inválido o sesión ya cerrada.");
+                    await ShowMissingSessionAsync(identifier, isQr, showMissingSession);
                     return false;
                 }
 
@@ -930,29 +938,7 @@ namespace Parking.UI.Windows.ViewModels
                     return false;
                 }
 
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    AmountToCharge = session.amount_due ?? 0;
-                    // La selección pertenece a esta salida; no se arrastra a otro vehículo.
-                    SelectedPaymentMethod = "cash";
-                    // El campo de entrada queda vacío. Una lectura de la placa
-                    // trasera al salir no prepara otra entrada accidentalmente.
-                    PlateNumber = string.Empty;
-                    _currentDetection = null;
-                    // Ningún visor debe conservar una lectura previa a esta salida.
-                    EntranceFeed.PendingPlate = string.Empty;
-                    ExitFeed.PendingPlate = string.Empty;
-                    // La marca se guardó al entrar: una edición posterior del plan
-                    // no transforma esta salida mensual en cobro ocasional.
-                    bool isMonthly = session.notes == MonthlyAccessPolicy.MonthlySessionNote;
-                    // El mensualizado sale por placa y sin importe; el ocasional
-                    // muestra el total calculado al cerrar la sesión.
-                    StatusMessage = isMonthly
-                        ? $"SALIDA POR PLACA: {session.plate} | Cliente mensualizado, sin cobro."
-                        : $"SALIDA POR {(isQr ? "QR" : "PLACA")}: {session.plate} | Total: {CurrencyDisplay.Format(AmountToCharge)}";
-                    ScannerAudioFeedback.PlayExit();
-                    _dialogService.ShowSuccess("¡Éxito!", StatusMessage);
-                });
+                await ShowRegisteredExitAsync(session, isQr);
                 _parkingStatusNotifier.NotifyParkingStatusChanged();
                 return true;
             }
@@ -962,6 +948,40 @@ namespace Parking.UI.Windows.ViewModels
                     _dialogService.ShowError("Error", $"Error en salida: {ex.Message}"));
                 return false;
             }
+        }
+
+        /// <summary>Informa que la placa o el QR no corresponde a una estancia abierta.</summary>
+        private async Task ShowMissingSessionAsync(string identifier, bool isQr, bool showDialog)
+        {
+            if (showDialog)
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    AmountToCharge = 0;
+                    _dialogService.ShowWarning("Atención", $"No hay sesión activa para {identifier}.");
+                });
+            else if (isQr)
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    StatusMessage = "QR inválido o sesión ya cerrada.");
+        }
+
+        /// <summary>Muestra el cobro confirmado y limpia las lecturas anteriores de ambos visores.</summary>
+        private async Task ShowRegisteredExitAsync(parking_session session, bool isQr)
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                AmountToCharge = session.amount_due ?? 0;
+                SelectedPaymentMethod = "cash";
+                PlateNumber = string.Empty;
+                _currentDetection = null;
+                EntranceFeed.PendingPlate = string.Empty;
+                ExitFeed.PendingPlate = string.Empty;
+                bool isMonthly = session.notes == MonthlyAccessPolicy.MonthlySessionNote;
+                StatusMessage = isMonthly
+                    ? $"SALIDA POR PLACA: {session.plate} | Cliente mensualizado, sin cobro."
+                    : $"SALIDA POR {(isQr ? "QR" : "PLACA")}: {session.plate} | Total: {CurrencyDisplay.Format(AmountToCharge)}";
+                ScannerAudioFeedback.PlayExit();
+                _dialogService.ShowSuccess("¡Éxito!", StatusMessage);
+            });
         }
 
         /// <summary>Programa OCR en un visor, con prioridad local para el QR de ese mismo visor.</summary>

@@ -101,30 +101,7 @@ public sealed class ReportExportService
         var row = 10;
         foreach (var item in items)
         {
-            sheet.Cell(row, 1).Value = item.Plate;
-            sheet.Cell(row, 2).Value = item.OwnerName;
-            sheet.Cell(row, 3).Value = item.VehicleType;
-            sheet.Cell(row, 4).Value = item.Category == "Mensual"
-                ? $"Cliente mensual\n{item.AccessSummary}" : item.Category;
-            var reportRow = new VehicleReportRow(row - 9, item);
-            sheet.Cell(row, 5).Value = item.Category == "Mensual" && item.PlanEndDate.HasValue
-                ? $"{reportRow.PlanStatusLabel}\nFin: {item.PlanEndDate:dd/MM/yyyy}"
-                : reportRow.PlanStatusLabel;
-            sheet.Cell(row, 6).Value = item.MonthlyFee;
-            sheet.Cell(row, 7).Value = item.TotalEntries;
-            if (item.LastEntryDate.HasValue) sheet.Cell(row, 8).Value = item.LastEntryDate.Value;
-            sheet.Cell(row, 9).Value = item.CurrentStatus;
-            sheet.Cell(row, 10).Value = item.TotalCollected;
-            sheet.Cell(row, 11).Value = item.TotalMinutesParked;
-            if (item.LastExitDate.HasValue) sheet.Cell(row, 12).Value = item.LastExitDate.Value;
-            ExcelBodyRow(sheet, row, 12);
-            // La modalidad ocupa una segunda línea para que no quede oculta en Excel.
-            if (item.Category == "Mensual")
-            {
-                sheet.Cell(row, 4).Style.Alignment.WrapText = true;
-                sheet.Cell(row, 5).Style.Alignment.WrapText = true;
-                sheet.Row(row).Height = 49;
-            }
+            WriteVehicleExcelRow(sheet, row, item);
             row++;
         }
         // La ausencia de filas se indica dentro de la misma tabla.
@@ -135,7 +112,43 @@ public sealed class ReportExportService
         sheet.Cell(totalRow, 10).Value = items.Sum(x => x.TotalCollected);
         sheet.Cell(totalRow, 11).Value = items.Sum(x => x.TotalMinutesParked);
         ExcelTotal(sheet, totalRow, 12);
-        // Anchos y formatos especializados evitan fechas o importes ambiguos.
+        StyleVehicleExcelSheet(sheet, row, totalRow);
+        ExcelFinish(sheet, 9, Math.Max(row - 1, 9), 12);
+        // El libro se escribe solo después de completar todos los estilos.
+        book.SaveAs(path);
+    }
+
+    /// <summary>Escribe una fila del informe de vehículos y conserva el texto del plan en dos líneas.</summary>
+    private static void WriteVehicleExcelRow(IXLWorksheet sheet, int row, VehicleReportDto item)
+    {
+        sheet.Cell(row, 1).Value = item.Plate;
+        sheet.Cell(row, 2).Value = item.OwnerName;
+        sheet.Cell(row, 3).Value = item.VehicleType;
+        sheet.Cell(row, 4).Value = item.Category == "Mensual"
+            ? $"Cliente mensual\n{item.AccessSummary}" : item.Category;
+        var reportRow = new VehicleReportRow(row - 9, item);
+        sheet.Cell(row, 5).Value = item.Category == "Mensual" && item.PlanEndDate.HasValue
+            ? $"{reportRow.PlanStatusLabel}\nFin: {item.PlanEndDate:dd/MM/yyyy}"
+            : reportRow.PlanStatusLabel;
+        sheet.Cell(row, 6).Value = item.MonthlyFee;
+        sheet.Cell(row, 7).Value = item.TotalEntries;
+        if (item.LastEntryDate.HasValue) sheet.Cell(row, 8).Value = item.LastEntryDate.Value;
+        sheet.Cell(row, 9).Value = item.CurrentStatus;
+        sheet.Cell(row, 10).Value = item.TotalCollected;
+        sheet.Cell(row, 11).Value = item.TotalMinutesParked;
+        if (item.LastExitDate.HasValue) sheet.Cell(row, 12).Value = item.LastExitDate.Value;
+        ExcelBodyRow(sheet, row, 12);
+        if (item.Category == "Mensual")
+        {
+            sheet.Cell(row, 4).Style.Alignment.WrapText = true;
+            sheet.Cell(row, 5).Style.Alignment.WrapText = true;
+            sheet.Row(row).Height = 49;
+        }
+    }
+
+    /// <summary>Aplica anchos y formatos monetarios y de fecha a la hoja de vehículos.</summary>
+    private static void StyleVehicleExcelSheet(IXLWorksheet sheet, int nextRow, int totalRow)
+    {
         sheet.Columns(1, 12).Width = 17;
         sheet.Column(2).Width = 30;
         sheet.Column(4).Width = 23;
@@ -143,14 +156,11 @@ public sealed class ReportExportService
         sheet.Column(8).Width = 22;
         sheet.Column(12).Width = 22;
         sheet.Column(10).Width = 21;
-        sheet.Range(10, 6, Math.Max(row - 1, 10), 6).Style.NumberFormat.Format = CurrencyFormat;
-        sheet.Range(10, 10, Math.Max(row - 1, 10), 10).Style.NumberFormat.Format = CurrencyFormat;
-        sheet.Range(10, 8, Math.Max(row - 1, 10), 8).Style.DateFormat.Format = "dd/mm/yyyy hh:mm";
-        sheet.Range(10, 12, Math.Max(row - 1, 10), 12).Style.DateFormat.Format = "dd/mm/yyyy hh:mm";
+        sheet.Range(10, 6, Math.Max(nextRow - 1, 10), 6).Style.NumberFormat.Format = CurrencyFormat;
+        sheet.Range(10, 10, Math.Max(nextRow - 1, 10), 10).Style.NumberFormat.Format = CurrencyFormat;
+        sheet.Range(10, 8, Math.Max(nextRow - 1, 10), 8).Style.DateFormat.Format = "dd/mm/yyyy hh:mm";
+        sheet.Range(10, 12, Math.Max(nextRow - 1, 10), 12).Style.DateFormat.Format = "dd/mm/yyyy hh:mm";
         sheet.Cell(totalRow, 10).Style.NumberFormat.Format = CurrencyFormat;
-        ExcelFinish(sheet, 9, Math.Max(row - 1, 9), 12);
-        // El libro se escribe solo después de completar todos los estilos.
-        book.SaveAs(path);
     }
 
     /// <summary>Genera el informe Word de operadores desde las filas ya consultadas.</summary>

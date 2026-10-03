@@ -315,185 +315,102 @@ public class userViewModel : BaseViewModel
         return true;
     }
 
+    /// <summary>Prepara la nueva cuenta; el servicio de Application genera el hash.</summary>
+    private user CreateUser() => new()
+    {
+        username = username.Trim(),
+        full_name = FullName.Trim(),
+        role = SelectedRole.ToString(),
+        is_active = IsActive,
+        created_at = DateTime.Now,
+        created_by = _currentuserId,
+        login_attempts = 0,
+        is_deleted = false
+    };
+
+    /// <summary>Valida y registra una cuenta mediante Application.</summary>
     private async Task SaveAsync()
     {
-
         try
         {
-
-            if (!Validate(true))
-                return;
-
-
-
-            var entity = new user
-            {
-
-                username =
-                    username.Trim(),
-
-
-                full_name =
-                    FullName.Trim(),
-
-
-                role =
-                    SelectedRole.ToString(),
-
-
-
-                is_active =
-                    IsActive,
-
-
-                created_at =
-                    DateTime.Now,
-
-
-                created_by =
-                    _currentuserId,
-
-
-                login_attempts = 0,
-
-
-                is_deleted = false
-
-            };
-
-
-
-            if (!await _users.CreateAsync(entity, Password))
+            if (!Validate(true)) return;
+            if (!await _users.CreateAsync(CreateUser(), Password))
             {
                 StatusMessage = "El usuario ya existe.";
                 _dialogs.ShowWarning("Usuarios", StatusMessage);
                 return;
             }
 
-
-
-            StatusMessage =
-                "Usuario registrado correctamente.";
+            StatusMessage = "Usuario registrado correctamente.";
             _dialogs.ShowSuccess("Usuarios", StatusMessage);
-
-
-
             await LoadAsync();
-
-
-
             ClearForm();
-
         }
         catch (Exception ex)
         {
-
             System.Diagnostics.Debug.WriteLine($"Error al registrar usuario: {ex}");
             StatusMessage = "No se pudo registrar el usuario. Revise los datos e inténtelo de nuevo.";
             _dialogs.ShowError("Usuarios", StatusMessage);
-
         }
-
     }
-
+    /// <summary>Actualiza la cuenta seleccionada y envía una nueva contraseña solo si se escribió.</summary>
     private async Task UpdateAsync()
     {
-
         if (Id == 0)
         {
-            StatusMessage =
-                "Seleccione un usuario.";
+            StatusMessage = "Seleccione un usuario.";
             _dialogs.ShowWarning("Usuarios", StatusMessage);
-
             return;
         }
 
-
-
-        var entity =
-            await _users.GetByIdAsync(Id);
-
-
-
+        var entity = await _users.GetByIdAsync(Id);
         if (entity == null)
         {
-            StatusMessage =
-                "Usuario no encontrado.";
+            StatusMessage = "Usuario no encontrado.";
             _dialogs.ShowWarning("Usuarios", StatusMessage);
-
             return;
         }
 
-
-
-        entity.username =
-            username.Trim();
-
-
-        entity.full_name =
-            FullName.Trim();
-
-
-        entity.role =
-            SelectedRole.ToString();
-
-
-
-        entity.is_active =
-            IsActive;
-
-
-
-        entity.updated_at =
-            DateTime.Now;
-
-
-
-        entity.updated_by =
-            _currentuserId;
-
-
-
-        if (!string.IsNullOrWhiteSpace(Password))
-        {
-
-            if (Password.Length < 8)
-            {
-                StatusMessage = "La contraseña debe tener al menos 8 caracteres.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
-                return;
-            }
-
-            if (Password != ConfirmPassword)
-            {
-                StatusMessage =
-                    "Las contraseñas no coinciden.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
-
-                return;
-            }
-
-
-
-        }
-
+        ApplyUserChanges(entity);
+        if (!ValidateOptionalPassword()) return;
         await _users.UpdateAsync(entity, Password);
-
-
-
-        StatusMessage =
-            "Usuario actualizado.";
+        StatusMessage = "Usuario actualizado.";
         _dialogs.ShowSuccess("Usuarios", StatusMessage);
-
-
-
         await LoadAsync();
-
-
         ClearForm();
-
     }
 
+    /// <summary>Aplica los datos editables a la cuenta recuperada de Application.</summary>
+    private void ApplyUserChanges(user entity)
+    {
+        entity.username = username.Trim();
+        entity.full_name = FullName.Trim();
+        entity.role = SelectedRole.ToString();
+        entity.is_active = IsActive;
+        entity.updated_at = DateTime.Now;
+        entity.updated_by = _currentuserId;
+    }
+
+    /// <summary>Permite mantener la contraseña actual o validar la nueva antes de enviarla.</summary>
+    private bool ValidateOptionalPassword()
+    {
+        if (string.IsNullOrWhiteSpace(Password)) return true;
+        if (Password.Length < 8)
+        {
+            StatusMessage = "La contraseña debe tener al menos 8 caracteres.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
+            return false;
+        }
+        if (Password != ConfirmPassword)
+        {
+            StatusMessage = "Las contraseñas no coinciden.";
+            _dialogs.ShowWarning("Usuarios", StatusMessage);
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>Elimina lógicamente la cuenta seleccionada.</summary>
     private async Task DeleteAsync()
     {
 

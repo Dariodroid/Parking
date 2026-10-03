@@ -71,89 +71,79 @@ namespace Parking.Infrastructure.ExternalServices
         /// <summary>Busca placas en el fotograma, lee sus caracteres y devuelve solo la región reconocida para el visor.</summary>
         /// <param name="imageFrame">Fotograma codificado que se recibe de la cámara.</param>
         /// <returns>Lectura de placa, recorte y datos de detección; valores vacíos si no pudo reconocerla.</returns>
-        public async Task<PlateDetectionResult> DetectPlateWithRegionsAsync(byte[] imageFrame)
+        public Task<PlateDetectionResult> DetectPlateWithRegionsAsync(byte[] imageFrame) =>
+            Task.Run(() => DetectFrame(imageFrame));
+
+        /// <summary>Procesa un fotograma fuera del hilo de WPF y conserva el primer candidato reconocido.</summary>
+        private PlateDetectionResult DetectFrame(byte[] imageFrame)
         {
-            return await Task.Run(() =>
+            var result = new PlateDetectionResult();
+            try
             {
-                var result = new PlateDetectionResult();
+                if (imageFrame == null || imageFrame.Length == 0) return result;
+                using var src = Cv2.ImDecode(imageFrame, ImreadModes.Color);
+                if (src.Empty()) return result;
 
-                try
+                var regions = FindCandidateRegions(src);
+                result.HasPlateCandidates = regions.Count > 0;
+                foreach (var rect in regions)
                 {
-                    if (imageFrame == null || imageFrame.Length == 0) return result;
+                    var padded = OpenCvSharp.Rect.Intersect(
+                        new OpenCvSharp.Rect(rect.X - rect.Width / 20, rect.Y - rect.Height / 8,
+                            rect.Width + rect.Width / 10, rect.Height + rect.Height / 4),
+                        new OpenCvSharp.Rect(0, 0, src.Width, src.Height));
+                    using var plate = new Mat(src, padded);
+                    var readings = ReadRegion(plate);
+                    if (readings.Count == 0) continue;
 
-                    using var src = Cv2.ImDecode(imageFrame, ImreadModes.Color);
-                    if (src.Empty()) return result;
-
-                    var roi = GetRecognitionRegion(src.Width, src.Height);
-                    using var searchArea = new Mat(src, roi);
-                    // Lazy.Value inicializa el modelo aquí, fuera del hilo de la interfaz.
-                    var regions = _detector.Value.Detect(searchArea);
-
-                    // 2. Si no detectó nada, fallback
-                    if (regions.Count == 0)
-                        regions = DetectPlateRegions(searchArea);
-
-                    // El detector trabaja en la ROI; los rectángulos se trasladan al frame original.
-                    regions = regions.Select(r => new OpenCvSharp.Rect(r.X + roi.X, r.Y + roi.Y, r.Width, r.Height))
-                        .Select(r => OpenCvSharp.Rect.Intersect(r, new OpenCvSharp.Rect(0, 0, src.Width, src.Height)))
-                        .Where(r => r.Width >= 60 && r.Height >= 20)
-                        .Take(3).ToList();
-                    // Esta marca permite distinguir un fallo temporal del OCR de la ausencia del vehículo.
-                    result.HasPlateCandidates = regions.Count > 0;
-                    foreach (var rect in regions)
-                    {
-                        var padded = OpenCvSharp.Rect.Intersect(
-                            new OpenCvSharp.Rect(rect.X - rect.Width / 20, rect.Y - rect.Height / 8,
-                                rect.Width + rect.Width / 10, rect.Height + rect.Height / 4),
-                            new OpenCvSharp.Rect(0, 0, src.Width, src.Height));
-                        using var plate = new Mat(src, padded);
-                        var readings = new List<string>();
-
-                        // Tesseract se crea al necesitarlo y se protege porque sus opciones son compartidas.
-                        var engine = _engine.Value;
-                        lock (engine)
-                        {
-                            // El encabezado (por ejemplo, ECUADOR) está encima del número.
-                            // El detector y la captura conservan la placa completa, pero el
-                            // OCR comienza en la franja de caracteres para evitar esa línea.
-                            foreach (double topFraction in new[] { .22, .12, 0.0 })
-                            {
-                                int top = (int)(plate.Height * topFraction);
-                                using var characterBand = new Mat(plate,
-                                    new OpenCvSharp.Rect(0, top, plate.Width, plate.Height - top));
-                                foreach (var candidate in CreateOcrCandidates(characterBand))
-                                    readings.AddRange(ReadPlateFromCandidate(engine, candidate));
-
-                                // Varios filtros deben coincidir antes de aceptar la lectura.
-                                // Solo ampliamos la zona si el recorte aún no es concluyente.
-                                if (readings.GroupBy(text => text).Any(group => group.Count() >= 3))
-                                    break;
-                            }
-                        }
-
-                        if (readings.Count > 0)
-                        {
-                            result.PlateNumber = readings.GroupBy(text => text)
-                                .OrderByDescending(group => group.Count())
-                                .First().Key;
-                            // Mostrar solo la región que permitió leer la placa.
-                            // Los demás candidatos del detector siguen disponibles
-                            // para OCR, pero no se dibujan sobre el visor.
-                            var displayRegion = ChooseDisplayRegion(regions, rect);
-                            result.DetectedRegions.Add(new PlateRegion(
-                                displayRegion.X, displayRegion.Y, displayRegion.Width, displayRegion.Height));
-                            result.PlateImage = plate.ToBytes(".jpg");
-                            return result;
-                        }
-                    }
+                    result.PlateNumber = readings.GroupBy(text => text)
+                        .OrderByDescending(group => group.Count()).First().Key;
+                    var display = ChooseDisplayRegion(regions, rect);
+                    result.DetectedRegions.Add(new PlateRegion(display.X, display.Y, display.Width, display.Height));
+                    result.PlateImage = plate.ToBytes(".jpg");
                     return result;
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en detección: {ex.Message}");
+            }
+            return result;
+        }
+
+        /// <summary>Traduce las detecciones de la ROI a coordenadas del fotograma completo.</summary>
+        private List<OpenCvSharp.Rect> FindCandidateRegions(Mat src)
+        {
+            var roi = GetRecognitionRegion(src.Width, src.Height);
+            using var searchArea = new Mat(src, roi);
+            // El modelo se inicializa aquí, fuera del hilo de la interfaz.
+            var regions = _detector.Value.Detect(searchArea);
+            if (regions.Count == 0) regions = DetectPlateRegions(searchArea);
+            return regions.Select(r => new OpenCvSharp.Rect(r.X + roi.X, r.Y + roi.Y, r.Width, r.Height))
+                .Select(r => OpenCvSharp.Rect.Intersect(r,
+                    new OpenCvSharp.Rect(0, 0, src.Width, src.Height)))
+                .Where(r => r.Width >= 60 && r.Height >= 20).Take(3).ToList();
+        }
+
+        /// <summary>Prueba las tres franjas y mantiene el consenso de lecturas OCR anterior.</summary>
+        private List<string> ReadRegion(Mat plate)
+        {
+            var readings = new List<string>();
+            var engine = _engine.Value;
+            lock (engine)
+            {
+                foreach (double topFraction in new[] { .22, .12, 0.0 })
                 {
-                    Console.WriteLine($"Error en detección: {ex.Message}");
-                    return result;
+                    int top = (int)(plate.Height * topFraction);
+                    using var band = new Mat(plate,
+                        new OpenCvSharp.Rect(0, top, plate.Width, plate.Height - top));
+                    foreach (var candidate in CreateOcrCandidates(band))
+                        readings.AddRange(ReadPlateFromCandidate(engine, candidate));
+                    if (readings.GroupBy(text => text).Any(group => group.Count() >= 3))
+                        break;
                 }
-            });
+            }
+            return readings;
         }
         /// <summary>Busca por bordes posibles placas cuando el detector principal no encuentra ninguna.</summary>
         /// <param name="src">Zona de búsqueda del fotograma.</param>
