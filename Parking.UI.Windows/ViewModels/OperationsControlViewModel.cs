@@ -13,7 +13,8 @@ namespace Parking.UI.Windows.ViewModels;
 /// <summary>Presenta incidencias, revisiones y la conciliación del turno del usuario actual.</summary>
 public sealed class OperationsControlViewModel : BaseViewModel
 {
-    private readonly IOperationsControlService _control;
+    private readonly IControlIncidentService _incidents;
+    private readonly IShiftClosingService _shifts;
     private readonly CameraHealthMonitor _cameras;
     private readonly IDialogService _dialogs;
     private ControlIncident? _selectedIncident;
@@ -52,13 +53,16 @@ public sealed class OperationsControlViewModel : BaseViewModel
     public ICommand CloseShiftCommand { get; }
 
     /// <summary>Prepara el centro sin consultar SQL hasta que el administrador navega a él.</summary>
-    /// <param name="control">Cálculos y escritura auditada del módulo.</param>
+    /// <param name="incidents">Consulta de incidencias y escritura de revisiones.</param>
+    /// <param name="shifts">Cálculos y cierres de caja del turno.</param>
     /// <param name="cameras">Fallos de vídeo del proceso actual.</param>
     /// <param name="dialogs">Muestra los avisos y confirmaciones con CustomMessageBox.</param>
-    public OperationsControlViewModel(IOperationsControlService control, CameraHealthMonitor cameras,
+    public OperationsControlViewModel(IControlIncidentService incidents, IShiftClosingService shifts,
+        CameraHealthMonitor cameras,
         IDialogService dialogs)
     {
-        _control = control;
+        _incidents = incidents;
+        _shifts = shifts;
         _cameras = cameras;
         _dialogs = dialogs;
         RefreshCommand = new AsyncRelayCommand(_ => LoadAsync());
@@ -72,10 +76,10 @@ public sealed class OperationsControlViewModel : BaseViewModel
         try
         {
             Status = "Actualizando el centro de control...";
-            var incidents = IsAdministrator ? await _control.GetOpenIncidentsAsync() : [];
-            var reviews = IsAdministrator ? await _control.GetReviewsAsync() : [];
-            var closures = await _control.GetClosuresAsync(IsAdministrator ? null : CurrentUser.Id);
-            var shift = await _control.GetCurrentShiftAsync(CurrentUser.Id);
+            var incidents = IsAdministrator ? await _incidents.GetOpenIncidentsAsync() : [];
+            var reviews = IsAdministrator ? await _incidents.GetReviewsAsync() : [];
+            var closures = await _shifts.GetClosuresAsync(IsAdministrator ? null : CurrentUser.Id);
+            var shift = await _shifts.GetCurrentShiftAsync(CurrentUser.Id);
             Incidents.Clear();
             foreach (var item in incidents.Concat(IsAdministrator ? _cameras.GetIncidents() : [])
                 .OrderByDescending(x => x.OccurredAt))
@@ -129,7 +133,7 @@ public sealed class OperationsControlViewModel : BaseViewModel
         }
         try
         {
-            await _control.ReviewAsync(SelectedIncident.Key, ReviewReason, CurrentUser.Id);
+            await _incidents.ReviewAsync(SelectedIncident.Key, ReviewReason, CurrentUser.Id);
             ReviewReason = string.Empty;
             SelectedIncident = null;
             Status = "Revisión guardada con usuario, fecha y motivo.";
@@ -173,7 +177,7 @@ public sealed class OperationsControlViewModel : BaseViewModel
             return;
         try
         {
-            ShiftClosure closure = await _control.CloseShiftAsync(CurrentUser.Id, counted, ClosingNote);
+            ShiftClosure closure = await _shifts.CloseShiftAsync(CurrentUser.Id, counted, ClosingNote);
             CountedCash = string.Empty;
             ClosingNote = string.Empty;
             Status = $"Turno #{closure.Id} cerrado. Diferencia de efectivo: {CurrencyDisplay.Format(closure.Difference)}.";

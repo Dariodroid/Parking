@@ -18,7 +18,8 @@ public class OperatorReportViewModel : BaseViewModel
 {
     private readonly IReportQueryService _reports;
     private readonly IDialogService _dialogs;
-    private readonly ReportExportService _exportService = new();
+    private readonly ReportExcelExporter _excelExporter = new();
+    private readonly ReportWordExporter _wordExporter = new();
     private readonly ReportPrintService _printService = new();
     private ObservableCollection<OperatorReportItem> _reportItems = new();
     private DateTime _fromDate = DateTime.Today.AddMonths(-1);
@@ -133,9 +134,9 @@ public class OperatorReportViewModel : BaseViewModel
         try
         {
             if (word)
-                _exportService.ExportOperatorsWord(dialog.FileName, ReportItems, AppliedFromDate, AppliedToDate, ReportDate);
+                _wordExporter.ExportOperatorsWord(dialog.FileName, ReportItems, AppliedFromDate, AppliedToDate, ReportDate);
             else
-                _exportService.ExportOperatorsExcel(dialog.FileName, ReportItems, AppliedFromDate, AppliedToDate, ReportDate);
+                _excelExporter.ExportOperatorsExcel(dialog.FileName, ReportItems, AppliedFromDate, AppliedToDate, ReportDate);
             _dialogs.ShowSuccess("Reportes", "Informe exportado correctamente.");
         }
         catch (Exception ex)

@@ -4,7 +4,7 @@ using Parking.Application.UseCases;
 
 namespace Parking.Application.Interfaces
 {
-    /// <summary>Contrato para registrar entradas, consultar sesiones abiertas y cerrar salidas.</summary>
+    /// <summary>Contrato para registrar la entrada de un vehículo y asignarle un puesto.</summary>
     public interface IEntryService
     {
         /// <summary>
@@ -26,26 +26,5 @@ namespace Parking.Application.Interfaces
         /// <returns>Puesto asignado y decisión mensual u ocasional; indica falta de cupo o sesión existente.</returns>
         Task<EntryRegistrationResult> RegisterEntryDetailedAsync(string plateNumber, int vehicleTypeId, byte[]? plateImage = null, int? selectedSlotId = null);
 
-        /// <summary>Busca la sesión abierta por placa y registra su salida.</summary>
-        /// <param name="plateNumber">Placa cuya estancia debe cerrarse.</param>
-        /// <param name="paymentMethod">Medio de pago elegido; sin especificar si no se indicó.</param>
-        /// <returns>Verdadero si se guardó el cierre de la sesión.</returns>
-        Task<bool> RegisterExitByPlateAsync(string plateNumber, string paymentMethod = "other");
-
-        /// <summary>Busca una sesión ocasional abierta mediante el contenido de su ticket QR.</summary>
-        /// <param name="qrCode">Identificador SESSION codificado en el ticket.</param>
-        /// <param name="paymentMethod">Medio de pago elegido; sin especificar si no se indicó.</param>
-        /// <returns>Verdadero si se guardó el cierre de la sesión.</returns>
-        Task<bool> RegisterExitByQrAsync(string qrCode, string paymentMethod = "other");
-
-        /// <summary>Consulta una estancia aún abierta mediante su placa.</summary>
-        /// <param name="plateNumber">Placa del vehículo.</param>
-        /// <returns>Sesión abierta o nulo si no existe.</returns>
-        Task<parking_session?> GetActiveSessionByPlateAsync(string plateNumber);
-
-        /// <summary>Consulta una estancia aún abierta mediante el identificador QR.</summary>
-        /// <param name="qrCode">Contenido leído del ticket.</param>
-        /// <returns>Sesión abierta o nulo si el QR no corresponde a una.</returns>
-        Task<parking_session?> GetActiveSessionByQrAsync(string qrCode);
     }
 }

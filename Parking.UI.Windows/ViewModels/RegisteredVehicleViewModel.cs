@@ -1,6 +1,5 @@
 using Parking.UI.Windows.Interfaces;
 using Parking.Application.Services;
-using Parking.Application.UseCases;
 using Parking.Application.Dto;
 using Parking.Application.Interfaces;
 using Parking.Domain.Model.Policies;
@@ -11,7 +10,6 @@ using Parking.UI.Windows.Helpers;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.Windows;
 using System.Windows.Input;
 
@@ -22,7 +20,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly IRegisteredVehicleManagementService _service;
     private readonly IMonthlyFeeLedgerService _monthlyLedger;
-    bool confirmed;
 
 
     private readonly int _currentUserId = CurrentUser.Id;
@@ -237,76 +234,28 @@ public class RegisteredVehicleViewModel : BaseViewModel
     private void InitializeSchedules()
     {
         VehicleSchedules.Clear();
-
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        string[] dayNames =
         {
-            DayOfWeek = 1,
-            DayName = "LUNES",
-            IsEnabled = true,
-            StartTime = new TimeSpan(7, 0, 0),
-            EndTime = new TimeSpan(19, 0, 0),
-            IsFullDay = false
-        });
+            "LUNES", "MARTES", "MIÉRCOLES", "JUEVES",
+            "VIERNES", "SÁBADO", "DOMINGO"
+        };
 
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
+        // La pantalla empieza en lunes, aunque la base de datos representa domingo con 0.
+        for (int index = 0; index < dayNames.Length; index++)
         {
-            DayOfWeek = 2,
-            DayName = "MARTES",
-            IsEnabled = true,
-            StartTime = new TimeSpan(7, 0, 0),
-            EndTime = new TimeSpan(19, 0, 0),
-            IsFullDay = false
-        });
-
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
-        {
-            DayOfWeek = 3,
-            DayName = "MIÉRCOLES",
-            IsEnabled = true,
-            StartTime = new TimeSpan(7, 0, 0),
-            EndTime = new TimeSpan(19, 0, 0),
-            IsFullDay = false
-        });
-
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
-        {
-            DayOfWeek = 4,
-            DayName = "JUEVES",
-            IsEnabled = true,
-            StartTime = new TimeSpan(7, 0, 0),
-            EndTime = new TimeSpan(19, 0, 0),
-            IsFullDay = false
-        });
-
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
-        {
-            DayOfWeek = 5,
-            DayName = "VIERNES",
-            IsEnabled = true,
-            StartTime = new TimeSpan(7, 0, 0),
-            EndTime = new TimeSpan(19, 0, 0),
-            IsFullDay = false
-        });
-
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
-        {
-            DayOfWeek = 6,
-            DayName = "SÁBADO",
-            IsEnabled = true,
-            StartTime = new TimeSpan(8, 0, 0),
-            EndTime = new TimeSpan(18, 0, 0),
-            IsFullDay = false
-        });
-
-        VehicleSchedules.Add(new VehicleScheduleItemViewModel
-        {
-            DayOfWeek = 0,
-            DayName = "DOMINGO",
-            IsEnabled = false,
-            StartTime = new TimeSpan(8, 0, 0),
-            EndTime = new TimeSpan(18, 0, 0),
-            IsFullDay = false
-        });
+            bool isSunday = index == 6;
+            bool isWeekend = index >= 5;
+            int dayOfWeek = isSunday ? 0 : index + 1;
+            VehicleSchedules.Add(new VehicleScheduleItemViewModel
+            {
+                DayOfWeek = dayOfWeek,
+                DayName = dayNames[index],
+                IsEnabled = !isSunday,
+                StartTime = TimeSpan.FromHours(isWeekend ? 8 : 7),
+                EndTime = TimeSpan.FromHours(isWeekend ? 18 : 19),
+                IsFullDay = false
+            });
+        }
     }
 
     /// <summary>Carga una sola vez los tipos, clientes y horarios necesarios para el formulario.</summary>
@@ -406,43 +355,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
     /// <returns>Verdadero cuando los datos son aptos para guardarse sin redondear importes.</returns>
     private bool Validate()
     {
-        if (string.IsNullOrWhiteSpace(Plate))
-        {
-            _dialogService.ShowWarning("Atención", "Ingrese la placa."); return false;
-        }
-
-        if (VehicleTypeId <= 0)
-        {
-            _dialogService.ShowWarning("Atención", "Seleccione el tipo de vehículo."); return false;
-        }
-
-        if (MonthlyFee == null || MonthlyFee <= 0)
-        {
-            _dialogService.ShowWarning("Atención", "Ingrese el valor mensual."); return false;
-        }
-
-        if (!MoneyAmount.IsValid(MonthlyFee.Value))
-        {
-            _dialogService.ShowWarning("Atención", "La mensualidad debe tener como máximo dos decimales y caber en la base de datos. No se redondeará automáticamente.");
-            return false;
-        }
-
-        if (MonthlyStartDate == null)
-        {
-            _dialogService.ShowWarning("Atención", "Seleccione fecha inicial."); return false;
-        }
-
-        if (MonthlyEndDate == null)
-        {
-            _dialogService.ShowWarning("Atención", "Seleccione fecha final."); return false;
-        }
-
-        if (MonthlyEndDate < MonthlyStartDate)
-        {
-            _dialogService.ShowWarning("Atención", "La fecha final no puede ser menor."); return false;
-        }
-
-        return true;
+        string? error = RegisteredVehicleFormValidator.GetError(
+            Plate, VehicleTypeId, MonthlyFee, MonthlyStartDate, MonthlyEndDate);
+        if (error is null) return true;
+        _dialogService.ShowWarning("Atención", error);
+        return false;
     }
 
     /// <summary>Construye la ficha que acompaña al nuevo contrato mensual.</summary>
@@ -723,10 +640,8 @@ public class RegisteredVehicleViewModel : BaseViewModel
                 return;
             }
 
-            confirmed = _dialogService.ShowConfirmation("Confirmar Eliminación",
-            $"¿Está seguro de eliminar a: '{entity.owner_name}'?");
-
-            if (!confirmed)
+            if (!_dialogService.ShowConfirmation("Confirmar Eliminación",
+                $"¿Está seguro de eliminar a: '{entity.owner_name}'?"))
             {
                 return;
             }

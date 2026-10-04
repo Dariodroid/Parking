@@ -16,7 +16,8 @@ public class VehicleReportViewModel : BaseViewModel
 {
     private readonly IReportQueryService _reports;
     private readonly IDialogService _dialogs;
-    private readonly ReportExportService _exportService = new();
+    private readonly ReportExcelExporter _excelExporter = new();
+    private readonly ReportWordExporter _wordExporter = new();
     private readonly ReportPrintService _printService = new();
     private ObservableCollection<VehicleReportDto> _vehicles = new();
     private IReadOnlyList<VehicleReportRow> _reportRows = [];
@@ -57,9 +58,9 @@ public class VehicleReportViewModel : BaseViewModel
         }
     }
     /// <summary>Período de la última búsqueda para el encabezado de la hoja.</summary>
-    public string AppliedPeriod => ReportExportService.VehiclePeriod(AppliedFilter);
+    public string AppliedPeriod => VehicleReportCriteriaFormatter.VehiclePeriod(AppliedFilter);
     /// <summary>Criterios de la última búsqueda para el encabezado de la hoja.</summary>
-    public string AppliedCriteria => ReportExportService.VehicleCriteria(AppliedFilter);
+    public string AppliedCriteria => VehicleReportCriteriaFormatter.VehicleCriteria(AppliedFilter);
     public decimal TotalCollected
     {
         get => _totalCollected;
@@ -151,9 +152,9 @@ public class VehicleReportViewModel : BaseViewModel
         try
         {
             if (word)
-                _exportService.ExportVehiclesWord(dialog.FileName, Vehicles, AppliedFilter, ReportDate);
+                _wordExporter.ExportVehiclesWord(dialog.FileName, Vehicles, AppliedFilter, ReportDate);
             else
-                _exportService.ExportVehiclesExcel(dialog.FileName, Vehicles, AppliedFilter, ReportDate);
+                _excelExporter.ExportVehiclesExcel(dialog.FileName, Vehicles, AppliedFilter, ReportDate);
             _dialogs.ShowSuccess("Reportes", "Informe exportado correctamente.");
         }
         catch (Exception ex)

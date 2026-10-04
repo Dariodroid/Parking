@@ -95,8 +95,10 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<ISqlConnectionTester, SqlConnectionTester>();
             serviceCollection.AddSingleton<IMonthlyFeeLedgerRepository, MonthlyFeeLedgerRepository>();
             serviceCollection.AddSingleton<IMonthlyFeeLedgerService, Parking.Application.Services.MonthlyFeeLedgerService>();
-            serviceCollection.AddTransient<IOperationsControlRepository, OperationsControlRepository>();
-            serviceCollection.AddTransient<IOperationsControlService, OperationsControlService>();
+            serviceCollection.AddTransient<IControlIncidentRepository, ControlIncidentRepository>();
+            serviceCollection.AddTransient<IShiftClosingRepository, ShiftClosingRepository>();
+            serviceCollection.AddTransient<IControlIncidentService, ControlIncidentService>();
+            serviceCollection.AddTransient<IShiftClosingService, ShiftClosingService>();
             serviceCollection.AddSingleton<IPlateService, PlateReaderService>();
             serviceCollection.AddSingleton<IFrameOverlayRenderer, OpenCvFrameOverlayRenderer>();
             serviceCollection.AddSingleton<IEntryPhotoStore, LocalEntryPhotoStore>();
@@ -106,11 +108,14 @@ namespace Parking.UI.Windows
             serviceCollection.AddSingleton<ExcelExportService>();
             // La cola térmica se consulta en Windows y el ticket sale tras confirmar SQL.
             serviceCollection.AddSingleton<ThermalTicketPrinter>();
+            serviceCollection.AddTransient<EntryTicketPrintService>();
+            serviceCollection.AddTransient<CameraPreviewService>();
 
             // ====================== 4. SERVICIOS DE APLICACIÓN ======================
             // EntryService usa repositorios DbContext scoped: comparte una sola
             // unidad de trabajo al registrar sesión y ocupación del puesto.
             serviceCollection.AddScoped<IEntryService, EntryService>();
+            serviceCollection.AddScoped<IExitService, ExitService>();
             // En tu App.xaml.cs o donde configures la inyección
             serviceCollection.AddSingleton<IDialogService, DialogService>();
 

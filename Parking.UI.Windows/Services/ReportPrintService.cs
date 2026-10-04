@@ -78,29 +78,7 @@ public sealed class ReportPrintService
             double sourceHeight = sheet.ActualHeight;
             if (sourceHeight <= 0) throw new InvalidOperationException("La hoja del informe quedó sin contenido imprimible.");
 
-            // Se mantiene el tamaño visual y se divide su altura en páginas reales.
-            const double margin = 18;
-            double scale = Math.Min(1, (pageWidth - margin * 2) / sourceWidth);
-            double sliceHeight = (pageHeight - margin * 2) / scale;
-            var rowBreaks = FindRowBreaks(sheet);
-            double offset = 0;
-            while (offset < sourceHeight - 0.5)
-            {
-                double end = Math.Min(sourceHeight, offset + sliceHeight);
-                if (end < sourceHeight)
-                {
-                    // Terminar entre filas evita separar texto de una misma estancia.
-                    double lowerBound = offset + sliceHeight * 0.65;
-                    double rowEnd = rowBreaks.Where(y => y > lowerBound && y <= end).DefaultIfEmpty(0).Max();
-                    if (rowEnd > offset) end = rowEnd;
-                }
-                double height = end - offset;
-                if (height <= 0) throw new InvalidOperationException("No se pudo dividir el informe en páginas.");
-                // El mapa de bits congela esta página antes de devolver la hoja al visor.
-                var image = RenderSlice(sheet, sourceWidth, offset, height);
-                document.Pages.Add(CreatePage(image, pageWidth, pageHeight, sourceWidth, height, scale, margin));
-                offset = end;
-            }
+            AddPages(document, sheet, sourceWidth, sourceHeight, pageWidth, pageHeight);
         }
         finally
         {
@@ -116,6 +94,40 @@ public sealed class ReportPrintService
             viewer.ScrollToVerticalOffset(verticalOffset);
         }
         return document;
+    }
+
+    /// <summary>Divide la hoja completa en páginas y procura no cortar filas del informe.</summary>
+    private static void AddPages(FixedDocument document, FrameworkElement sheet,
+        double sourceWidth, double sourceHeight, double pageWidth, double pageHeight)
+    {
+        const double margin = 18;
+        double scale = Math.Min(1, (pageWidth - margin * 2) / sourceWidth);
+        double sliceHeight = (pageHeight - margin * 2) / scale;
+        var rowBreaks = FindRowBreaks(sheet);
+        double offset = 0;
+
+        while (offset < sourceHeight - 0.5)
+        {
+            double end = Math.Min(sourceHeight, offset + sliceHeight);
+            if (end < sourceHeight)
+            {
+                double lowerBound = offset + sliceHeight * 0.65;
+                double rowEnd = 0;
+                foreach (double rowBreak in rowBreaks)
+                {
+                    if (rowBreak > lowerBound && rowBreak <= end && rowBreak > rowEnd)
+                        rowEnd = rowBreak;
+                }
+                if (rowEnd > offset) end = rowEnd;
+            }
+
+            double height = end - offset;
+            if (height <= 0) throw new InvalidOperationException("No se pudo dividir el informe en páginas.");
+            // La imagen se conserva antes de devolver la hoja al visor.
+            var image = RenderSlice(sheet, sourceWidth, offset, height);
+            document.Pages.Add(CreatePage(image, pageWidth, pageHeight, sourceWidth, height, scale, margin));
+            offset = end;
+        }
     }
 
     /// <summary>Rasteriza una franja de la hoja independiente y congela el resultado.</summary>

@@ -286,15 +286,6 @@ namespace Parking.Infrastructure.ExternalServices
             return RecognizePlateAsync(image);
         }
 
-        /// <summary>Variante sin imagen mantenida por compatibilidad con la interfaz.</summary>
-        /// <returns>No retorna un resultado.</returns>
-        /// <exception cref="NotImplementedException">Siempre: no puede reconocerse una placa sin imagen.</exception>
-        public Task<string> RecognizePlateAsync()
-        {
-            // La cámara debe entregar un fotograma a la otra sobrecarga.
-            throw new NotImplementedException();
-        }
-
         /// <summary>Libera el motor OCR únicamente si llegó a inicializarse.</summary>
         public void Dispose()
         {

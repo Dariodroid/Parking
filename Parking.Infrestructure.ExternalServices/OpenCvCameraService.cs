@@ -59,7 +59,7 @@ namespace Parking.Infrastructure.ExternalServices
                         // La versión local de OpenCvSharp no expone los nombres de
                         // CAP_PROP_OPEN_TIMEOUT_MSEC (53) y READ_TIMEOUT_MSEC (54).
                         _capture = new VideoCapture(source.StreamUrl, VideoCaptureAPIs.FFMPEG,
-                            [53, 5000, 54, 3000]);
+                            new[] { 53, 5000, 54, 3000 });
                         if (!_capture.IsOpened())
                         {
                             // El backend predeterminado puede aceptar ciertos MJPEG HTTP.

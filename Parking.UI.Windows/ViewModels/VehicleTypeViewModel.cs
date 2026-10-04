@@ -230,22 +230,11 @@ public class vehicle_typeViewModel : BaseViewModel
 
             var entity = new vehicle_type
             {
-                name = Name.Trim(),
-                icon = Icon?.Trim(),
-
-                hourly_rate = HourlyRate,
-
-                grace_minutes = GraceMinutes,
-                fraction_minutes = FractionMinutes,
-                fraction_rate = FractionRate,
-
-                is_active = IsActive,
-
                 created_at = DateTime.Now,
                 created_by = _currentuserId,
-
                 is_deleted = false
             };
+            ApplyForm(entity);
 
             await _service.CreateAsync(entity);
 
@@ -283,17 +272,7 @@ public class vehicle_typeViewModel : BaseViewModel
                 return;
             }
 
-            entity.name = Name.Trim();
-            entity.icon = Icon?.Trim();
-
-            entity.hourly_rate = HourlyRate;
-
-            entity.grace_minutes = GraceMinutes;
-            entity.fraction_minutes = FractionMinutes;
-            entity.fraction_rate = FractionRate;
-
-            entity.is_active = IsActive;
-
+            ApplyForm(entity);
             entity.updated_at = DateTime.Now;
             entity.updated_by = _currentuserId;
 
@@ -309,6 +288,18 @@ public class vehicle_typeViewModel : BaseViewModel
         {
             _dialogService.ShowInfo("Mensaje !", ex.Message);
         }
+    }
+
+    /// <summary>Aplica las mismas tarifas y datos editables al crear o actualizar.</summary>
+    private void ApplyForm(vehicle_type entity)
+    {
+        entity.name = Name.Trim();
+        entity.icon = Icon?.Trim();
+        entity.hourly_rate = HourlyRate;
+        entity.grace_minutes = GraceMinutes;
+        entity.fraction_minutes = FractionMinutes;
+        entity.fraction_rate = FractionRate;
+        entity.is_active = IsActive;
     }
 
     /// <summary>Elimina el tipo seleccionado tras las validaciones del repositorio.</summary>

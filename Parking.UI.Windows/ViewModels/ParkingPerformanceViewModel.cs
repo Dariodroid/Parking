@@ -15,7 +15,8 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
 {
     private readonly IReportQueryService _reports;
     private readonly IDialogService _dialogs;
-    private readonly ReportExportService _export = new();
+    private readonly ReportExcelExporter _excelExporter = new();
+    private readonly ReportWordExporter _wordExporter = new();
     private readonly ReportPrintService _printer = new();
     private DateTime _startDate = DateTime.Today.AddDays(-29);
     private DateTime _endDate = DateTime.Today;
@@ -110,8 +111,8 @@ public sealed class ParkingPerformanceViewModel : BaseViewModel
         if (dialog.ShowDialog() != true) return;
         try
         {
-            if (word) _export.ExportPerformanceWord(dialog.FileName, Report, AppliedStartDate, AppliedEndDate);
-            else _export.ExportPerformanceExcel(dialog.FileName, Report, AppliedStartDate, AppliedEndDate);
+            if (word) _wordExporter.ExportPerformanceWord(dialog.FileName, Report, AppliedStartDate, AppliedEndDate);
+            else _excelExporter.ExportPerformanceExcel(dialog.FileName, Report, AppliedStartDate, AppliedEndDate);
             Status = $"Informe guardado en {dialog.FileName}.";
             _dialogs.ShowSuccess("Rendimiento", Status);
         }

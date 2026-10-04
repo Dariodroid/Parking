@@ -44,7 +44,9 @@ public class AuthenticationService : IAuthenticationService
             validPassword = _passwordHasher.VerifyPassword(
                 request.Password, user?.password_hash ?? DummyPasswordHash);
         }
-        catch (Exception ex) when (ex is FormatException or ArgumentException or OverflowException)
+        catch (Exception ex) when (ex is FormatException ||
+                                   ex is ArgumentException ||
+                                   ex is OverflowException)
         {
             // Un hash dañado tampoco debe revelar que la cuenta sí existe.
             _passwordHasher.VerifyPassword(request.Password, DummyPasswordHash);
@@ -56,7 +58,7 @@ public class AuthenticationService : IAuthenticationService
         if (user == null || !user.is_active || !validPassword)
         {
             // Solo un usuario real y activo incrementa el contador; SQL hace la operación atómica.
-            if (user is { is_active: true } && !locked && !validPassword)
+            if (user != null && user.is_active && !locked && !validPassword)
                 await _userRepository.RecordFailedLoginAsync(user.id, DateTime.UtcNow,
                     MaximumAttempts, LockDuration);
             return new LoginResult

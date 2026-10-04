@@ -10,12 +10,10 @@ using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 
 namespace Parking.UI.Windows.ViewModels
 {
@@ -25,22 +23,20 @@ namespace Parking.UI.Windows.ViewModels
         private readonly IVehicleTypeManagementService _vehicleTypes;
         private readonly IParkingSlotManagementService _slots;
         private static readonly TimeSpan AutoDetectionInterval = TimeSpan.FromMilliseconds(900);
-        private static readonly TimeSpan DetectionDisplayTime = TimeSpan.FromSeconds(3);
 
         private readonly ICameraSourceCatalog _cameraSourceCatalog;
         private readonly CameraSelectionStore _cameraSelectionStore;
         private readonly CameraHealthMonitor _cameraHealth;
         private readonly CameraSelectionConfiguration? _savedCameraSelection;
         private readonly IPlateService _plateService;
-        private readonly IFrameOverlayRenderer _frameOverlayRenderer;
+        private readonly CameraPreviewService _cameraPreview;
         private readonly IEntryService _entryService;
+        private readonly IExitService _exitService;
         private readonly IParkingStatusNotifier _parkingStatusNotifier;
-        private readonly ThermalTicketPrinter _ticketPrinter;
-        private readonly ApplicationSettingsStore _settingsStore;
-        private EntryTicketData? _lastTicket;
+        private readonly EntryTicketPrintService _ticketPrint;
 
         /// <summary>Habilita reimpresión después de una entrada ocasional confirmada.</summary>
-        public bool CanReprintLastTicket => _lastTicket is not null;
+        public bool CanReprintLastTicket => _ticketPrint.CanReprint;
 
         // Detector compartido: una lectura OCR a la vez protege el modelo nativo.
         private readonly SemaphoreSlim _plateReaderGate = new(1, 1);
@@ -73,18 +69,9 @@ namespace Parking.UI.Windows.ViewModels
         private DateTime _lastDetectionTime = DateTime.MinValue;
         // El mismo contexto de datos atiende entrada y salida; esta puerta evita operaciones simultáneas.
         private readonly SemaphoreSlim _sessionOperationGate = new(1, 1);
-        private string _handledPlate = string.Empty;
-        private DateTime _handledPlateLastSeenUtc = DateTime.MinValue;
-        // La placa debe desaparecer antes de aceptar otra lectura como nuevo vehículo.
-        private static readonly TimeSpan PlateReentryInterval = TimeSpan.FromSeconds(5);
-        private string _lastExitedPlate = string.Empty;
-        private DateTime _lastExitUtc = DateTime.MinValue;
-        // Tras una salida, el vehículo dispone de tiempo para despejar la cámara.
-        private static readonly TimeSpan ExitEntryCooldown = TimeSpan.FromSeconds(30);
+        private readonly PlateScanHistory _scanHistory = new();
 
         private readonly IQrService _qrService;
-        private string _lastScannedQr = string.Empty;
-        private DateTime _lastQrScanTime = DateTime.MinValue;
         // Espaciado mínimo de lecturas QR para no procesar cada fotograma.
         private static readonly TimeSpan QrDetectionInterval = TimeSpan.FromMilliseconds(350);
 
@@ -156,13 +143,13 @@ namespace Parking.UI.Windows.ViewModels
         /// <param name="plateService">Reconoce placas dentro del fotograma.</param>
         /// <param name="qrService">Lee los tickets QR mostrados a la cámara.</param>
         /// <param name="entryService">Registra y consulta las sesiones de estacionamiento.</param>
+        /// <param name="exitService">Consulta y cierra las sesiones de estacionamiento.</param>
         /// <param name="vehicleTypes">Proporciona tipos de vehículo disponibles.</param>
         /// <param name="slots">Consulta la ocupación y los puestos libres.</param>
         /// <param name="parkingStatusNotifier">Notifica cambios de ocupación a otras vistas.</param>
         /// <param name="dialogService">Presenta avisos y errores al operador.</param>
-        /// <param name="ticketPrinter">Envía tickets a una cola de impresión Windows.</param>
-        /// <param name="settingsStore">Lee la impresora y el ancho elegidos para este equipo.</param>
-        /// <param name="frameOverlayRenderer">Dibuja las guías de vista previa fuera del ViewModel.</param>
+        /// <param name="ticketPrint">Conserva e imprime el último ticket de entrada.</param>
+        /// <param name="cameraPreview">Muestra las imágenes y vigila que cada cámara siga entregándolas.</param>
         public PlateReaderViewModel(
             ICameraServiceFactory cameraFactory,
             ICameraSourceCatalog cameraSourceCatalog,
@@ -171,17 +158,16 @@ namespace Parking.UI.Windows.ViewModels
             IPlateService plateService,
             IQrService qrService,
             IEntryService entryService,
+            IExitService exitService,
             IVehicleTypeManagementService vehicleTypes,
             IParkingSlotManagementService slots,
             IParkingStatusNotifier parkingStatusNotifier,
             IDialogService dialogService,
-            ThermalTicketPrinter ticketPrinter,
-            ApplicationSettingsStore settingsStore,
-            IFrameOverlayRenderer frameOverlayRenderer)
+            EntryTicketPrintService ticketPrint,
+            CameraPreviewService cameraPreview)
         {
             _dialogService = dialogService;
-            _ticketPrinter = ticketPrinter;
-            _settingsStore = settingsStore;
+            _ticketPrint = ticketPrint;
             _cameraSourceCatalog = cameraSourceCatalog;
             _cameraSelectionStore = cameraSelectionStore;
             _cameraHealth = cameraHealth;
@@ -195,8 +181,9 @@ namespace Parking.UI.Windows.ViewModels
             EntranceFeed.DroidCamNetworkUrl = _savedCameraSelection?.EntranceDroidCamUrl ?? string.Empty;
             ExitFeed.DroidCamNetworkUrl = _savedCameraSelection?.ExitDroidCamUrl ?? string.Empty;
             _plateService = plateService;
-            _frameOverlayRenderer = frameOverlayRenderer;
+            _cameraPreview = cameraPreview;
             _entryService = entryService;
+            _exitService = exitService;
             _qrService = qrService;
             _vehicleTypes = vehicleTypes;
             _slots = slots;
@@ -306,8 +293,7 @@ namespace Parking.UI.Windows.ViewModels
             if (string.IsNullOrWhiteSpace(PlateNumber)) return;
             // El mismo formato de placa se usa en las búsquedas y los mensajes.
             string plate = PlateNumber.Trim().ToUpperInvariant();
-            if (string.Equals(plate, _lastExitedPlate, StringComparison.OrdinalIgnoreCase)
-                && DateTime.UtcNow - _lastExitUtc < ExitEntryCooldown)
+            if (_scanHistory.WasRecentlyExited(plate, DateTime.UtcNow))
             {
                 _dialogService.ShowWarning("Salida reciente",
                     $"La salida de {plate} acaba de registrarse. Espere a que el vehículo despeje la puerta antes de iniciar otra entrada.");
@@ -338,7 +324,7 @@ namespace Parking.UI.Windows.ViewModels
                     {
                         // El mismo vehículo puede seguir delante de la cámara tras
                         // registrar la entrada. Solo una nueva aparición causa salida.
-                        MarkPlateHandled(plate);
+                        _scanHistory.MarkPlateHandled(plate, DateTime.UtcNow);
                         await LoadSlotStatsAsync();
                     }
                 }
@@ -370,7 +356,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <summary>Conserva el ticket y comunica la modalidad con el diálogo adecuado.</summary>
         private void ShowRegisteredEntry(string plate, EntryRegistrationResult entry)
         {
-            string? printingWarning = PrintEntryTicketIfNeeded(entry.Ticket);
+            string? printingWarning = _ticketPrint.PrintIfConfigured(entry.Ticket);
+            if (entry.Ticket is not null) OnPropertyChanged(nameof(CanReprintLastTicket));
             string accessMessage = DescribeEntryAccess(entry.Access);
             if (printingWarning is not null) accessMessage += $" {printingWarning}";
             StatusMessage = $"ENTRADA: {plate} asignado al puesto {entry.SlotNumber}. {accessMessage}";
@@ -382,25 +369,6 @@ namespace Parking.UI.Windows.ViewModels
             else
                 _dialogService.ShowSuccess("Entrada registrada", StatusMessage);
             _parkingStatusNotifier.NotifyParkingStatusChanged();
-        }
-
-        /// <summary>Imprime solo si está configurado y devuelve un aviso si falló la impresora.</summary>
-        private string? PrintEntryTicketIfNeeded(EntryTicketData? ticket)
-        {
-            if (ticket is null) return null;
-            _lastTicket = ticket;
-            OnPropertyChanged(nameof(CanReprintLastTicket));
-            var settings = _settingsStore.Load();
-            if (!settings.AutoPrintTickets) return null;
-            try
-            {
-                _ticketPrinter.Print(ticket, settings.TicketPrinterName, settings.TicketPaperWidthMm);
-                return null;
-            }
-            catch (Exception error)
-            {
-                return $"Entrada guardada, pero no se pudo enviar el ticket a la impresora: {error.Message} Use Reimprimir último ticket.";
-            }
         }
 
         /// <summary>Traduce la clasificación de Domain y agrega la cuota pendiente si existe.</summary>
@@ -494,12 +462,11 @@ namespace Parking.UI.Windows.ViewModels
         /// <summary>Reimprime el último ticket ocasional sin volver a registrar el vehículo.</summary>
         private void ReprintLastTicket()
         {
-            if (_lastTicket is null) return;
+            if (!_ticketPrint.CanReprint) return;
             try
             {
                 // Se leen ajustes actuales para permitir cambiar de impresora tras un fallo.
-                var settings = _settingsStore.Load();
-                _ticketPrinter.Print(_lastTicket, settings.TicketPrinterName, settings.TicketPaperWidthMm);
+                _ticketPrint.ReprintLast();
                 _dialogService.ShowSuccess("Ticket enviado", "El ticket se envió a la cola de impresión de Windows.");
             }
             catch (Exception ex)
@@ -602,7 +569,11 @@ namespace Parking.UI.Windows.ViewModels
                 feed.IsRunning = true;
                 _cameraHealth.Clear(feed.Title);
                 feed.Status = "Imagen en directo. Lee placas y QR.";
-                feed.PreviewTask = RunPreviewLoopAsync(feed, feed.Cancellation.Token);
+                feed.PreviewTask = _cameraPreview.RunAsync(feed, (source, frame) =>
+                {
+                    TryQueueQrDetection(source, frame);
+                    TryQueuePlateDetection(source, frame);
+                }, () => OnPropertyChanged(nameof(IsCameraRunning)), feed.Cancellation.Token);
             }
             catch (Exception)
             {
@@ -740,97 +711,6 @@ namespace Parking.UI.Windows.ViewModels
             if (released) _cameraHealth.Clear(feed.Title);
         }
 
-        /// <summary>Actualiza un visor y entrega sus fotogramas a los lectores QR y OCR.</summary>
-        /// <param name="feed">Panel propietario de la captura y de la imagen.</param>
-        /// <param name="cancellationToken">Detiene el bucle cuando se cierra la cámara.</param>
-        /// <returns>Tarea continua de visualización hasta la cancelación.</returns>
-        private async Task RunPreviewLoopAsync(CameraFeedViewModel feed, CancellationToken cancellationToken)
-        {
-            // Permite detectar una fuente abierta que deja de entregar imágenes.
-            DateTime lastFrameUtc = DateTime.UtcNow;
-            // El visor se limita a unas 15 actualizaciones por segundo por cámara.
-            DateTime lastPreviewUtc = DateTime.MinValue;
-            try
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    // Cada bucle lee solo de la fuente asignada a su panel.
-                    // ConfigureAwait evita hacer decodificación y dibujo en el hilo de WPF.
-                    byte[] currentFrame = await feed.Capture.CaptureFrameAsync().ConfigureAwait(false);
-                    if (currentFrame.Length > 0)
-                    {
-                        DateTime now = DateTime.UtcNow;
-                        lastFrameUtc = now;
-                        _cameraHealth.Clear(feed.Title);
-                        lastPreviewUtc = await UpdatePreviewIfDueAsync(feed, currentFrame, now, lastPreviewUtc);
-                        // Los dos visores pueden leer ambas señales; sus límites son independientes.
-                        TryQueueQrDetection(feed, currentFrame);
-                        TryQueuePlateDetection(feed, currentFrame);
-                    }
-                    // Read() ya espera al siguiente fotograma. Solo hacemos una
-                    // pausa breve si el dispositivo aún no entrega imágenes.
-                    if (currentFrame.Length == 0 &&
-                        await HandleMissingFrameAsync(feed, lastFrameUtc, cancellationToken)) break;
-                }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception)
-            {
-                // Se conserva el otro visor en ejecución si esta fuente falla.
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                    feed.Status = "Se interrumpió el vídeo de esta cámara.");
-                _cameraHealth.ReportFailure(feed.Title, feed.Status);
-            }
-            finally
-            {
-                // Una cancelación manual deja el cierre al método que espera este bucle.
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    // Si la fuente terminó por error, este mismo bucle libera su driver.
-                    try { await feed.Capture.StopCameraAsync(); }
-                    catch (Exception)
-                    {
-                        // La otra fuente sigue operativa aunque este driver falle.
-                    }
-                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        feed.Preview = null;
-                        feed.ActiveSource = null;
-                        feed.IsRunning = false;
-                        OnPropertyChanged(nameof(IsCameraRunning));
-                    });
-                }
-            }
-        }
-
-        /// <summary>Actualiza como máximo quince imágenes por segundo y conserva el último instante dibujado.</summary>
-        private async Task<DateTime> UpdatePreviewIfDueAsync(CameraFeedViewModel feed, byte[] frame,
-            DateTime now, DateTime lastPreviewUtc)
-        {
-            if (now - lastPreviewUtc < TimeSpan.FromMilliseconds(66)) return lastPreviewUtc;
-            var visibleDetection = now - feed.LastDetectionUtc < DetectionDisplayTime
-                ? feed.CurrentDetection : null;
-            byte[] image = _frameOverlayRenderer.Render(frame, visibleDetection);
-            var preview = BuildBitmapSource(image);
-            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => feed.Preview = preview);
-            return now;
-        }
-
-        /// <summary>Espera el siguiente fotograma o avisa cuando una cámara no entrega imagen.</summary>
-        private async Task<bool> HandleMissingFrameAsync(CameraFeedViewModel feed,
-            DateTime lastFrameUtc, CancellationToken cancellationToken)
-        {
-            if (DateTime.UtcNow - lastFrameUtc > TimeSpan.FromSeconds(5))
-            {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                    feed.Status = "Esta cámara dejó de entregar imagen. Pulse Buscar o Iniciar.");
-                _cameraHealth.ReportFailure(feed.Title, feed.Status);
-                return true;
-            }
-            await Task.Delay(50, cancellationToken);
-            return false;
-        }
-
         /// <summary>Programa una lectura QR para un visor si su lector está disponible.</summary>
         /// <param name="feed">Panel que entregó el fotograma.</param>
         /// <param name="currentFrame">Fotograma actual de la cámara.</param>
@@ -858,17 +738,12 @@ namespace Parking.UI.Windows.ViewModels
                     DateTime now = DateTime.UtcNow;
                     // Mientras haya un QR visible, el OCR de placas cede prioridad al ticket.
                     feed.LastQrVisibleUtc = now;
-                    if (string.Equals(_lastScannedQr, qrText, StringComparison.OrdinalIgnoreCase)
-                        && now - _lastQrScanTime < TimeSpan.FromSeconds(5))
+                    if (_scanHistory.ShouldIgnoreRepeatedQr(qrText, now))
                     {
                         // Mientras el ticket siga ante la cámara, una sola lectura
                         // basta. La siguiente se permite después de retirarlo.
-                        _lastQrScanTime = now;
                         return;
                     }
-
-                    _lastScannedQr = qrText;
-                    _lastQrScanTime = now;
 
                     // Un enlace o texto arbitrario no representa el identificador de sesión.
                     if (!qrText.StartsWith("SESSION-", StringComparison.OrdinalIgnoreCase))
@@ -906,20 +781,18 @@ namespace Parking.UI.Windows.ViewModels
                 try
                 {
                     session = isQr
-                        ? await _entryService.GetActiveSessionByQrAsync(identifier)
-                        : await _entryService.GetActiveSessionByPlateAsync(identifier);
+                        ? await _exitService.GetActiveSessionByQrAsync(identifier)
+                        : await _exitService.GetActiveSessionByPlateAsync(identifier);
 
                     success = session != null && (isQr
-                        ? await _entryService.RegisterExitByQrAsync(identifier, SelectedPaymentMethod)
-                        : await _entryService.RegisterExitByPlateAsync(identifier, SelectedPaymentMethod));
+                        ? await _exitService.RegisterExitByQrAsync(identifier, SelectedPaymentMethod)
+                        : await _exitService.RegisterExitByPlateAsync(identifier, SelectedPaymentMethod));
 
                     if (success)
                     {
-                        MarkPlateHandled(session!.plate);
-                        _lastExitedPlate = session.plate;
-                        _lastExitUtc = DateTime.UtcNow;
-                        _lastScannedQr = session.qr_data ?? string.Empty;
-                        _lastQrScanTime = DateTime.UtcNow;
+                        DateTime exitRecordedUtc = DateTime.UtcNow;
+                        _scanHistory.MarkPlateHandled(session!.plate, exitRecordedUtc);
+                        _scanHistory.MarkExited(session.plate, session.qr_data, exitRecordedUtc);
                         await LoadSlotStatsAsync();
                     }
                 }
@@ -1012,12 +885,11 @@ namespace Parking.UI.Windows.ViewModels
                 PlateDetectionResult detection;
                 try { detection = await _plateService.DetectPlateWithRegionsAsync(frame); }
                 finally { _plateReaderGate.Release(); }
-                if (detection.HasPlateCandidates && string.IsNullOrWhiteSpace(detection.PlateNumber)
-                    && !string.IsNullOrEmpty(_handledPlate))
+                if (detection.HasPlateCandidates && string.IsNullOrWhiteSpace(detection.PlateNumber))
                 {
                     // El OCR puede fallar unos frames aunque el vehículo continúe
                     // frente a la cámara; no lo tratamos como una nueva llegada.
-                    _handledPlateLastSeenUtc = DateTime.UtcNow;
+                    _scanHistory.KeepHandledPlateVisible(DateTime.UtcNow);
                 }
                 if (!string.IsNullOrWhiteSpace(detection.PlateNumber))
                 {
@@ -1033,7 +905,7 @@ namespace Parking.UI.Windows.ViewModels
                     _lastDetectionTime = DateTime.UtcNow;
                     feed.CurrentDetection = detection;
                     feed.LastDetectionUtc = _lastDetectionTime;
-                    if (ShouldIgnoreRepeatedPlate(detection.PlateNumber)) return;
+                    if (_scanHistory.ShouldIgnoreRepeatedPlate(detection.PlateNumber, DateTime.UtcNow)) return;
 
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -1044,7 +916,7 @@ namespace Parking.UI.Windows.ViewModels
                     // En la misma puerta no se puede inferir la dirección del
                     // vehículo a partir de la placa. La cámara solo rellena el
                     // campo; la salida automática requiere el QR del ticket.
-                    MarkPlateHandled(detection.PlateNumber);
+                    _scanHistory.MarkPlateHandled(detection.PlateNumber, DateTime.UtcNow);
                 }
             }
             catch (Exception ex)
@@ -1055,46 +927,5 @@ namespace Parking.UI.Windows.ViewModels
             finally { Interlocked.Exchange(ref feed.PlateDetectionInProgress, 0); }
         }
 
-        /// <summary>Marca una placa como atendida para evitar repetir el evento mientras siga visible.</summary>
-        /// <param name="plate">Placa recién registrada o mostrada.</param>
-        private void MarkPlateHandled(string plate)
-        {
-            // La próxima lectura igual actualiza esta marca hasta que la placa desaparezca.
-            _handledPlate = plate;
-            _handledPlateLastSeenUtc = DateTime.UtcNow;
-        }
-
-        /// <summary>Determina si la placa ya atendida continúa ante la cámara.</summary>
-        /// <param name="plate">Placa leída por el OCR.</param>
-        /// <returns>Verdadero si aún no ha transcurrido el tiempo para considerarla una nueva aparición.</returns>
-        private bool ShouldIgnoreRepeatedPlate(string plate)
-        {
-            if (!string.Equals(_handledPlate, plate, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            DateTime now = DateTime.UtcNow;
-            if (now - _handledPlateLastSeenUtc >= PlateReentryInterval)
-                return false;
-
-            // La misma placa debe desaparecer unos segundos antes de que una
-            // nueva lectura se interprete como otro paso por la cámara.
-            _handledPlateLastSeenUtc = now;
-            return true;
-        }
-
-        /// <summary>Convierte un cuadro codificado en una imagen WPF segura para otro hilo.</summary>
-        /// <param name="frameBytes">Bytes de la imagen que entregó la cámara.</param>
-        /// <returns>Imagen cargada y congelada para mostrarla en el visor.</returns>
-        private static BitmapSource BuildBitmapSource(byte[] frameBytes)
-        {
-            using var ms = new MemoryStream(frameBytes);
-            var image = new BitmapImage();
-            image.BeginInit();
-            image.CacheOption = BitmapCacheOption.OnLoad;
-            image.StreamSource = ms;
-            image.EndInit();
-            image.Freeze();
-            return image;
-        }
     }
 }

@@ -81,84 +81,50 @@ public class RegisteredVehicleRepository
             .AddRangeAsync(schedules);
     }
 
-    public async Task UpdateSchedulesAsync(
-     List<monthly_vehicle_schedule> schedules)
+    /// <summary>Marca los horarios modificados para que el contexto los guarde junto con la ficha.</summary>
+    public Task UpdateSchedulesAsync(List<monthly_vehicle_schedule> schedules)
     {
-        _context.monthly_vehicle_schedules
-            .UpdateRange(schedules);
-
-        await Task.CompletedTask;
+        _context.monthly_vehicle_schedules.UpdateRange(schedules);
+        return Task.CompletedTask;
     }
 
-    public async Task SoftDeleteAsync(
-        registered_vehicle entity,
-        int deletedBy)
+    /// <summary>Marca la ficha, su plan y sus horarios como eliminados sin borrar su historial.</summary>
+    public Task SoftDeleteAsync(registered_vehicle entity, int deletedBy)
     {
+        DateTime now = DateTime.Now;
         entity.is_deleted = true;
-
-        entity.deleted_at = DateTime.Now;
-
+        entity.deleted_at = now;
         entity.deleted_by = deletedBy;
-
-        entity.updated_at = DateTime.Now;
-
+        entity.updated_at = now;
         entity.updated_by = deletedBy;
-
         entity.is_active = false;
-
-        // =========================
-        // PLAN
-        // =========================
 
         if (entity.vehicle_monthly_plan != null)
         {
-            entity.vehicle_monthly_plan.is_deleted = true;
-
-            entity.vehicle_monthly_plan.deleted_at =
-                DateTime.Now;
-
-            entity.vehicle_monthly_plan.deleted_by =
-                deletedBy;
-
-            entity.vehicle_monthly_plan.updated_at =
-                DateTime.Now;
-
-            entity.vehicle_monthly_plan.updated_by =
-                deletedBy;
-
-            entity.vehicle_monthly_plan.is_active =
-                false;
-
-            entity.vehicle_monthly_plan.status =
-                "cancelled";
+            var plan = entity.vehicle_monthly_plan;
+            plan.is_deleted = true;
+            plan.deleted_at = now;
+            plan.deleted_by = deletedBy;
+            plan.updated_at = now;
+            plan.updated_by = deletedBy;
+            plan.is_active = false;
+            plan.status = "cancelled";
         }
-
-        // =========================
-        // HORARIOS
-        // =========================
 
         if (entity.monthly_vehicle_schedules != null)
         {
-            foreach (var schedule
-                in entity.monthly_vehicle_schedules)
+            foreach (var schedule in entity.monthly_vehicle_schedules)
             {
                 schedule.is_deleted = true;
-
-                schedule.deleted_at = DateTime.Now;
-
+                schedule.deleted_at = now;
                 schedule.deleted_by = deletedBy;
-
-                schedule.updated_at = DateTime.Now;
-
+                schedule.updated_at = now;
                 schedule.updated_by = deletedBy;
-
                 schedule.is_active = false;
             }
         }
 
-        _context.registered_vehicles
-            .Update(entity);
-
-        await Task.CompletedTask;
+        _context.registered_vehicles.Update(entity);
+        return Task.CompletedTask;
     }
 }
