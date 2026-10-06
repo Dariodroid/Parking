@@ -21,10 +21,7 @@ public class MenuWidthConverter : IMultiValueConverter
         bool exp2Expanded = values.Length > 2 && values[2] is bool b3 && b3;
 
         // El menú abierto tiene prioridad; los paneles desplegados también necesitan ancho completo.
-        if (menuExpanded) return new GridLength(240);
-        if (exp1Expanded || exp2Expanded) return new GridLength(240);
-        // El menú cerrado sin paneles usa el ancho reducido.
-        return new GridLength(100);
+        return new GridLength(menuExpanded || exp1Expanded || exp2Expanded ? 240 : 100);
     }
 
     /// <summary>La conversión inversa no está definida para un ancho derivado de varios estados.</summary>
@@ -32,11 +29,12 @@ public class MenuWidthConverter : IMultiValueConverter
     /// <param name="targetTypes">Tipos de los valores de origen.</param>
     /// <param name="parameter">Parámetro opcional del enlace.</param>
     /// <param name="culture">Cultura del enlace.</param>
-    /// <returns>No retorna: esta dirección no está implementada.</returns>
-    /// <exception cref="NotImplementedException">Siempre, porque el enlace se usa solo de origen a destino.</exception>
+    /// <returns>Una instrucción para conservar cada estado original.</returns>
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
-        // Un ancho no permite reconstruir de forma única los tres estados originales.
-        throw new NotImplementedException();
+        var results = new object[targetTypes.Length];
+        for (int index = 0; index < results.Length; index++)
+            results[index] = Binding.DoNothing;
+        return results;
     }
 }

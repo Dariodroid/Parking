@@ -29,6 +29,7 @@ public class AsyncRelayCommand : ICommand
     /// <param name="parameter">Dato proporcionado por el enlace de WPF.</param>
     public async void Execute(object? parameter)
     {
+        if (!CanExecute(parameter)) return;
         // ICommand exige void; la operación real se espera para mantener el estado ocupado.
         _isExecuting = true;
         RaiseCanExecuteChanged();

@@ -39,7 +39,7 @@
         </Style>
 
         <!-- ========================================================== -->
-        <!-- 🟢 COMBOBOX DEFINITIVO: IGUAL DE SIMPLE QUE EL DE userPage -->
+        <!-- Selector de tipo de vehículo con el mismo estilo de los otros formularios. -->
         <!-- ========================================================== -->
         <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Height" Value="34"/>

@@ -84,56 +84,31 @@ public class VehicleScheduleItemViewModel : BaseViewModel
     /// <summary>Prepara los comandos de ajuste horario de este día.</summary>
     public VehicleScheduleItemViewModel()
     {
-        IncreaseStartHourCommand =
-            new RelayCommand(_ => IncreaseStartHour());
-
-        DecreaseStartHourCommand =
-            new RelayCommand(_ => DecreaseStartHour());
-
-        IncreaseEndHourCommand =
-            new RelayCommand(_ => IncreaseEndHour());
-
-        DecreaseEndHourCommand =
-            new RelayCommand(_ => DecreaseEndHour());
+        IncreaseStartHourCommand = new RelayCommand(_ => ChangeStartHour(1));
+        DecreaseStartHourCommand = new RelayCommand(_ => ChangeStartHour(-1));
+        IncreaseEndHourCommand = new RelayCommand(_ => ChangeEndHour(1));
+        DecreaseEndHourCommand = new RelayCommand(_ => ChangeEndHour(-1));
     }
 
-    /// <summary>Avanza una hora de entrada cuando se permite la edición.</summary>
-    private void IncreaseStartHour()
+    /// <summary>Ajusta la entrada una hora en la dirección indicada.</summary>
+    private void ChangeStartHour(int hours)
     {
         if (!CanEditHours) return;
-        StartTime = StartTime.Add(TimeSpan.FromHours(1));
-
-        if (StartTime.TotalHours >= 24)
-            StartTime = TimeSpan.Zero;
+        StartTime = WrapHour(StartTime.Add(TimeSpan.FromHours(hours)));
     }
 
-    /// <summary>Retrocede una hora de entrada cuando se permite la edición.</summary>
-    private void DecreaseStartHour()
+    /// <summary>Ajusta la salida una hora en la dirección indicada.</summary>
+    private void ChangeEndHour(int hours)
     {
         if (!CanEditHours) return;
-        StartTime = StartTime.Subtract(TimeSpan.FromHours(1));
-
-        if (StartTime.TotalHours < 0)
-            StartTime = new TimeSpan(23, 0, 0);
+        EndTime = WrapHour(EndTime.Add(TimeSpan.FromHours(hours)));
     }
 
-    /// <summary>Avanza una hora de salida cuando se permite la edición.</summary>
-    private void IncreaseEndHour()
+    /// <summary>Vuelve a medianoche al pasar de 23 horas y a 23 horas al retroceder desde cero.</summary>
+    private static TimeSpan WrapHour(TimeSpan value)
     {
-        if (!CanEditHours) return;
-        EndTime = EndTime.Add(TimeSpan.FromHours(1));
-
-        if (EndTime.TotalHours >= 24)
-            EndTime = TimeSpan.Zero;
-    }
-
-    /// <summary>Retrocede una hora de salida cuando se permite la edición.</summary>
-    private void DecreaseEndHour()
-    {
-        if (!CanEditHours) return;
-        EndTime = EndTime.Subtract(TimeSpan.FromHours(1));
-
-        if (EndTime.TotalHours < 0)
-            EndTime = new TimeSpan(23, 0, 0);
+        if (value.TotalHours >= 24) return TimeSpan.Zero;
+        if (value.TotalHours < 0) return new TimeSpan(23, 0, 0);
+        return value;
     }
 }

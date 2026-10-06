@@ -4,11 +4,11 @@ using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 
-public class vehicle_typeRepository : IBaseRepository<vehicle_type>, Ivehicle_typeRepository
+public class VehicleTypeRepository : IBaseRepository<vehicle_type>, IVehicleTypeRepository
 {
     private readonly parking_dbContext _context;
 
-    public vehicle_typeRepository(parking_dbContext context)
+    public VehicleTypeRepository(parking_dbContext context)
     {
         _context = context;
     }
@@ -74,10 +74,9 @@ public class vehicle_typeRepository : IBaseRepository<vehicle_type>, Ivehicle_ty
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task SoftDeleteAsync(vehicle_type entity)
+    public Task SoftDeleteAsync(vehicle_type entity)
     {
         _context.vehicle_types.Update(entity);
-
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }

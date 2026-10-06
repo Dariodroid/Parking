@@ -9,13 +9,10 @@ public class RegisteredVehicleRepository
     : BaseRepository<registered_vehicle>,
       IRegisteredVehicle
 {
-    private readonly parking_dbContext _context;
-
     public RegisteredVehicleRepository(
         parking_dbContext context)
         : base(context)
     {
-        _context = context;
     }
 
     public async Task<bool> ExistsByPlateAsync(

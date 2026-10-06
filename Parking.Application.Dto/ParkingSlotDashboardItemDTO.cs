@@ -37,7 +37,7 @@ public class ParkingSlotDashboardItemDTO : INotifyPropertyChanged
 
     public int SlotId { get; set; }
 
-    public string SlotNumber { get; set; }
+    public string SlotNumber { get; set; } = string.Empty;
 
     public bool IsOccupied { get; set; }
 
@@ -53,16 +53,13 @@ public class ParkingSlotDashboardItemDTO : INotifyPropertyChanged
     {
         get
         {
-            var match = Regex.Match(SlotNumber ?? "", @"^\d+");
-            if (match.Success)
-            {
-                return int.Parse(match.Value);
-            }
-            return int.MaxValue;
+            var match = Regex.Match(SlotNumber, @"^\d+");
+            return match.Success && int.TryParse(match.Value, out int order)
+                ? order : int.MaxValue;
         }
     }
 
-    // 🟢 Evento de notificación de cambios
+    /// <summary>Notifica a la vista los cambios de posición del puesto.</summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

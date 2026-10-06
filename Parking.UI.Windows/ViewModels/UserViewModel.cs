@@ -1,343 +1,179 @@
-using Parking.UI.Windows.Interfaces;
-using Parking.Application.Services;
 using Parking.Application.Interfaces;
+using Parking.Application.Services;
 using Parking.Domain.Model.Enums;
 using Parking.Domain.Model.Models;
+using Parking.UI.Windows.Interfaces;
 using Parking.UI.Windows.ViewModels.Base;
-using Parking.UI.Windows.Services;
 using System.Collections.ObjectModel;
-using System.Windows;
+using System.Diagnostics;
 using System.Windows.Input;
-
 
 namespace Parking.UI.Windows.ViewModels;
 
-
-public class userViewModel : BaseViewModel
+/// <summary>Presenta cuentas y envía las altas, cambios y bajas a Application.</summary>
+public class UserViewModel : BaseViewModel
 {
-
     private readonly IUserManagementService _users;
-
     private readonly IDialogService _dialogs;
+    private readonly int _currentUserId = CurrentUser.Id;
 
-
-    private readonly int _currentuserId = CurrentUser.Id;
-
-
-
-    public List<userRole> Roles { get; } =
-        Enum.GetValues(typeof(userRole))
-        .Cast<userRole>()
-        .ToList();
-
-
-
-    public ObservableCollection<user> users { get; } = new();
-
-
-
+    public List<UserRole> Roles { get; } = Enum.GetValues<UserRole>().ToList();
+    public ObservableCollection<user> Users { get; } = new();
     public ICommand SaveCommand { get; }
-
     public ICommand UpdateCommand { get; }
-
     public ICommand DeleteCommand { get; }
-
     public ICommand NewCommand { get; }
 
-
-
-
-    public userViewModel(
-        IUserManagementService users,
-        IDialogService dialogs)
+    /// <summary>Recibe el caso de uso de cuentas y prepara las acciones de la pantalla.</summary>
+    public UserViewModel(IUserManagementService users, IDialogService dialogs)
     {
-
         _users = users;
-
         _dialogs = dialogs;
-
-
-
-        SaveCommand =
-            new RelayCommand(
-                async _ => await SaveAsync());
-
-
-        UpdateCommand =
-            new RelayCommand(
-                async _ => await UpdateAsync());
-
-
-        DeleteCommand =
-            new RelayCommand(
-                async _ => await DeleteAsync());
-
-
-        NewCommand =
-            new RelayCommand(
-                _ => ClearForm());
-
+        SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UpdateCommand = new AsyncRelayCommand(_ => RunSafelyAsync(UpdateAsync,
+            "No se pudo actualizar el usuario. Inténtelo de nuevo."));
+        DeleteCommand = new AsyncRelayCommand(_ => RunSafelyAsync(DeleteAsync,
+            "No se pudo eliminar el usuario. Inténtelo de nuevo."));
+        NewCommand = new RelayCommand(_ => ClearForm());
     }
 
-
-
-
-
     private int _id;
-
     public int Id
     {
         get => _id;
-
         set => SetProperty(ref _id, value);
     }
 
-
-
-
-
     private string _username = string.Empty;
-
-    public string username
+    public string Username
     {
         get => _username;
-
         set => SetProperty(ref _username, value);
     }
 
-
-
-
-
     private string _fullName = string.Empty;
-
     public string FullName
     {
         get => _fullName;
-
         set => SetProperty(ref _fullName, value);
     }
 
-
-
-
-
-    private userRole _selectedRole = userRole.Operador;
-
-
-    public userRole SelectedRole
+    private UserRole _selectedRole = UserRole.Operador;
+    public UserRole SelectedRole
     {
         get => _selectedRole;
-
         set => SetProperty(ref _selectedRole, value);
     }
 
-
-
-
-
     private string _password = string.Empty;
-
-
     public string Password
     {
         get => _password;
-
         set => SetProperty(ref _password, value);
     }
 
-
-
-
-
     private string _confirmPassword = string.Empty;
-
-
     public string ConfirmPassword
     {
         get => _confirmPassword;
-
         set => SetProperty(ref _confirmPassword, value);
     }
 
-
-
-
-
     private bool _isActive = true;
-
-
     public bool IsActive
     {
         get => _isActive;
-
         set => SetProperty(ref _isActive, value);
     }
 
-
-
-
-
     private string _statusMessage = string.Empty;
-
-
     public string StatusMessage
     {
         get => _statusMessage;
-
         set => SetProperty(ref _statusMessage, value);
     }
 
-
-
-
-
-    private user? _selecteduser;
-
-
-    public user? Selecteduser
+    private user? _selectedUser;
+    public user? SelectedUser
     {
-        get => _selecteduser;
-
+        get => _selectedUser;
         set
         {
-            if (SetProperty(ref _selecteduser, value)
-               && value != null)
-            {
+            if (SetProperty(ref _selectedUser, value) && value != null)
                 LoadSelected(value);
-            }
         }
     }
 
+    /// <summary>Carga los usuarios cuando se abre la sección.</summary>
+    public Task InitializeAsync() => LoadAsync();
 
-
-
-
-    public async Task InitializeAsync()
-    {
-        await LoadAsync();
-    }
-
+    /// <summary>Actualiza la lista sin incluir usuarios eliminados.</summary>
     private async Task LoadAsync()
     {
-
-        users.Clear();
-
-
-        var items =
-            await _users.GetAllAsync();
-
-
-
-        foreach (var item in items)
-            users.Add(item);
-
+        Users.Clear();
+        var items = await _users.GetAllAsync();
+        foreach (var item in items) Users.Add(item);
     }
 
+    /// <summary>Copia a los campos editables la cuenta seleccionada.</summary>
     private void LoadSelected(user item)
     {
-
         Id = item.id;
-
-        username = item.username;
-
+        Username = item.username;
         FullName = item.full_name;
-
-
-        if (Enum.TryParse(
-            item.role,
-            out userRole role))
-        {
-            SelectedRole = role;
-        }
-
-
+        if (Enum.TryParse(item.role, out UserRole role)) SelectedRole = role;
         IsActive = item.is_active;
-
-
         Password = string.Empty;
-
         ConfirmPassword = string.Empty;
-
     }
 
+    /// <summary>Valida la ficha y exige contraseña al crear una cuenta.</summary>
     private bool Validate(bool requirePassword)
     {
-
-        if (string.IsNullOrWhiteSpace(username))
-        {
-            StatusMessage = "Ingrese el usuario.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
-            return false;
-        }
-
-
-
+        if (string.IsNullOrWhiteSpace(Username))
+            return ShowValidationError("Ingrese el usuario.");
         if (string.IsNullOrWhiteSpace(FullName))
-        {
-            StatusMessage = "Ingrese el nombre.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
-            return false;
-        }
-
-
-
-        if (requirePassword)
-        {
-
-            if (string.IsNullOrWhiteSpace(Password))
-            {
-                StatusMessage = "Ingrese la contraseña.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
-                return false;
-            }
-
-            if (Password.Length < 8)
-            {
-                StatusMessage = "La contraseña debe tener al menos 8 caracteres.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
-                return false;
-            }
-
-
-            if (Password != ConfirmPassword)
-            {
-                StatusMessage =
-                    "Las contraseñas no coinciden.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
-
-                return false;
-            }
-
-        }
-
-
+            return ShowValidationError("Ingrese el nombre.");
+        if (requirePassword && string.IsNullOrWhiteSpace(Password))
+            return ShowValidationError("Ingrese la contraseña.");
+        if (string.IsNullOrWhiteSpace(Password)) return true;
+        if (Password.Length < 8)
+            return ShowValidationError("La contraseña debe tener al menos 8 caracteres.");
+        if (Password != ConfirmPassword)
+            return ShowValidationError("Las contraseñas no coinciden.");
         return true;
     }
 
-    /// <summary>Prepara la nueva cuenta; el servicio de Application genera el hash.</summary>
+    /// <summary>Muestra el primer error de validación en el diálogo del sistema.</summary>
+    private bool ShowValidationError(string message)
+    {
+        StatusMessage = message;
+        _dialogs.ShowWarning("Usuarios", message);
+        return false;
+    }
+
+    /// <summary>Prepara la cuenta; Application genera el hash de su contraseña.</summary>
     private user CreateUser() => new()
     {
-        username = username.Trim(),
+        username = Username.Trim(),
         full_name = FullName.Trim(),
         role = SelectedRole.ToString(),
         is_active = IsActive,
         created_at = DateTime.Now,
-        created_by = _currentuserId,
+        created_by = _currentUserId,
         login_attempts = 0,
         is_deleted = false
     };
 
-    /// <summary>Valida y registra una cuenta mediante Application.</summary>
+    /// <summary>Registra una cuenta nueva y recarga la lista.</summary>
     private async Task SaveAsync()
     {
         try
         {
-            if (!Validate(true)) return;
+            if (!Validate(requirePassword: true)) return;
             if (!await _users.CreateAsync(CreateUser(), Password))
             {
-                StatusMessage = "El usuario ya existe.";
-                _dialogs.ShowWarning("Usuarios", StatusMessage);
+                ShowValidationError("El usuario ya existe.");
                 return;
             }
 
@@ -348,31 +184,30 @@ public class userViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error al registrar usuario: {ex}");
+            Debug.WriteLine($"Error al registrar usuario: {ex}");
             StatusMessage = "No se pudo registrar el usuario. Revise los datos e inténtelo de nuevo.";
             _dialogs.ShowError("Usuarios", StatusMessage);
         }
     }
-    /// <summary>Actualiza la cuenta seleccionada y envía una nueva contraseña solo si se escribió.</summary>
+
+    /// <summary>Actualiza la cuenta; una contraseña vacía conserva la actual.</summary>
     private async Task UpdateAsync()
     {
         if (Id == 0)
         {
-            StatusMessage = "Seleccione un usuario.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
+            ShowValidationError("Seleccione un usuario.");
             return;
         }
+        if (!Validate(requirePassword: false)) return;
 
         var entity = await _users.GetByIdAsync(Id);
         if (entity == null)
         {
-            StatusMessage = "Usuario no encontrado.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
+            ShowValidationError("Usuario no encontrado.");
             return;
         }
 
         ApplyUserChanges(entity);
-        if (!ValidateOptionalPassword()) return;
         await _users.UpdateAsync(entity, Password);
         StatusMessage = "Usuario actualizado.";
         _dialogs.ShowSuccess("Usuarios", StatusMessage);
@@ -380,107 +215,65 @@ public class userViewModel : BaseViewModel
         ClearForm();
     }
 
-    /// <summary>Aplica los datos editables a la cuenta recuperada de Application.</summary>
+    /// <summary>Aplica los campos editables a la cuenta recuperada.</summary>
     private void ApplyUserChanges(user entity)
     {
-        entity.username = username.Trim();
+        entity.username = Username.Trim();
         entity.full_name = FullName.Trim();
         entity.role = SelectedRole.ToString();
         entity.is_active = IsActive;
         entity.updated_at = DateTime.Now;
-        entity.updated_by = _currentuserId;
+        entity.updated_by = _currentUserId;
     }
 
-    /// <summary>Permite mantener la contraseña actual o validar la nueva antes de enviarla.</summary>
-    private bool ValidateOptionalPassword()
-    {
-        if (string.IsNullOrWhiteSpace(Password)) return true;
-        if (Password.Length < 8)
-        {
-            StatusMessage = "La contraseña debe tener al menos 8 caracteres.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
-            return false;
-        }
-        if (Password != ConfirmPassword)
-        {
-            StatusMessage = "Las contraseñas no coinciden.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
-            return false;
-        }
-        return true;
-    }
-
-    /// <summary>Elimina lógicamente la cuenta seleccionada.</summary>
+    /// <summary>Elimina lógicamente la cuenta seleccionada y recarga la lista.</summary>
     private async Task DeleteAsync()
     {
-
         if (Id == 0)
         {
-            StatusMessage =
-                "Seleccione un usuario.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
-
+            ShowValidationError("Seleccione un usuario.");
             return;
         }
 
-
-
-        var entity =
-            await _users.GetByIdAsync(Id);
-
-
-
+        var entity = await _users.GetByIdAsync(Id);
         if (entity == null)
         {
-            StatusMessage =
-                "Usuario no encontrado.";
-            _dialogs.ShowWarning("Usuarios", StatusMessage);
-
+            ShowValidationError("Usuario no encontrado.");
             return;
         }
 
-
-
-        await _users.DeleteAsync(entity, _currentuserId);
-
-        StatusMessage =
-            "Usuario eliminado.";
+        await _users.DeleteAsync(entity, _currentUserId);
+        StatusMessage = "Usuario eliminado.";
         _dialogs.ShowSuccess("Usuarios", StatusMessage);
-
-
-
         await LoadAsync();
-
-
         ClearForm();
-
     }
 
+    /// <summary>Presenta fallos de actualización y eliminación con el diálogo habitual.</summary>
+    private async Task RunSafelyAsync(Func<Task> action, string message)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error en la gestión de usuarios: {ex}");
+            StatusMessage = message;
+            _dialogs.ShowError("Usuarios", message);
+        }
+    }
+
+    /// <summary>Limpia los campos para ingresar otra cuenta.</summary>
     private void ClearForm()
     {
-
         Id = 0;
-
-        username = string.Empty;
-
+        Username = string.Empty;
         FullName = string.Empty;
-
-        SelectedRole =
-            userRole.Operador;
-
-
+        SelectedRole = UserRole.Operador;
         Password = string.Empty;
-
-
-        ConfirmPassword =
-            string.Empty;
-
-
+        ConfirmPassword = string.Empty;
         IsActive = true;
-
-
-        Selecteduser = null;
-
+        SelectedUser = null;
     }
-
 }

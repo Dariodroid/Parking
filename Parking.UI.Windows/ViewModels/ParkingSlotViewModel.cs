@@ -25,9 +25,9 @@ public class ParkingSlotViewModel : BaseViewModel
     {
         _service = service;
         _dialogs = dialogs;
-        SaveCommand = new RelayCommand(async _ => await SaveAsync());
-        UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
-        DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
+        SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UpdateCommand = new AsyncRelayCommand(_ => UpdateAsync());
+        DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
         NewCommand = new RelayCommand(_ => ClearForm());
         // El constructor inicia la carga; las siguientes recargas sí esperan su resultado.
         _ = InitializeAsync();
@@ -40,22 +40,22 @@ public class ParkingSlotViewModel : BaseViewModel
         set => SetProperty(ref _id, value);
     }
 
-    private string _slotNumber;
+    private string _slotNumber = string.Empty;
     public string SlotNumber
     {
         get => _slotNumber;
         set => SetProperty(ref _slotNumber, value);
     }
 
-    private string _statusMessage;
+    private string _statusMessage = string.Empty;
     public string StatusMessage
     {
         get => _statusMessage;
         set => SetProperty(ref _statusMessage, value);
     }
 
-    private parking_slot _selectedSlot;
-    public parking_slot SelectedSlot
+    private parking_slot? _selectedSlot;
+    public parking_slot? SelectedSlot
     {
         get => _selectedSlot;
         set

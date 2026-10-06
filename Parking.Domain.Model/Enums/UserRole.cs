@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Parking.Domain.Model.Enums;
 
-namespace Parking.Domain.Model.Enums
+/// <summary>Roles que puede escoger el administrador para una cuenta.</summary>
+public enum UserRole
 {
-    public enum userRole
-    {
-        Administrador = 1,
-        Operador = 2
-    }
+    Administrador = 1,
+    Operador = 2
 }

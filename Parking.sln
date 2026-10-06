@@ -25,6 +25,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parking.Infrastructure.Exte
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parking.Application.Dto", "Parking.Application.Dto\Parking.Application.Dto.csproj", "{BCD918C0-F8E3-4322-AC72-F308B611BE6E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parking.LicenseIssuer", "tools\Parking.LicenseIssuer\Parking.LicenseIssuer.csproj", "{001162AB-EA30-4606-AD6A-4FDB5AA2680D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +63,10 @@ Global
 		{BCD918C0-F8E3-4322-AC72-F308B611BE6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCD918C0-F8E3-4322-AC72-F308B611BE6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCD918C0-F8E3-4322-AC72-F308B611BE6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{001162AB-EA30-4606-AD6A-4FDB5AA2680D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{001162AB-EA30-4606-AD6A-4FDB5AA2680D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{001162AB-EA30-4606-AD6A-4FDB5AA2680D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{001162AB-EA30-4606-AD6A-4FDB5AA2680D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -71,6 +79,7 @@ Global
 		{EB82CB20-2428-45AE-9C0A-7228804482E9} = {653A0D0D-84FA-402D-8505-27A3B7EA000D}
 		{3438DC2E-67D6-4BD0-963E-E43B493FF73D} = {653A0D0D-84FA-402D-8505-27A3B7EA000D}
 		{BCD918C0-F8E3-4322-AC72-F308B611BE6E} = {7BED10FD-9311-41CE-B0D3-6231A3698E5C}
+		{001162AB-EA30-4606-AD6A-4FDB5AA2680D} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1528FD-8B91-4D03-A559-05AABF64957A}

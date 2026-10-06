@@ -9,14 +9,14 @@ namespace Parking.Application.Services;
 /// <summary>Cierra estancias por placa o QR y confirma sesión, pago y puesto en la misma unidad de trabajo.</summary>
 public sealed class ExitService : IExitService
 {
-    private readonly Iparking_sessionRepository _sessionRepo;
+    private readonly IParkingSessionRepository _sessionRepo;
     private readonly IParkingSlotRepository _slotRepo;
-    private readonly Ivehicle_typeRepository _vehicleTypes;
+    private readonly IVehicleTypeRepository _vehicleTypes;
     private readonly IBaseRepository<payment> _paymentRepo;
 
     /// <summary>Recibe repositorios que comparten el mismo contexto EF para el cierre.</summary>
-    public ExitService(Iparking_sessionRepository sessionRepo, IParkingSlotRepository slotRepo,
-        Ivehicle_typeRepository vehicleTypes, IBaseRepository<payment> paymentRepo)
+    public ExitService(IParkingSessionRepository sessionRepo, IParkingSlotRepository slotRepo,
+        IVehicleTypeRepository vehicleTypes, IBaseRepository<payment> paymentRepo)
     {
         _sessionRepo = sessionRepo;
         _slotRepo = slotRepo;

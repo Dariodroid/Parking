@@ -359,5 +359,9 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# La clave privada del emisor y las licencias emitidas no se publican en Git.
+tools/Parking.LicenseIssuer/private/
+*.license
+
 # Fody - auto-generated XML schema
 FodyWeavers.xsd

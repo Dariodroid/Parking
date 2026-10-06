@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace Parking.Infrastructure.DataAccess.Repository
 {
-    public class parking_sessionRepository : BaseRepository<parking_session>, Iparking_sessionRepository
+    public class ParkingSessionRepository : BaseRepository<parking_session>, IParkingSessionRepository
     {
-        public parking_sessionRepository(parking_dbContext context)
+        public ParkingSessionRepository(parking_dbContext context)
             : base(context)
         {
         }

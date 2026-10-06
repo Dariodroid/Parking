@@ -46,13 +46,13 @@
             </DataTemplate>
 
             <!-- TIPOS VEHÍCULO -->
-            <DataTemplate DataType="{x:Type vm:vehicle_typeViewModel}">
-                <views:vehicle_typePage/>
+            <DataTemplate DataType="{x:Type vm:VehicleTypeViewModel}">
+                <views:VehicleTypePage/>
             </DataTemplate>
 
             <!-- USUARIOS -->
-            <DataTemplate DataType="{x:Type vm:userViewModel}">
-                <views:userPage/>
+            <DataTemplate DataType="{x:Type vm:UserViewModel}">
+                <views:UserPage/>
             </DataTemplate>
 
             <!-- CLIENTES -->

@@ -4,11 +4,11 @@ using Parking.Domain.Model.Models;
 
 namespace Parking.Infrastructure.DataAccess.Repository;
 
-public class userRepository : IuserRepository
+public class UserRepository : IUserRepository
 {
     private readonly parking_dbContext _context;
 
-    public userRepository(parking_dbContext context)
+    public UserRepository(parking_dbContext context)
     {
         _context = context;
     }
@@ -45,62 +45,6 @@ public class userRepository : IuserRepository
             .FirstOrDefaultAsync(x =>
                 x.id == id &&
                 !x.is_deleted);
-    }
-
-    public async Task<user?> GetByEmailAsync(string email)
-    {
-        return await _context.users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x =>
-                x.username == email &&
-                !x.is_deleted);
-    }
-
-    public async Task<bool> ExistsByEmailAsync(string email)
-    {
-        return await _context.users
-            .AnyAsync(x =>
-                x.username == email &&
-                !x.is_deleted);
-    }
-
-    public async Task<IEnumerable<user>> GetusersByRoleAsync(string roleName)
-    {
-        return await _context.users
-            .AsNoTracking()
-            .Where(x =>
-                x.role == roleName &&
-                !x.is_deleted)
-            .OrderBy(x => x.full_name)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<user>> GetActiveOperatorsAsync()
-    {
-        return await _context.users
-            .AsNoTracking()
-            .Where(x =>
-                x.role == "operator" &&
-                x.is_active &&
-                !x.is_deleted)
-            .OrderBy(x => x.full_name)
-            .ToListAsync();
-    }
-
-    public async Task<bool> ChangeStatusAsync(int userId, bool isActive)
-    {
-        var user = await _context.users
-            .FirstOrDefaultAsync(x =>
-                x.id == userId &&
-                !x.is_deleted);
-
-        if (user == null)
-            return false;
-
-        user.is_active = isActive;
-        user.updated_at = DateTime.Now;
-
-        return true;
     }
 
     /// <summary>Registra el acceso correcto y restablece el contador de intentos de forma inmediata.</summary>
@@ -169,7 +113,7 @@ public class userRepository : IuserRepository
         return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> ExistsByusernameAsync(string username)
+    public async Task<bool> ExistsByUsernameAsync(string username)
     {
         return await _context.users
             .AnyAsync(x =>
@@ -177,7 +121,7 @@ public class userRepository : IuserRepository
                 !x.is_deleted);
     }
 
-    public async Task<user?> GetByusernameAsync(string username)
+    public async Task<user?> GetByUsernameAsync(string username)
     {
         return await _context.users
             .AsNoTracking()
@@ -186,12 +130,4 @@ public class userRepository : IuserRepository
                 !x.is_deleted);
     }
 
-    public async Task<user?> GetByUsernameAsync(
-      string username)
-    {
-        return await _context.users
-            .FirstOrDefaultAsync(x =>
-                x.username == username &&
-                !x.is_deleted);
-    }
 }

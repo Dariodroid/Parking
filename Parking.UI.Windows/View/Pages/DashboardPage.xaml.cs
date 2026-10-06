@@ -9,20 +9,18 @@ namespace Parking.UI.Windows.View.Pages
 {
     public partial class DashboardPage : UserControl
     {
-        // 🟢 Estado de la "directora con walkie-talkie"
+        // Estado del gesto de arrastre de una tarjeta de puesto.
         private Point _dragStartPoint;
         private bool _isPotentialDrag;
         private bool _dragInProgress;
-        private Button _dragSourceButton;
-        private ParkingSlotDashboardItemDTO _draggedItem;
+        private Button? _dragSourceButton;
+        private ParkingSlotDashboardItemDTO? _draggedItem;
 
         public DashboardPage()
         {
             InitializeComponent();
 
-            // 🟢 REGISTRO BLINDADO: handledEventsToo = true
-            // La raíz escucha TODOS los eventos de mouse, incluso si el Button
-            // los marca como "manejados" o captura el mouse.
+            // Escucha también los eventos que el botón de la tarjeta ya marcó como atendidos.
             this.AddHandler(PreviewMouseLeftButtonDownEvent,
                 new MouseButtonEventHandler(OnPreviewMouseLeftButtonDown), true);
             this.AddHandler(PreviewMouseMoveEvent,
@@ -31,16 +29,12 @@ namespace Parking.UI.Windows.View.Pages
                 new MouseButtonEventHandler(OnPreviewMouseLeftButtonUp), true);
         }
 
-        // ==========================================
-        // PASO 1: PRESIONAR (¿Es una tarjeta o es otro botón?)
-        // ==========================================
+        /// <summary>Recuerda la tarjeta sobre la que comenzó el gesto.</summary>
         private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _dragSourceButton = FindVisualParent<Button>(e.OriginalSource as DependencyObject);
             _draggedItem = _dragSourceButton?.DataContext as ParkingSlotDashboardItemDTO;
 
-            // Solo activamos el arrastre potencial si es una tarjeta de puesto.
-            // (El botón "RESTABLECER ORDEN" tiene otro DataContext y queda excluido).
             if (_draggedItem != null)
             {
                 _dragStartPoint = e.GetPosition(this);
@@ -52,12 +46,7 @@ namespace Parking.UI.Windows.View.Pages
             }
         }
 
-        // ==========================================
-        // PASO 2: MOVER (¿Palmadita o agarre?)
-        // ==========================================
-        // ==========================================
-        // PASO 2: MOVER (¿Palmadita o agarre?)
-        // ==========================================
+        /// <summary>Inicia el arrastre al superar el umbral de movimiento de Windows.</summary>
         private void OnPreviewMouseMove(object sender, MouseEventArgs e)
         {
             if (!_isPotentialDrag || e.LeftButton != MouseButtonState.Pressed)
@@ -65,7 +54,6 @@ namespace Parking.UI.Windows.View.Pages
 
             var currentPosition = e.GetPosition(this);
 
-            // 🟢 Umbral del sistema: si se movió lo suficiente, es ARRASTRE
             if (Math.Abs(currentPosition.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
                 Math.Abs(currentPosition.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
             {
@@ -73,12 +61,9 @@ namespace Parking.UI.Windows.View.Pages
                 _dragInProgress = true;
 
                 DependencyObject dragSource = _dragSourceButton ?? (DependencyObject)this;
-
-                // 🟢 CORREGIDO: try/finally garantiza que _dragInProgress se resetee
-                // incluso si DoDragDrop consume el MouseUp o lanza una excepción.
                 try
                 {
-                    DragDrop.DoDragDrop(dragSource, _draggedItem, DragDropEffects.Move);
+                    DragDrop.DoDragDrop(dragSource, _draggedItem!, DragDropEffects.Move);
                 }
                 finally
                 {
@@ -87,52 +72,28 @@ namespace Parking.UI.Windows.View.Pages
             }
         }
 
-        // ==========================================
-        // PASO 3: SOLTAR (Suprimir el clic si hubo arrastre)
-        // ==========================================
+        /// <summary>Evita que soltar una tarjeta active también su clic.</summary>
         private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (_dragInProgress)
             {
-                // Si acabamos de arrastrar, marcamos el evento como manejado
-                // para que el Button NO dispare su Click (evita efectos secundarios).
                 e.Handled = true;
                 _dragInProgress = false;
             }
 
-            // Si no hubo arrastre, fue un CLIC limpio: el Button ejecutará
-            // su SelectSlotCommand y el panel de detalle se cargará.
             _isPotentialDrag = false;
         }
 
-        // ==========================================
-        // EVENTOS DE LAS TARJETAS (DROP SOBRE OTRA TARJETA)
-        // ==========================================
-
+        /// <summary>Atenúa la tarjeta que recibirá el puesto arrastrado.</summary>
         private void Slot_DragEnter(object sender, DragEventArgs e)
         {
-            var targetButton = sender as Button;
-            if (targetButton != null)
-            {
-                var border = FindVisualChild<Border>(targetButton);
-                if (border != null)
-                {
-                    border.Opacity = 0.6;
-                }
-            }
+            SetSlotOpacity(sender, 0.6);
         }
 
+        /// <summary>Restaura el aspecto de la tarjeta al retirar el arrastre.</summary>
         private void Slot_DragLeave(object sender, DragEventArgs e)
         {
-            var targetButton = sender as Button;
-            if (targetButton != null)
-            {
-                var border = FindVisualChild<Border>(targetButton);
-                if (border != null)
-                {
-                    border.Opacity = 1.0;
-                }
-            }
+            SetSlotOpacity(sender, 1.0);
         }
 
         private async void Slot_Drop(object sender, DragEventArgs e)
@@ -159,14 +120,10 @@ namespace Parking.UI.Windows.View.Pages
                 await viewModel.SaveSlotPositionsAsync();
             }
 
-            var border = FindVisualChild<Border>(targetButton);
-            if (border != null) border.Opacity = 1.0;
+            SetSlotOpacity(targetButton, 1.0);
         }
 
-        // ==========================================
-        // EVENTOS DEL CANVAS (DROP EN ESPACIO VACÍO)
-        // ==========================================
-
+        /// <summary>Permite soltar un puesto en el espacio libre del tablero.</summary>
         private void Canvas_DragEnter(object sender, DragEventArgs e)
         {
             e.Effects = DragDropEffects.Move;
@@ -193,20 +150,26 @@ namespace Parking.UI.Windows.View.Pages
                 await viewModel.SaveSlotPositionsAsync();
         }
 
-        // ==========================================
-        // MÉTODOS AUXILIARES (HELPERS DEL ÁRBOL VISUAL)
-        // ==========================================
-
-        public static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        /// <summary>Aplica la opacidad a la tarjeta de destino si contiene un borde.</summary>
+        private static void SetSlotOpacity(object source, double opacity)
         {
-            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
-            if (parentObject == null) return null;
-            T parent = parentObject as T;
-            if (parent != null) return parent;
-            else return FindVisualParent<T>(parentObject);
+            if (source is Button button && FindVisualChild<Border>(button) is { } border)
+                border.Opacity = opacity;
         }
 
-        public static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        /// <summary>Busca el primer ancestro del tipo indicado.</summary>
+        private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T match) return match;
+                child = VisualTreeHelper.GetParent(child);
+            }
+            return null;
+        }
+
+        /// <summary>Busca el primer descendiente visual del tipo indicado.</summary>
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {

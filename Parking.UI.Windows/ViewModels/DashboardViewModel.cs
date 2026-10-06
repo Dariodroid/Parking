@@ -16,7 +16,7 @@ public class DashboardViewModel : BaseViewModel
 
     public ICommand SelectSlotCommand { get; }
 
-    // 🟢 NUEVO: El "pito del árbitro"
+    /// <summary>Restaura la distribución inicial de los puestos.</summary>
     public ICommand ResetLayoutCommand { get; }
 
     public ObservableCollection<ParkingSlotDashboardItemDTO> Slots { get; } = new();
@@ -33,10 +33,7 @@ public class DashboardViewModel : BaseViewModel
             SelectedSlot = slot as ParkingSlotDashboardItemDTO;
         });
 
-        ResetLayoutCommand = new RelayCommand(async _ =>
-        {
-            await ResetLayoutAsync();
-        });
+        ResetLayoutCommand = new AsyncRelayCommand(_ => ResetLayoutAsync());
 
         _parkingStatusNotifier.ParkingStatusChanged += OnParkingStatusChanged;
         _ = InitializeAsync();
@@ -46,14 +43,12 @@ public class DashboardViewModel : BaseViewModel
     {
         try
         {
-            // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
             if (System.Windows.Application.Current.Dispatcher.CheckAccess())
             {
                 await LoadAsync();
                 return;
             }
 
-            // 🟢 CORREGIDO: Nombre completo para evitar colisión con Parking.Application
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(LoadAsync).Task.Unwrap();
         }
         catch (Exception ex)
@@ -64,8 +59,8 @@ public class DashboardViewModel : BaseViewModel
 
     #region PROPIEDADES
 
-    private ParkingSlotDashboardItemDTO _selectedSlot;
-    public ParkingSlotDashboardItemDTO SelectedSlot
+    private ParkingSlotDashboardItemDTO? _selectedSlot;
+    public ParkingSlotDashboardItemDTO? SelectedSlot
     {
         get => _selectedSlot;
         set => SetProperty(ref _selectedSlot, value);
@@ -92,7 +87,7 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _freeSlots, value);
     }
 
-    // 🟢 NUEVAS PROPIEDADES: Tamaño dinámico del mapa (Canvas)
+    /// <summary>Ancho del lienzo que contiene los puestos.</summary>
     private double _mapWidth;
     public double MapWidth
     {
@@ -130,8 +125,8 @@ public class DashboardViewModel : BaseViewModel
             .ThenBy(x => x.SlotNumber)
             .ToList();
 
-        // 4. Cuadrícula perfecta por defecto
-        var defaultGrid = CalculateGridPositions(orderedItems.Count);
+        // Los puestos sin posición guardada usan la cuadrícula inicial.
+        var defaultGrid = DashboardGridLayout.CreatePositions(orderedItems.Count);
 
         for (int i = 0; i < orderedItems.Count; i++)
         {
@@ -139,13 +134,11 @@ public class DashboardViewModel : BaseViewModel
 
             if (savedPositions.TryGetValue(item.SlotId, out var savedPosition))
             {
-                // 🟢 Hay diseño personalizado guardado: lo respetamos
                 item.PositionX = savedPosition.X;
                 item.PositionY = savedPosition.Y;
             }
             else
             {
-                // 🟢 Primera vez (o puesto nuevo): cuadrícula profesional
                 item.PositionX = defaultGrid[i].X;
                 item.PositionY = defaultGrid[i].Y;
             }
@@ -157,13 +150,10 @@ public class DashboardViewModel : BaseViewModel
         OccupiedSlots = Slots.Count(x => x.IsOccupied);
         FreeSlots = Slots.Count(x => !x.IsOccupied);
 
-        // 🟢 NUEVO: Recalcular el tamaño del mapa al cargar
         UpdateMapSize();
     }
 
-    /// <summary>
-    /// 🟢 PITO DEL ÁRBITRO: Restaura la cuadrícula original y la guarda en SQLite.
-    /// </summary>
+    /// <summary>Restaura la cuadrícula original y la guarda en SQLite.</summary>
     public async Task ResetLayoutAsync()
     {
         try
@@ -173,53 +163,20 @@ public class DashboardViewModel : BaseViewModel
                 .ThenBy(x => x.SlotNumber)
                 .ToList();
 
-            var defaultGrid = CalculateGridPositions(orderedItems.Count);
+            var defaultGrid = DashboardGridLayout.CreatePositions(orderedItems.Count);
 
             for (int i = 0; i < orderedItems.Count; i++)
             {
-                // Gracias a INotifyPropertyChanged, la UI se actualiza en tiempo real
                 orderedItems[i].PositionX = defaultGrid[i].X;
                 orderedItems[i].PositionY = defaultGrid[i].Y;
             }
 
-            // Persistimos el orden restaurado en SQLite
             await SaveSlotPositionsAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error al restablecer el orden: {ex.Message}");
         }
-    }
-
-    /// <summary>
-    /// Calcula las posiciones de una cuadrícula perfecta (filas y columnas uniformes).
-    /// </summary>
-    private static List<(int X, int Y)> CalculateGridPositions(int count)
-    {
-        const int cardWidth = 160;
-        const int cardHeight = 100;
-        const int horizontalSpacing = 20;
-        const int verticalSpacing = 20;
-        const int startX = 20;
-        const int startY = 20;
-        const int containerWidth = 1000;
-
-        int cardsPerRow = Math.Max(1, (containerWidth - startX) / (cardWidth + horizontalSpacing));
-
-        var result = new List<(int X, int Y)>(count);
-
-        for (int i = 0; i < count; i++)
-        {
-            int row = i / cardsPerRow;
-            int col = i % cardsPerRow;
-
-            result.Add((
-                startX + col * (cardWidth + horizontalSpacing),
-                startY + row * (cardHeight + verticalSpacing)
-            ));
-        }
-
-        return result;
     }
 
     public async Task SaveSlotPositionsAsync()
@@ -233,7 +190,6 @@ public class DashboardViewModel : BaseViewModel
                 positions[slot.SlotId] = (slot.PositionX, slot.PositionY);
             }
 
-            // 🟢 NUEVO: Recalcular el tamaño del mapa antes de persistir
             UpdateMapSize();
 
             await _dashboard.UpdateSlotPositionsAsync(positions);
@@ -244,25 +200,11 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// 🟢 Calcula el tamaño real del lienzo: hasta la última tarjeta + padding.
-    /// Se llama después de cualquier cambio de posiciones para que el scroll
-    /// aparezca solo cuando el contenido lo requiera.
-    /// </summary>
+    /// <summary>Ajusta el lienzo para abarcar todas las posiciones visibles.</summary>
     private void UpdateMapSize()
     {
-        const int cardWidth = 160;
-        const int cardHeight = 100;
-        const int padding = 40; // Margen de seguridad a la derecha y abajo
-
-        if (Slots.Count == 0)
-        {
-            MapWidth = 0;
-            MapHeight = 0;
-            return;
-        }
-
-        MapWidth = Slots.Max(x => x.PositionX) + cardWidth + padding;
-        MapHeight = Slots.Max(x => x.PositionY) + cardHeight + padding;
+        var size = DashboardGridLayout.GetCanvasSize(Slots);
+        MapWidth = size.Width;
+        MapHeight = size.Height;
     }
 }

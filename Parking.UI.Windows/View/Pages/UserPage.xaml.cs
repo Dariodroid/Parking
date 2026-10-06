@@ -1,12 +1,12 @@
-﻿using Parking.UI.Windows.ViewModels;
+using Parking.UI.Windows.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace Parking.UI.Windows.View.Pages
 {
-    public partial class userPage : UserControl
+    public partial class UserPage : UserControl
     {
-        public userPage()
+        public UserPage()
         {
             InitializeComponent();
         }
@@ -18,7 +18,7 @@ namespace Parking.UI.Windows.View.Pages
                 PasswordTextBox.Text = PasswordBox.Password;
             }
 
-            if (DataContext is userViewModel vm)
+            if (DataContext is UserViewModel vm)
             {
                 vm.Password = PasswordBox.Password;
             }
@@ -31,7 +31,7 @@ namespace Parking.UI.Windows.View.Pages
                 ConfirmPasswordTextBox.Text = ConfirmPasswordBox.Password;
             }
 
-            if (DataContext is userViewModel vm)
+            if (DataContext is UserViewModel vm)
             {
                 vm.ConfirmPassword = ConfirmPasswordBox.Password;
             }
@@ -44,7 +44,7 @@ namespace Parking.UI.Windows.View.Pages
                 PasswordBox.Password = PasswordTextBox.Text;
             }
 
-            if (DataContext is userViewModel vm)
+            if (DataContext is UserViewModel vm)
             {
                 vm.Password = PasswordTextBox.Text;
             }
@@ -57,7 +57,7 @@ namespace Parking.UI.Windows.View.Pages
                 ConfirmPasswordBox.Password = ConfirmPasswordTextBox.Text;
             }
 
-            if (DataContext is userViewModel vm)
+            if (DataContext is UserViewModel vm)
             {
                 vm.ConfirmPassword = ConfirmPasswordTextBox.Text;
             }

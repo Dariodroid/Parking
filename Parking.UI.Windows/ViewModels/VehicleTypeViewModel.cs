@@ -1,27 +1,20 @@
-using Parking.Application.Interfaces;
-using Parking.UI.Windows.Interfaces;
 using Parking.Application.Services;
-using Parking.Domain.Model.Interfaces;
+using Parking.Application.Interfaces;
 using Parking.Domain.Model.Models;
-using Parking.UI.Windows.View.Dialogs;
+using Parking.UI.Windows.Interfaces;
 using Parking.UI.Windows.ViewModels.Base;
-using Parking.UI.Windows.Services;
-using System;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Input;
 
 namespace Parking.UI.Windows.ViewModels;
 
-public class vehicle_typeViewModel : BaseViewModel
+public class VehicleTypeViewModel : BaseViewModel
 {
     private readonly IDialogService _dialogService;
     private readonly IVehicleTypeManagementService _service;
-    bool dialog;
+    private readonly int _currentUserId = CurrentUser.Id;
 
-    private readonly int _currentuserId = CurrentUser.Id;
-
-    public ObservableCollection<vehicle_type> vehicle_types { get; } = new();
+    public ObservableCollection<vehicle_type> VehicleTypes { get; } = new();
 
     public ICommand SaveCommand { get; }
     public ICommand UpdateCommand { get; }
@@ -31,15 +24,15 @@ public class vehicle_typeViewModel : BaseViewModel
     /// <summary>Prepara la edición de tipos de vehículo y sus tarifas.</summary>
     /// <param name="service">Consulta y guarda los tipos de vehículo.</param>
     /// <param name="dialogService">Muestra validaciones y resultados al operador.</param>
-    public vehicle_typeViewModel(IVehicleTypeManagementService service, IDialogService dialogService)
+    public VehicleTypeViewModel(IVehicleTypeManagementService service, IDialogService dialogService)
     {
         _service = service;
         _dialogService = dialogService;
 
-        SaveCommand = new RelayCommand(async _ => await SaveAsync());
-        UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
+        SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
+        UpdateCommand = new AsyncRelayCommand(_ => UpdateAsync());
         NewCommand = new RelayCommand(_ => ClearForm());
-        DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
+        DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
     }
 
     private int _id;
@@ -123,13 +116,13 @@ public class vehicle_typeViewModel : BaseViewModel
         set => SetProperty(ref _isActive, value);
     }
 
-    private vehicle_type? _selectedvehicle_type;
-    public vehicle_type? Selectedvehicle_type
+    private vehicle_type? _selectedVehicleType;
+    public vehicle_type? SelectedVehicleType
     {
-        get => _selectedvehicle_type;
+        get => _selectedVehicleType;
         set
         {
-            if (SetProperty(ref _selectedvehicle_type, value) && value != null)
+            if (SetProperty(ref _selectedVehicleType, value) && value != null)
             {
                 LoadSelected(value);
             }
@@ -152,13 +145,13 @@ public class vehicle_typeViewModel : BaseViewModel
     /// <summary>Recarga la lista de tipos de vehículo desde la base.</summary>
     private async Task LoadAsync()
     {
-        vehicle_types.Clear();
+        VehicleTypes.Clear();
 
         var items = await _service.GetAllAsync();
 
         foreach (var item in items)
         {
-            vehicle_types.Add(item);
+            VehicleTypes.Add(item);
         }
     }
 
@@ -231,14 +224,14 @@ public class vehicle_typeViewModel : BaseViewModel
             var entity = new vehicle_type
             {
                 created_at = DateTime.Now,
-                created_by = _currentuserId,
+                created_by = _currentUserId,
                 is_deleted = false
             };
             ApplyForm(entity);
 
             await _service.CreateAsync(entity);
 
-            _dialogService.ShowWarning("Atención", "El nombre del tipo de vehículo es obligatorio");
+            _dialogService.ShowSuccess("Tipos de vehículo", "Tipo de vehículo registrado correctamente.");
 
             await LoadAsync();
 
@@ -274,7 +267,7 @@ public class vehicle_typeViewModel : BaseViewModel
 
             ApplyForm(entity);
             entity.updated_at = DateTime.Now;
-            entity.updated_by = _currentuserId;
+            entity.updated_by = _currentUserId;
 
             await _service.UpdateAsync(entity);
 
@@ -286,7 +279,7 @@ public class vehicle_typeViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            _dialogService.ShowInfo("Mensaje !", ex.Message);
+            _dialogService.ShowError("Tipos de vehículo", ex.Message);
         }
     }
 
@@ -321,14 +314,13 @@ public class vehicle_typeViewModel : BaseViewModel
                 return;
             }
 
-            dialog = _dialogService.ShowConfirmation("Confirmación", $"¿Está seguro de eliminar el tipo de vehículo '{entity.name}'?");
-
-            if (!dialog)
+            if (!_dialogService.ShowConfirmation("Confirmación",
+                $"¿Está seguro de eliminar el tipo de vehículo '{entity.name}'?"))
             {
                 return;
             }
 
-            await _service.DeleteAsync(entity, _currentuserId);
+            await _service.DeleteAsync(entity, _currentUserId);
 
             _dialogService.ShowInfo("Mensaje !", "Registro eliminado correctamente.");
 
@@ -359,6 +351,6 @@ public class vehicle_typeViewModel : BaseViewModel
 
         IsActive = true;
 
-        Selectedvehicle_type = null;
+        SelectedVehicleType = null;
     }
 }

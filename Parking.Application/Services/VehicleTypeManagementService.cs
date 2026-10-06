@@ -7,9 +7,9 @@ namespace Parking.Application.Services;
 /// <summary>Confirma cada cambio de tipo de vehículo mediante su repositorio.</summary>
 public sealed class VehicleTypeManagementService : IVehicleTypeManagementService
 {
-    private readonly Ivehicle_typeRepository _types;
+    private readonly IVehicleTypeRepository _types;
 
-    public VehicleTypeManagementService(Ivehicle_typeRepository types) => _types = types;
+    public VehicleTypeManagementService(IVehicleTypeRepository types) => _types = types;
 
     public Task<IEnumerable<vehicle_type>> GetAllAsync() => _types.GetAllAsync();
     public Task<vehicle_type?> GetByIdAsync(long id) => _types.GetByIdAsync(id);

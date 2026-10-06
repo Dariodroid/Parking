@@ -14,7 +14,7 @@ namespace Parking.Application.Services
     /// </summary>
     public class EntryService : IEntryService
     {
-        private readonly Iparking_sessionRepository _sessionRepo;
+        private readonly IParkingSessionRepository _sessionRepo;
         private readonly IParkingSlotRepository _slotRepo;
         private readonly IEntryPhotoStore _photoStore;
         private readonly IQrTicketStore _qrTicketStore;
@@ -28,7 +28,7 @@ namespace Parking.Application.Services
         /// <param name="qrTicketStore">Genera o elimina el QR de entradas ocasionales.</param>
         /// <param name="registeredVehicles">Busca clientes con plan y horarios completos.</param>
         public EntryService(
-            Iparking_sessionRepository sessionRepo,
+            IParkingSessionRepository sessionRepo,
             IParkingSlotRepository slotRepo,
             IEntryPhotoStore photoStore,
             IQrTicketStore qrTicketStore,

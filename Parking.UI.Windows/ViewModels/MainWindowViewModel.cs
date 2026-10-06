@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Parking.Domain.Model.Models;
 using Parking.Application.Services;
 using Parking.UI.Windows.Services;
@@ -53,8 +53,7 @@ namespace Parking.UI.Windows.ViewModels
 
             CanManageSystem = MenuAccessPolicy.IsAdministrator(CurrentUser.Role);
 
-            NavigateCommand = new RelayCommand(async param =>
-                await NavigateAsync(param?.ToString()));
+            NavigateCommand = new AsyncRelayCommand(param => NavigateAsync(param?.ToString()));
 
             //_ = NavigateAsync("Operaciones");
         }
@@ -64,7 +63,8 @@ namespace Parking.UI.Windows.ViewModels
         /// <returns>Tarea que termina cuando se carga la sección seleccionada.</returns>
         private async Task NavigateAsync(string? destination)
         {
-            if (!CurrentUser.IsAuthenticated || !MenuAccessPolicy.CanNavigate(CurrentUser.Role, destination))
+            if (!CurrentUser.IsAuthenticated || string.IsNullOrWhiteSpace(destination)
+                || !MenuAccessPolicy.CanNavigate(CurrentUser.Role, destination))
                 return;
 
             // Actualizamos la clave del menú inmediatamente para iluminar el botón
@@ -118,7 +118,7 @@ namespace Parking.UI.Windows.ViewModels
                     break;
 
                 case "Tipos Vehículo":
-                    var vehicleVm = _serviceProvider.GetRequiredService<vehicle_typeViewModel>();
+                    var vehicleVm = _serviceProvider.GetRequiredService<VehicleTypeViewModel>();
                     CurrentView = vehicleVm;
                     PageTitle = "Tipos de Vehículos";
                     await vehicleVm.InitializeAsync();
@@ -132,7 +132,7 @@ namespace Parking.UI.Windows.ViewModels
                     break;
 
                 case "Usuarios":
-                    var userVm = _serviceProvider.GetRequiredService<userViewModel>();
+                    var userVm = _serviceProvider.GetRequiredService<UserViewModel>();
                     CurrentView = userVm;
                     PageTitle = "Gestión de Usuarios";
                     await userVm.InitializeAsync();

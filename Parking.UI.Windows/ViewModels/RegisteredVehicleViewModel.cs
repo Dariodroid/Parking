@@ -71,11 +71,11 @@ public class RegisteredVehicleViewModel : BaseViewModel
         _monthlyLedger = monthlyLedger;
 
 
-        SaveCommand = new RelayCommand(async _ => await SaveAsync());
+        SaveCommand = new AsyncRelayCommand(_ => SaveAsync());
 
-        UpdateCommand = new RelayCommand(async _ => await UpdateAsync());
+        UpdateCommand = new AsyncRelayCommand(_ => UpdateAsync());
 
-        DeleteCommand = new RelayCommand(async _ => await DeleteAsync());
+        DeleteCommand = new AsyncRelayCommand(_ => DeleteAsync());
 
         NewCommand = new RelayCommand(_ => ClearForm());
         // La acción de pago espera el guardado antes de poder ejecutarse otra vez.
@@ -231,32 +231,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
     private bool _isLoaded;
 
     /// <summary>Prepara los siete días editables con su estado y horas iniciales.</summary>
-    private void InitializeSchedules()
-    {
-        VehicleSchedules.Clear();
-        string[] dayNames =
-        {
-            "LUNES", "MARTES", "MIÉRCOLES", "JUEVES",
-            "VIERNES", "SÁBADO", "DOMINGO"
-        };
-
-        // La pantalla empieza en lunes, aunque la base de datos representa domingo con 0.
-        for (int index = 0; index < dayNames.Length; index++)
-        {
-            bool isSunday = index == 6;
-            bool isWeekend = index >= 5;
-            int dayOfWeek = isSunday ? 0 : index + 1;
-            VehicleSchedules.Add(new VehicleScheduleItemViewModel
-            {
-                DayOfWeek = dayOfWeek,
-                DayName = dayNames[index],
-                IsEnabled = !isSunday,
-                StartTime = TimeSpan.FromHours(isWeekend ? 8 : 7),
-                EndTime = TimeSpan.FromHours(isWeekend ? 18 : 19),
-                IsFullDay = false
-            });
-        }
-    }
+    private void InitializeSchedules() => VehicleScheduleMapper.CreateDefaults(VehicleSchedules);
 
     /// <summary>Carga una sola vez los tipos, clientes y horarios necesarios para el formulario.</summary>
     public async Task InitializeAsync()
@@ -323,32 +298,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
             MonthlyStartDate = plan.start_date;
             MonthlyEndDate = plan.end_date;
         }
-        LoadSchedules(item);
-    }
-
-    /// <summary>Restablece los siete días y carga solo los horarios no eliminados de la ficha.</summary>
-    private void LoadSchedules(registered_vehicle item)
-    {
-        foreach (var schedule in VehicleSchedules)
-        {
-            schedule.IsEnabled = false;
-            schedule.IsFullDay = false;
-            schedule.StartTime = new TimeSpan(7, 0, 0);
-            schedule.EndTime = new TimeSpan(19, 0, 0);
-        }
-        if (item.monthly_vehicle_schedules == null || !item.monthly_vehicle_schedules.Any())
-            return;
-        foreach (var schedule in VehicleSchedules)
-        {
-            var saved = item.monthly_vehicle_schedules
-                .FirstOrDefault(x => !x.is_deleted && x.day_of_week == schedule.DayOfWeek);
-            if (saved == null) continue;
-            // Una fila guardada pero inactiva debe verse desactivada.
-            schedule.IsEnabled = saved.is_active;
-            schedule.StartTime = saved.start_time.ToTimeSpan();
-            schedule.EndTime = saved.end_time.ToTimeSpan();
-            schedule.IsFullDay = saved.is_full_day;
-        }
+        VehicleScheduleMapper.Load(VehicleSchedules, item);
     }
 
     /// <summary>Comprueba la ficha y las fechas antes de crear o actualizar un contrato.</summary>
@@ -395,20 +345,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
         collected_by = expired ? null : _currentUserId
     };
 
-    /// <summary>Convierte un día habilitado de la pantalla en una fila nueva del horario.</summary>
-    private monthly_vehicle_schedule CreateSchedule(VehicleScheduleItemViewModel day, int vehicleId) => new()
-    {
-        registered_vehicle_id = vehicleId,
-        day_of_week = day.DayOfWeek,
-        start_time = TimeOnly.FromTimeSpan(day.StartTime),
-        end_time = TimeOnly.FromTimeSpan(day.EndTime),
-        is_active = day.IsEnabled,
-        is_full_day = day.IsFullDay,
-        created_at = DateTime.Now,
-        created_by = _currentUserId,
-        is_deleted = false
-    };
-
     /// <summary>Crea vehículo, plan y horarios; deja pendiente la cuota de un contrato creado ya vencido.</summary>
     private async Task SaveAsync()
     {
@@ -436,8 +372,7 @@ public class RegisteredVehicleViewModel : BaseViewModel
             bool createdAlreadyExpired = endDate.Date < DateTime.Today;
 
             var plan = CreatePlan(startDate, endDate, createdAlreadyExpired);
-            var schedules = VehicleSchedules.Where(x => x.IsEnabled)
-                .Select(x => CreateSchedule(x, 0)).ToList();
+            var schedules = VehicleScheduleMapper.CreateEnabled(VehicleSchedules, 0, _currentUserId);
 
             await _service.RegisterAsync(vehicle, plan, schedules);
 
@@ -489,32 +424,6 @@ public class RegisteredVehicleViewModel : BaseViewModel
         plan.status = IsActive ? "active" : "cancelled";
     }
 
-    /// <summary>Separa los horarios que se actualizan de los nuevos días habilitados.</summary>
-    private (List<monthly_vehicle_schedule> ToUpdate, List<monthly_vehicle_schedule> ToAdd)
-        BuildScheduleChanges(registered_vehicle entity)
-    {
-        var toUpdate = new List<monthly_vehicle_schedule>();
-        var toAdd = new List<monthly_vehicle_schedule>();
-        foreach (var day in VehicleSchedules)
-        {
-            var existing = entity.monthly_vehicle_schedules
-                .FirstOrDefault(x => x.day_of_week == day.DayOfWeek);
-            if (existing is not null)
-            {
-                existing.start_time = TimeOnly.FromTimeSpan(day.StartTime);
-                existing.end_time = TimeOnly.FromTimeSpan(day.EndTime);
-                existing.is_full_day = day.IsFullDay;
-                existing.is_active = day.IsEnabled;
-                existing.updated_at = DateTime.Now;
-                existing.updated_by = _currentUserId;
-                toUpdate.Add(existing);
-            }
-            else if (day.IsEnabled)
-                toAdd.Add(CreateSchedule(day, entity.id));
-        }
-        return (toUpdate, toAdd);
-    }
-
     /// <summary>Actualiza la ficha, el estado, las fechas y los horarios sin registrar un cobro nuevo.</summary>
     private async Task UpdateAsync()
     {
@@ -540,7 +449,8 @@ public class RegisteredVehicleViewModel : BaseViewModel
 
             ApplyVehicleChanges(entity);
             ApplyPlanChanges(entity.vehicle_monthly_plan);
-            var (schedulesToUpdate, schedulesToAdd) = BuildScheduleChanges(entity);
+            var (schedulesToUpdate, schedulesToAdd) =
+                VehicleScheduleMapper.BuildChanges(entity, VehicleSchedules, _currentUserId);
 
             await _service.UpdateAsync(entity, schedulesToUpdate, schedulesToAdd);
 

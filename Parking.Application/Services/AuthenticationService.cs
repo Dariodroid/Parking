@@ -1,12 +1,11 @@
-using Parking.Application.Interfaces;
 using Parking.Application.Dto;
+using Parking.Application.Interfaces;
 using Parking.Domain.Model.Interfaces;
-
 
 namespace Parking.Application.Services;
 
-
-public class AuthenticationService : IAuthenticationService
+/// <summary>Comprueba credenciales y coordina el bloqueo temporal de acceso.</summary>
+public sealed class AuthenticationService : IAuthenticationService
 {
     private const string InvalidCredentialsMessage = "Usuario o contraseña incorrectos.";
     private const string LockedMessage =
@@ -17,26 +16,23 @@ public class AuthenticationService : IAuthenticationService
     private const string DummyPasswordHash =
         "100000.AAAAAAAAAAAAAAAAAAAAAA==.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
-    private readonly IuserRepository _userRepository;
-
+    private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
 
-    public AuthenticationService(IuserRepository userRepository, IPasswordHasher passwordHasher)
+    /// <summary>Recibe el repositorio de cuentas y el verificador de contraseñas.</summary>
+    public AuthenticationService(IUserRepository userRepository, IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
-
         _passwordHasher = passwordHasher;
     }
-
 
     /// <summary>Comprueba credenciales sin revelar si el usuario existe o está activo.</summary>
     /// <param name="request">Nombre de usuario y contraseña introducidos.</param>
     /// <returns>Usuario autenticado, rechazo genérico o aviso de bloqueo si la contraseña es válida.</returns>
-    public async Task<LoginResult> LoginAsync(
-        LoginRequest request)
+    public async Task<LoginResult> LoginAsync(LoginRequest request)
     {
         // La consulta no cambia el texto mostrado al usuario según su resultado.
-        var user = await _userRepository.GetByusernameAsync(request.Username);
+        var user = await _userRepository.GetByUsernameAsync(request.Username);
         bool validPassword;
         try
         {
@@ -72,14 +68,11 @@ public class AuthenticationService : IAuthenticationService
         if (locked)
             return new LoginResult { Success = false, Message = LockedMessage };
 
-        UserDto dto = new()
+        var authenticatedUser = new UserDto
         {
             Id = user.id,
-
             Username = user.username,
-
             FullName = user.full_name,
-
             Role = user.role
         };
 
@@ -90,30 +83,19 @@ public class AuthenticationService : IAuthenticationService
         return new LoginResult
         {
             Success = true,
-
             Message = "Login correcto.",
-
-            User = dto
+            User = authenticatedUser
         };
     }
 
-    public async Task<bool> AuthenticateAsync(
-        string username,
-        string password)
+    /// <summary>Devuelve únicamente si las credenciales permiten iniciar sesión.</summary>
+    public async Task<bool> AuthenticateAsync(string username, string password)
     {
-
-        var result =
-            await LoginAsync(
-                new LoginRequest
-                {
-                    Username = username,
-
-                    Password = password
-                });
-
-
+        var result = await LoginAsync(new LoginRequest
+        {
+            Username = username,
+            Password = password
+        });
         return result.Success;
-
     }
-
 }

@@ -27,11 +27,9 @@ public class DoubleToVisibilityConverter : IValueConverter
     /// <param name="targetType">Tipo del origen solicitado por WPF.</param>
     /// <param name="parameter">Parámetro opcional del enlace.</param>
     /// <param name="culture">Cultura del enlace.</param>
-    /// <returns>No retorna: esta dirección no está implementada.</returns>
-    /// <exception cref="NotImplementedException">Siempre, porque el enlace se usa solo de origen a destino.</exception>
+    /// <returns>Una instrucción para conservar el ancho original.</returns>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        // Una misma visibilidad puede corresponder a numerosos anchos.
-        throw new NotImplementedException();
+        return Binding.DoNothing;
     }
 }

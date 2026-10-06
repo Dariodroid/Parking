@@ -7,10 +7,10 @@ namespace Parking.Application.Services;
 /// <summary>Coordina la administración de usuarios y conserva el hash fuera de la UI.</summary>
 public sealed class UserManagementService : IUserManagementService
 {
-    private readonly IuserRepository _users;
+    private readonly IUserRepository _users;
     private readonly IPasswordHasher _hasher;
 
-    public UserManagementService(IuserRepository users, IPasswordHasher hasher)
+    public UserManagementService(IUserRepository users, IPasswordHasher hasher)
     {
         _users = users;
         _hasher = hasher;
@@ -22,7 +22,7 @@ public sealed class UserManagementService : IUserManagementService
     public async Task<bool> CreateAsync(user account, string password)
     {
         RequirePassword(password);
-        if (await _users.ExistsByusernameAsync(account.username))
+        if (await _users.ExistsByUsernameAsync(account.username))
             return false;
         account.password_hash = _hasher.HashPassword(password);
         await _users.AddAsync(account);

@@ -149,14 +149,14 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         _ticketPrinter = ticketPrinter;
         _dialogs = dialogs;
         _connectionTester = connectionTester;
-        _currencySymbol = store.Load().CurrencySymbol;
-        var printerSettings = store.Load();
-        _selectedTicketPrinter = printerSettings.TicketPrinterName;
-        _ticketPaperWidthMm = printerSettings.TicketPaperWidthMm is 58 or 80
-            ? printerSettings.TicketPaperWidthMm : 80;
-        _autoPrintTickets = printerSettings.AutoPrintTickets;
+        var settings = store.Load();
+        _currencySymbol = settings.CurrencySymbol;
+        _selectedTicketPrinter = settings.TicketPrinterName;
+        _ticketPaperWidthMm = settings.TicketPaperWidthMm is 58 or 80
+            ? settings.TicketPaperWidthMm : 80;
+        _autoPrintTickets = settings.AutoPrintTickets;
         // Los operadores no reciben la cadena, que podría contener una contraseña SQL.
-        _connectionString = CanManageConnection ? store.Load().ConnectionString : string.Empty;
+        _connectionString = CanManageConnection ? settings.ConnectionString : string.Empty;
         TestConnectionCommand = new AsyncRelayCommand(_ => TestConnectionAsync());
         SaveConnectionCommand = new RelayCommand(_ => SaveConnection());
         RestartCommand = new RelayCommand(_ => Restart());
@@ -285,19 +285,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
     /// <returns>Tarea que muestra el resultado de conectividad.</returns>
     private async Task TestConnectionAsync()
     {
-        if (!CanManageConnection)
-        {
-            Status = "Solo un administrador puede configurar la conexión.";
-            _dialogs.ShowWarning("Conexión", Status);
-            return;
-        }
-
-        if (!_connectionTester.TryNormalize(ConnectionString, out var normalized))
-        {
-            Status = "Indique Server y Database en una cadena SQL válida.";
-            _dialogs.ShowWarning("Conexión", Status);
-            return;
-        }
+        if (!TryGetNormalizedConnection(out string normalized)) return;
 
         IsBusy = true;
         Status = "Comprobando la conexión...";
@@ -314,25 +302,16 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             Status = $"No se pudo conectar: {ex.Message}";
             _dialogs.ShowError("Conexión", Status);
         }
-        finally { IsBusy = false; }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     /// <summary>Guarda la dirección SQL local y avisa que los contextos abiertos requieren reinicio.</summary>
     private void SaveConnection()
     {
-        if (!CanManageConnection)
-        {
-            Status = "Solo un administrador puede configurar la conexión.";
-            _dialogs.ShowWarning("Conexión", Status);
-            return;
-        }
-
-        if (!_connectionTester.TryNormalize(ConnectionString, out var normalized))
-        {
-            Status = "Indique Server y Database en una cadena SQL válida.";
-            _dialogs.ShowWarning("Conexión", Status);
-            return;
-        }
+        if (!TryGetNormalizedConnection(out string normalized)) return;
 
         try
         {
@@ -348,6 +327,23 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             Status = $"No se pudo guardar la configuración: {ex.Message}";
             _dialogs.ShowError("Conexión", Status);
         }
+    }
+
+    /// <summary>Comprueba permisos y normaliza la dirección SQL antes de probarla o guardarla.</summary>
+    private bool TryGetNormalizedConnection(out string normalized)
+    {
+        normalized = string.Empty;
+        if (!CanManageConnection)
+        {
+            Status = "Solo un administrador puede configurar la conexión.";
+            _dialogs.ShowWarning("Conexión", Status);
+            return false;
+        }
+        if (_connectionTester.TryNormalize(ConnectionString, out normalized)) return true;
+
+        Status = "Indique Server y Database en una cadena SQL válida.";
+        _dialogs.ShowWarning("Conexión", Status);
+        return false;
     }
 
     /// <summary>Abre una nueva instancia y cierra la actual para renovar todos los DbContext.</summary>

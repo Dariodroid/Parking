@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Parking.Domain.Model\Parking.Domain.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Licensing\public-key.pem" LogicalName="Parking.Licensing.PublicKey" />
+  </ItemGroup>
+
 </Project>

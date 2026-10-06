@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Parking.Domain.Model.Interfaces
 {
-    public interface Iparking_sessionRepository : IBaseRepository<parking_session>
+    public interface IParkingSessionRepository : IBaseRepository<parking_session>
     {
         /// <summary>Busca la estancia abierta de una placa.</summary>
         /// <param name="plate">Placa normalizada del vehículo.</param>
