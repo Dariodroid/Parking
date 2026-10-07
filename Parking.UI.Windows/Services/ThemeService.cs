@@ -20,7 +20,7 @@ public sealed class ThemeService
     public void ApplyStored() => Apply(_settingsStore.Load().Theme, save: false);
 
     /// <summary>Cambia el tema de la sesión y lo guarda cuando se solicita.</summary>
-    /// <param name="mode">Tema claro u oscuro.</param>
+    /// <param name="mode">Tema claro, oscuro o de panel azul.</param>
     /// <param name="save">Indica si debe persistirse para el próximo inicio.</param>
     public void Apply(AppThemeMode mode, bool save = true)
     {
@@ -31,18 +31,18 @@ public sealed class ThemeService
         helper.SetTheme(palette);
 
         // Los pinceles compartidos recolorean los estilos propios del proyecto.
-        SetBrush("AppPageBrush", mode, "#121212", "#F4F7FB");
-        SetBrush("AppSurfaceBrush", mode, "#1E1E1E", "#FFFFFF");
-        SetBrush("AppRaisedBrush", mode, "#252525", "#EAF0F5");
-        SetBrush("AppSidebarBrush", mode, "#1A1A1A", "#E5EBF1");
-        SetBrush("AppInputBrush", mode, "#0A0A0A", "#FFFFFF");
-        SetBrush("AppCameraPanelBrush", mode, "#101820", "#FFFFFF");
-        SetBrush("AppBorderBrush", mode, "#333333", "#C7D2DD");
-        SetBrush("AppInputBorderBrush", mode, "#444444", "#A8B6C5");
-        SetBrush("AppTextBrush", mode, "#FFFFFF", "#1D2935");
-        SetBrush("AppMutedTextBrush", mode, "#AAB8C4", "#526173");
-        SetBrush("AppAccentTextBrush", mode, "#4FC3F7", "#075F95");
-        SetBrush("AppSelectedBrush", mode, "#15293A", "#DCECF8");
+        SetBrush("AppPageBrush", mode, "#121212", "#F4F7FB", "#04112B");
+        SetBrush("AppSurfaceBrush", mode, "#1E1E1E", "#FFFFFF", "#092653");
+        SetBrush("AppRaisedBrush", mode, "#252525", "#EAF0F5", "#12396D");
+        SetBrush("AppSidebarBrush", mode, "#1A1A1A", "#E5EBF1", "#061C42");
+        SetBrush("AppInputBrush", mode, "#0A0A0A", "#FFFFFF", "#031633");
+        SetBrush("AppCameraPanelBrush", mode, "#101820", "#FFFFFF", "#020C21");
+        SetBrush("AppBorderBrush", mode, "#333333", "#C7D2DD", "#1765A8");
+        SetBrush("AppInputBorderBrush", mode, "#444444", "#A8B6C5", "#3197D6");
+        SetBrush("AppTextBrush", mode, "#FFFFFF", "#1D2935", "#ECF8FF");
+        SetBrush("AppMutedTextBrush", mode, "#AAB8C4", "#526173", "#91BDE0");
+        SetBrush("AppAccentTextBrush", mode, "#4FC3F7", "#075F95", "#45D8FF");
+        SetBrush("AppSelectedBrush", mode, "#15293A", "#DCECF8", "#174A89");
         Current = mode;
 
         if (save)
@@ -58,10 +58,16 @@ public sealed class ThemeService
     /// <param name="mode">Tema solicitado.</param>
     /// <param name="dark">Color del tema oscuro.</param>
     /// <param name="light">Color del tema claro.</param>
-    private static void SetBrush(string key, AppThemeMode mode, string dark, string light)
+    /// <param name="hud">Color del panel azul.</param>
+    private static void SetBrush(string key, AppThemeMode mode, string dark, string light, string hud)
     {
         // Reemplazar el recurso permite que DynamicResource se actualice al instante.
         System.Windows.Application.Current.Resources[key] = new SolidColorBrush(
-            (Color)ColorConverter.ConvertFromString(mode == AppThemeMode.Light ? light : dark));
+            (Color)ColorConverter.ConvertFromString(mode switch
+            {
+                AppThemeMode.Light => light,
+                AppThemeMode.Hud => hud,
+                _ => dark
+            }));
     }
 }

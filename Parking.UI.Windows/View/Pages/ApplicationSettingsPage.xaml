@@ -21,6 +21,8 @@
                         <RadioButton Content="Oscuro" IsChecked="{Binding IsDarkTheme, Mode=TwoWay}"
                                      Foreground="{DynamicResource AppTextBrush}" Margin="0,0,24,0"/>
                         <RadioButton Content="Claro" IsChecked="{Binding IsLightTheme, Mode=TwoWay}"
+                                     Foreground="{DynamicResource AppTextBrush}" Margin="0,0,24,0"/>
+                        <RadioButton Content="Panel azul" IsChecked="{Binding IsHudTheme, Mode=TwoWay}"
                                      Foreground="{DynamicResource AppTextBrush}"/>
                     </StackPanel>
                     <TextBlock Text="El cambio de tema se aplica y guarda al momento."

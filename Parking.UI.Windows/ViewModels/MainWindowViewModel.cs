@@ -3,6 +3,7 @@ using Parking.Domain.Model.Models;
 using Parking.Application.Services;
 using Parking.UI.Windows.Services;
 using Parking.UI.Windows.ViewModels.Base;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace Parking.UI.Windows.ViewModels
@@ -19,7 +20,32 @@ namespace Parking.UI.Windows.ViewModels
         public object? CurrentView
         {
             get => _currentView;
-            set => SetProperty(ref _currentView, value);
+            set
+            {
+                if (SetProperty(ref _currentView, value)) NotifyLoadingChanged();
+            }
+        }
+
+        /// <summary>Expone la carga de Operaciones a la ventana que cubre también el menú y la barra superior.</summary>
+        public bool IsModernLoading => CurrentView is PlateReaderViewModel operations && operations.IsModernLoading;
+        public string LoadingTitle => (CurrentView as PlateReaderViewModel)?.LoadingTitle ?? string.Empty;
+        public string LoadingDetail => (CurrentView as PlateReaderViewModel)?.LoadingDetail ?? string.Empty;
+
+        /// <summary>Actualiza las propiedades que usa la animación de toda la ventana.</summary>
+        private void NotifyLoadingChanged()
+        {
+            OnPropertyChanged(nameof(IsModernLoading));
+            OnPropertyChanged(nameof(LoadingTitle));
+            OnPropertyChanged(nameof(LoadingDetail));
+        }
+
+        /// <summary>Propaga el fin de carga y los textos de Operaciones al panel principal.</summary>
+        private void OnOperationsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(PlateReaderViewModel.IsModernLoading)
+                or nameof(PlateReaderViewModel.LoadingTitle)
+                or nameof(PlateReaderViewModel.LoadingDetail))
+                NotifyLoadingChanged();
         }
 
         public string PageTitle
@@ -74,7 +100,11 @@ namespace Parking.UI.Windows.ViewModels
             {
                 case "Operaciones":
                     // Reutilizar el mismo controlador conserva vídeo, selección y reconocimiento.
-                    _operationViewModel ??= _serviceProvider.GetRequiredService<PlateReaderViewModel>();
+                    if (_operationViewModel is null)
+                    {
+                        _operationViewModel = _serviceProvider.GetRequiredService<PlateReaderViewModel>();
+                        _operationViewModel.PropertyChanged += OnOperationsPropertyChanged;
+                    }
                     CurrentView = _operationViewModel;
                     PageTitle = "Registro de Entrada / Salida";
                     break;

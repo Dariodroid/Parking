@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace Parking.UI.Windows.ViewModels
 {
@@ -42,7 +43,54 @@ namespace Parking.UI.Windows.ViewModels
         private readonly SemaphoreSlim _plateReaderGate = new(1, 1);
         // Apertura y cierre se serializan para que una captura no se libere durante su inicio.
         private readonly SemaphoreSlim _cameraOperationGate = new(1, 1);
+        // Cambiar a true recupera el diseño de carga anterior sin tocar su XAML.
+        private const bool UseClassicLoading = false;
         private bool _isOperational = true;
+        private bool _isPreparingOperations = true;
+        private bool _isConnectingCamera;
+        private string _loadingTitle = "PREPARANDO OPERACIONES";
+        private string _loadingDetail = "Buscando cámaras y cargando datos...";
+
+        /// <summary>Indica si se están descubriendo cámaras y cargando los datos iniciales.</summary>
+        public bool IsPreparingOperations
+        {
+            get => _isPreparingOperations;
+            private set
+            {
+                if (SetProperty(ref _isPreparingOperations, value)) NotifyLoadingChanged();
+            }
+        }
+
+        /// <summary>Texto mostrado durante la preparación o la conexión de una cámara.</summary>
+        public string LoadingTitle { get => _loadingTitle; private set => SetProperty(ref _loadingTitle, value); }
+        public string LoadingDetail { get => _loadingDetail; private set => SetProperty(ref _loadingDetail, value); }
+        /// <summary>Conserva el diseño anterior para recuperarlo con una sola constante.</summary>
+        public bool IsClassicLoading => UseClassicLoading && (IsPreparingOperations || _isConnectingCamera);
+        /// <summary>Activa el nuevo panel mientras hay una tarea de carga en curso.</summary>
+        public bool IsModernLoading => !UseClassicLoading && (IsPreparingOperations || _isConnectingCamera);
+
+        /// <summary>Actualiza ambos diseños de carga al comenzar o terminar una tarea.</summary>
+        private void NotifyLoadingChanged()
+        {
+            OnPropertyChanged(nameof(IsClassicLoading));
+            OnPropertyChanged(nameof(IsModernLoading));
+        }
+
+        /// <summary>Muestra la espera propia de una conexión sin detener el otro visor.</summary>
+        private void ShowCameraLoading(string title)
+        {
+            LoadingTitle = title;
+            LoadingDetail = "Conectando vídeo y preparando el reconocimiento de placas y QR...";
+            _isConnectingCamera = true;
+            NotifyLoadingChanged();
+        }
+
+        /// <summary>Oculta la espera aun cuando el driver no consiga abrir la fuente.</summary>
+        private void HideCameraLoading()
+        {
+            _isConnectingCamera = false;
+            NotifyLoadingChanged();
+        }
 
         private string _plateNumber = string.Empty;
         private string _statusMessage = "Listo para iniciar.";
@@ -218,8 +266,11 @@ namespace Parking.UI.Windows.ViewModels
         /// <returns>Tarea de preparación inicial de la pantalla.</returns>
         private async Task InitializeAsync()
         {
+            Exception? loadError = null;
             try
             {
+                // Permite dibujar la vista y su animación antes de sondear los drivers.
+                await Dispatcher.Yield(DispatcherPriority.Background);
                 // Detectamos dispositivos sin abrirlos de forma permanente.
                 await RefreshCamerasAsync();
                 // El cierre de la aplicación puede comenzar mientras se buscan drivers.
@@ -234,8 +285,14 @@ namespace Parking.UI.Windows.ViewModels
             }
             catch (Exception ex)
             {
-                _dialogService.ShowError("Error", $"Error cargando la pantalla: {ex.Message}");
+                loadError = ex;
             }
+            finally
+            {
+                IsPreparingOperations = false;
+            }
+            if (loadError is not null)
+                _dialogService.ShowError("Error", $"Error cargando la pantalla: {loadError.Message}");
         }
 
         /// <summary>Actualiza total, ocupados y puestos disponibles conservando la selección actual.</summary>
@@ -490,18 +547,28 @@ namespace Parking.UI.Windows.ViewModels
         {
             // Una aplicación en cierre no debe volver a abrir capturas.
             if (!_isOperational) return;
-            await _cameraOperationGate.WaitAsync();
+            ShowCameraLoading("INICIANDO CÁMARAS");
             try
             {
-                // Reconfigurar primero libera los dispositivos asignados antes de abrir otros.
-                await StopFeedAsync(EntranceFeed);
-                await StopFeedAsync(ExitFeed);
-                await StartSelectedFeedsAsync();
-                // Una búsqueda sin fuente funcional no reemplaza la preferencia anterior.
-                if (IsCameraRunning)
-                    SaveCameraSelection();
+                await Dispatcher.Yield(DispatcherPriority.Background);
+                await _cameraOperationGate.WaitAsync();
+                try
+                {
+                    // Reconfigurar primero libera los dispositivos asignados antes de abrir otros.
+                    await StopFeedAsync(EntranceFeed);
+                    await StopFeedAsync(ExitFeed);
+                    await StartSelectedFeedsAsync();
+                    await WaitForFirstImagesAsync(EntranceFeed, ExitFeed);
+                    // Una búsqueda sin fuente funcional no reemplaza la preferencia anterior.
+                    if (IsCameraRunning)
+                        SaveCameraSelection();
+                }
+                finally { _cameraOperationGate.Release(); }
             }
-            finally { _cameraOperationGate.Release(); }
+            finally
+            {
+                HideCameraLoading();
+            }
         }
 
         /// <summary>Abre las dos selecciones evitando asignar el mismo dispositivo local dos veces.</summary>
@@ -593,41 +660,65 @@ namespace Parking.UI.Windows.ViewModels
         {
             // Una aplicación en cierre no debe volver a encender el dispositivo.
             if (!_isOperational) return;
-            await _cameraOperationGate.WaitAsync();
+            if (feed.SelectedSource is null)
+            {
+                feed.Status = "Seleccione una cámara.";
+                return;
+            }
+            ShowCameraLoading($"INICIANDO CÁMARA DE {feed.Title}");
             try
             {
-                // Detenemos la captura previa de este panel antes de aplicar su nueva selección.
-                await StopFeedAsync(feed);
-                if (feed.Capture.IsCameraRunning)
+                await Dispatcher.Yield(DispatcherPriority.Background);
+                await _cameraOperationGate.WaitAsync();
+                try
                 {
-                    // No se abre otra fuente sobre un driver que no confirmó el cierre.
-                    feed.Status = "La cámara sigue ocupada. Intente detenerla de nuevo.";
-                    OnPropertyChanged(nameof(IsCameraRunning));
-                    return;
-                }
-                var other = ReferenceEquals(feed, EntranceFeed) ? ExitFeed : EntranceFeed;
-                // La cámara física solo se traslada si el otro visor la mantiene abierta.
-                if (feed.SelectedSource?.Kind == CameraSourceKind.WindowsDevice
-                    && other.ActiveSource?.Kind == CameraSourceKind.WindowsDevice
-                    && other.ActiveSource.Id == feed.SelectedSource.Id)
-                {
-                    await StopFeedAsync(other);
-                    // Un controlador que continúa ocupado no debe recibir una segunda apertura.
-                    if (other.Capture.IsCameraRunning)
+                    // Detenemos la captura previa de este panel antes de aplicar su nueva selección.
+                    await StopFeedAsync(feed);
+                    if (feed.Capture.IsCameraRunning)
                     {
-                        feed.Status = "La otra cámara sigue ocupada. Intente detenerla de nuevo.";
+                        // No se abre otra fuente sobre un driver que no confirmó el cierre.
+                        feed.Status = "La cámara sigue ocupada. Intente detenerla de nuevo.";
                         OnPropertyChanged(nameof(IsCameraRunning));
                         return;
                     }
-                    other.Status = $"Cámara trasladada a {feed.Title}.";
-                }
+                    var other = ReferenceEquals(feed, EntranceFeed) ? ExitFeed : EntranceFeed;
+                    // La cámara física solo se traslada si el otro visor la mantiene abierta.
+                    if (feed.SelectedSource?.Kind == CameraSourceKind.WindowsDevice
+                        && other.ActiveSource?.Kind == CameraSourceKind.WindowsDevice
+                        && other.ActiveSource.Id == feed.SelectedSource.Id)
+                    {
+                        await StopFeedAsync(other);
+                        // Un controlador que continúa ocupado no debe recibir una segunda apertura.
+                        if (other.Capture.IsCameraRunning)
+                        {
+                            feed.Status = "La otra cámara sigue ocupada. Intente detenerla de nuevo.";
+                            OnPropertyChanged(nameof(IsCameraRunning));
+                            return;
+                        }
+                        other.Status = $"Cámara trasladada a {feed.Title}.";
+                    }
 
-                // La apertura ocurre después del cierre nativo del dispositivo anterior.
-                await StartFeedAsync(feed);
-                OnPropertyChanged(nameof(IsCameraRunning));
-                if (feed.IsRunning) SaveCameraSelection();
+                    // La apertura ocurre después del cierre nativo del dispositivo anterior.
+                    await StartFeedAsync(feed);
+                    await WaitForFirstImagesAsync(feed);
+                    OnPropertyChanged(nameof(IsCameraRunning));
+                    if (feed.IsRunning) SaveCameraSelection();
+                }
+                finally { _cameraOperationGate.Release(); }
             }
-            finally { _cameraOperationGate.Release(); }
+            finally
+            {
+                HideCameraLoading();
+            }
+        }
+
+        /// <summary>Espera la primera imagen visible de las fuentes abiertas, con límite de cinco segundos.</summary>
+        private async Task WaitForFirstImagesAsync(params CameraFeedViewModel[] feeds)
+        {
+            DateTime limit = DateTime.UtcNow.AddSeconds(5);
+            while (_isOperational && DateTime.UtcNow < limit
+                && feeds.Any(feed => feed.IsRunning && feed.Preview is null))
+                await Task.Delay(80);
         }
 
         /// <summary>Cierra un visor sin interrumpir la captura del otro.</summary>

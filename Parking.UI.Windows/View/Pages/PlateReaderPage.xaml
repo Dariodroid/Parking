@@ -528,5 +528,51 @@
 
             </StackPanel>
         </ScrollViewer>
+
+        <!-- Versión original: se conserva completa para recuperarla desde UseClassicLoading. -->
+        <Grid Grid.ColumnSpan="2" Panel.ZIndex="10"
+              Visibility="{Binding IsClassicLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="{DynamicResource AppPageBrush}" Opacity="0.94"/>
+            <Border Width="360" Padding="32" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1" CornerRadius="16">
+                <StackPanel HorizontalAlignment="Center">
+                    <Grid Width="82" Height="82" HorizontalAlignment="Center">
+                        <Ellipse Stroke="{DynamicResource AppAccentTextBrush}" StrokeThickness="5"
+                                 StrokeDashArray="5 3" StrokeDashCap="Round">
+                            <Ellipse.RenderTransform>
+                                <RotateTransform CenterX="41" CenterY="41"/>
+                            </Ellipse.RenderTransform>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsClassicLoading}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="LoadingRotation">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                                         From="0" To="360" Duration="0:0:1.4" RepeatBehavior="Forever"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="LoadingRotation"/>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <materialDesign:PackIcon Kind="CarOutline" Width="34" Height="34"
+                                                 Foreground="{DynamicResource AppAccentTextBrush}"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="{Binding LoadingTitle}" FontSize="17" FontWeight="Bold"
+                               Foreground="{DynamicResource AppTextBrush}" TextAlignment="Center" Margin="0,22,0,8"/>
+                    <TextBlock Text="{Binding LoadingDetail}" FontSize="12"
+                               Foreground="{DynamicResource AppMutedTextBrush}" TextAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

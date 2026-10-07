@@ -28,6 +28,7 @@
         <local:MenuWidthConverter x:Key="MenuWidthConverter"/>
         <local:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter"/>
         <BooleanToVisibilityConverter x:Key="RoleVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="LoadingVisibilityConverter"/>
 
         <!-- VISTAS -->
         <DataTemplate DataType="{x:Type vm:PlateReaderViewModel}">
@@ -334,6 +335,107 @@
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch"/>
             </Grid>
+        </Grid>
+        <!-- La animación cubre toda la ventana y deja ver Operaciones detrás. -->
+        <Grid Grid.RowSpan="2" Panel.ZIndex="11"
+              Visibility="{Binding IsModernLoading, Converter={StaticResource LoadingVisibilityConverter}}">
+            <Border Background="#99000000"/>
+            <Border Width="480" Padding="30,24" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource AppSurfaceBrush}" BorderBrush="{DynamicResource AppAccentTextBrush}"
+                    BorderThickness="1" CornerRadius="14">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="PARKING  /  SISTEMA DE CAPTURA" Foreground="{DynamicResource AppAccentTextBrush}"
+                                FontSize="11" FontWeight="Bold" TextAlignment="Center"/>
+                    <Grid Width="176" Height="176" HorizontalAlignment="Center" Margin="0,22,0,14">
+                        <Ellipse Width="164" Height="164" Stroke="{DynamicResource AppAccentTextBrush}" StrokeThickness="4"
+                                 StrokeDashArray="9 6" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform><RotateTransform/></Ellipse.RenderTransform>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsModernLoading}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="OuterLoadingSpin">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                                         From="0" To="360" Duration="0:0:2.2" RepeatBehavior="Forever"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions><StopStoryboard BeginStoryboardName="OuterLoadingSpin"/></DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <Ellipse Width="126" Height="126" Stroke="{DynamicResource AppInputBorderBrush}" StrokeThickness="7"
+                                 StrokeDashArray="2 5" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform><RotateTransform/></Ellipse.RenderTransform>
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsModernLoading}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="InnerLoadingSpin">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                                         From="360" To="0" Duration="0:0:1.6" RepeatBehavior="Forever"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions><StopStoryboard BeginStoryboardName="InnerLoadingSpin"/></DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <Ellipse Width="82" Height="82" Fill="{DynamicResource AppSelectedBrush}"
+                                 Stroke="{DynamicResource AppAccentTextBrush}" StrokeThickness="1"/>
+                        <materialDesign:PackIcon Kind="CarOutline" Width="43" Height="43"
+                                                 Foreground="{DynamicResource AppAccentTextBrush}"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="{Binding LoadingTitle}" FontSize="19" FontWeight="Bold"
+                               Foreground="{DynamicResource AppTextBrush}" TextAlignment="Center"/>
+                    <TextBlock Text="{Binding LoadingDetail}" FontSize="12" TextWrapping="Wrap"
+                               Width="360" Foreground="{DynamicResource AppMutedTextBrush}"
+                               TextAlignment="Center" Margin="0,9,0,18"/>
+                    <!-- Un haz cruza la barra sin simular un porcentaje que el driver no ofrece. -->
+                    <Canvas Width="350" Height="6" Background="{DynamicResource AppRaisedBrush}" ClipToBounds="True">
+                        <Rectangle Width="120" Height="6" Canvas.Left="-120"
+                                   Fill="{DynamicResource AppAccentTextBrush}">
+                            <Rectangle.OpacityMask>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                    <GradientStop Color="#FFFFFFFF" Offset="0.5"/>
+                                    <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Rectangle.OpacityMask>
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsModernLoading}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="LoadingBarMotion">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(Canvas.Left)"
+                                                                         From="-120" To="350" Duration="0:0:1.65"
+                                                                         RepeatBehavior="Forever"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions><StopStoryboard BeginStoryboardName="LoadingBarMotion"/></DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Rectangle.Style>
+                        </Rectangle>
+                    </Canvas>
+                    <TextBlock Text="SISTEMA EN PREPARACIÓN" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppMutedTextBrush}"
+                               TextAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </Window>

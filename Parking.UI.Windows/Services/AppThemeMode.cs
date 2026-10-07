@@ -4,5 +4,6 @@ namespace Parking.UI.Windows.Services;
 public enum AppThemeMode
 {
     Dark,
-    Light
+    Light,
+    Hud
 }

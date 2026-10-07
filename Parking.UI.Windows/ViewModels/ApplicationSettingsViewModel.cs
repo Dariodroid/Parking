@@ -117,6 +117,13 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
         set { if (value) ChangeTheme(AppThemeMode.Dark); }
     }
 
+    /// <summary>Opción experimental de panel azul para toda la interfaz.</summary>
+    public bool IsHudTheme
+    {
+        get => _themeService.Current == AppThemeMode.Hud;
+        set { if (value) ChangeTheme(AppThemeMode.Hud); }
+    }
+
     /// <summary>Comprueba acceso de lectura a la base indicada.</summary>
     public ICommand TestConnectionCommand { get; }
 
@@ -273,6 +280,7 @@ public sealed class ApplicationSettingsViewModel : BaseViewModel
             _themeService.Apply(mode);
             OnPropertyChanged(nameof(IsLightTheme));
             OnPropertyChanged(nameof(IsDarkTheme));
+            OnPropertyChanged(nameof(IsHudTheme));
         }
         catch (Exception ex)
         {
